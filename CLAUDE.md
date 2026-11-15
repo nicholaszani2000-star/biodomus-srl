@@ -27,7 +27,7 @@ Regola di lavoro: esegui solo lo step richiesto, fai il report di §12, FERMATI.
 
 ## §1 Il repository
 
-- Repository GitHub: biodomus-landing. Branch di lavoro: lavoro. Il branch main cambia solo con la pull request dello step 8.
+- Repository GitHub: biodomus-srl. Branch di lavoro: lavoro. Il branch main cambia solo con la pull request dello step 8.
 - Struttura:
 
 ```
@@ -57,10 +57,10 @@ Questi valori vanno in src/content/dati.ts e da lì in tutta la pagina. Nessun c
 Se un valore è «[DA COMPILARE: …]» non inventarlo: usa un testo neutro o nascondi l'elemento, e segnalalo nel report. In pagina non deve mai comparire «DA COMPILARE».
 
 Progetto
-- REPO: biodomus-landing
+- REPO: biodomus-srl
 - BRANCH: lavoro
 - NETLIFY_SITO: biodomus
-- DOMINIO: biodomussrls.it
+- DOMINIO (già registrato da noi): biodomussrls.it
 - DATA_AVVIO: 11 gennaio 2027
 - DATA_ONLINE: 11 gennaio 2027
 
@@ -76,12 +76,12 @@ Brand e contatti
 - LOGO: nessun logo: wordmark tipografico
 
 Dati legali
-- TITOLARE: Mirko Lanzafame
-- FORMA: S.r.l. / S.r.l.s.
+- TITOLARE (la società, titolare della partita IVA e del trattamento dei dati; il referente è REFERENTE): BIODOMUS SRLS
+- FORMA: società a responsabilità limitata semplificata
 - PIVA: 04059520124
-- SEDE: via carlo noè 45 gallarate
+- SEDE: Via Carlo Noè 45, 21013 Gallarate (VA)
 - REA: VA-398965
-- CAPITALE: 50000
+- CAPITALE: 5.000 €
 - PEC: biodomus@cgn.legalmail.it
 - RUOLO_LEGALE: da definire con il commercialista
 - COSTO_SERVIZIO: Il primo incontro conoscitivo è gratuito e senza impegno. Il cliente non sostiene costi per il servizio di consulenza: l'eventuale compenso viene riconosciuto direttamente dall'azienda partner, secondo accordi preventivamente definiti.
@@ -113,8 +113,8 @@ Villa a Cislago · Cislago · 363 · 2026 · A4
 Villa Sara · – · 237 · 2017 · A
 
 Design
-- STILE: Calce (chiaro, caldo)
-- COLORE_ACCENTO: #3E9F23
+- STILE: Cemento (chiaro, grigio caldo)
+- COLORE_ACCENTO (antracite dei serramenti): #383E42
 
 Servizi (si usano allo step 8)
 - SUPABASE_URL: (arriva allo step 8)
@@ -141,7 +141,7 @@ Regole condizionali
 6. Ogni testo sta in src/content/testi.json, modificabile dal sito di GitHub senza toccare codice. I default sono il copy di §8.
 7. Niente dati finti: niente recensioni inventate, contatori, «ultimi posti», countdown, loghi o foto di aziende senza autorizzazione, foto o render presentati come case costruite se non lo sono.
 8. Ogni effetto ha un ripiego. Senza JavaScript la pagina si legge tutta (HTML prerenderizzato) e il modulo invia lo stesso (POST classico alla funzione, poi /grazie.html). Con prefers-reduced-motion niente smooth scroll, pin, parallasse né testi spezzati: solo dissolvenze brevi. WebGL non si usa.
-9. Niente librerie superflue né CDN. Dipendenze ammesse: react, react-dom, gsap, @gsap/react, lenis, tailwindcss, @tailwindcss/vite, @fontsource-variable/bricolage-grotesque, @fontsource-variable/inter. Solo sviluppo: typescript, eslint e plugin dello scaffold, @netlify/functions, playwright, sharp, tsx. Ogni altra dipendenza va motivata nel report. Font self-hosted.
+9. Niente librerie superflue né CDN. Dipendenze ammesse: react, react-dom, gsap, @gsap/react, lenis, tailwindcss, @tailwindcss/vite, @fontsource-variable/bricolage-grotesque, @fontsource-variable/inter. Solo sviluppo: typescript, eslint e plugin dello scaffold, @netlify/functions, playwright, sharp, tsx. Ogni altra dipendenza va motivata nel report. Font self-hosted. Versioni esatte in package.json. TypeScript resta alla 6.0.x: typescript-eslint supporta solo versioni sotto la 6.1. Lo scaffold di create-vite 9 propone TypeScript 7 e oxlint: non usarli finché typescript-eslint non supporta la 7. Il linter è ESLint (eslint.config.js, con @eslint/js, globals, typescript-eslint, eslint-plugin-react-hooks, eslint-plugin-react-refresh).
 10. Dati di business (tempi, classi, garanzie, budget, nomi, contatti) solo da §2, mai scritti a mano nei componenti.
 11. Non chiedermi ciò che puoi procurarti o generare da solo. Chiedi solo ciò che so io: dati mancanti di §2, autorizzazioni, account, chiavi.
 12. Segreti (chiavi Supabase, Brevo, Meta) mai nel codice né nel repository: solo variabili d'ambiente di Netlify. I nomi stanno in .env.example.
@@ -184,17 +184,17 @@ Requisiti verificati e insidie:
 
 ## §5 Design system
 
-Atmosfera: «dal disegno alla casa». Calce, calcestruzzo, carta da progetto e la luce calda di una casa abitata. Ordine da tavola tecnica, calore da casa finita. Molto spazio, poche cose per schermata.
+Atmosfera: «dal disegno alla casa». I materiali di una casa moderna: intonaco grigio, cemento, serramenti antracite, legno di rovere. Ordine da tavola tecnica, calore da casa finita. Molto spazio, poche cose per schermata. Niente colori accesi, niente gradienti: grigi caldi, un antracite deciso e il legno solo come dettaglio.
 
-STILE scelto: Calce (chiaro, caldo). Se è «Calce» usi la palette chiara, se è «Grafite» quella scura.
+STILE scelto: Cemento (chiaro, grigio caldo). Se è «Cemento» usi la palette chiara, se è «Grafite» quella scura.
 
-L'accento è il blu dell'inchiostro da tavola: lega la pagina al disegno di progetto. Il «ruggine» dell'armatura compare solo nei disegni (tondini, segni di quota), mai sul testo.
+L'accento è l'antracite dei serramenti: pulsanti e link, deciso e sobrio. Il legno di rovere scalda i dettagli grafici (icone, numeri dei passaggi, linee di quota, sottolineature), mai il testo. Il «ruggine» dell'armatura compare solo nei disegni (tondini), mai sul testo.
 
 Palette chiara (token in bd-tokens.css):
-- --bd-fondo #F4F1EA (calce), --bd-carta #FBFAF7 (card), --bd-testo #1C1D1A, --bd-testo-2 #5F5B53, --bd-linea #D9D4CA (solo bordi e griglia), --bd-accento #3E9F23 (pulsanti con testo bianco, link, dettagli), --bd-ruggine #B4542D (solo disegni), --bd-ok #5C6A55.
+- --bd-fondo #EDECE8 (intonaco grigio), --bd-carta #F8F7F5 (card), --bd-testo #1F2326 (grafite), --bd-testo-2 #595E62, --bd-linea #D3D1CC (solo bordi e griglia), --bd-accento #383E42 (antracite: pulsanti con testo bianco, link), --bd-accento-hover #262B2E, --bd-legno #A87B4F (rovere: solo dettagli grafici), --bd-ruggine #B4542D (solo disegni), --bd-ok #4F6B58 (conferme).
 Palette scura:
-- --bd-fondo #161714, --bd-carta #1F201C, --bd-testo #ECE8E0, --bd-testo-2 #A8A398, --bd-linea #34352F, --bd-accento #8FB0F0 (pulsanti con testo #161714, link), --bd-ruggine #E08A62 (solo disegni), --bd-ok #9DB08F.
-Contrasti misurati: testo su fondo 15:1, testo-2 su fondo 6:1, bianco su #2346A0 8,5:1, #2346A0 su calce 7,6:1, #161714 su #8FB0F0 8,3:1. Se COLORE_ACCENTO cambia, ricalcola: sotto 4,5:1 con il bianco usa il testo scuro sul pulsante o scurisci l'accento, e scrivilo nel report.
+- --bd-fondo #1A1C1E, --bd-carta #232629, --bd-testo #ECEBE8, --bd-testo-2 #A9ADB0, --bd-linea #3A3E42, --bd-accento #E4E1DA (pulsanti con testo #1A1C1E, link), --bd-legno #C49A6C (solo dettagli grafici), --bd-ruggine #E08A62 (solo disegni), --bd-ok #9DB5A3.
+Contrasti misurati (WCAG): chiara — testo su fondo 13,4:1, testo-2 su fondo 5,5:1, accento su fondo 9,2:1 (link), bianco su accento 10,8:1 (pulsanti), ok su carta 5,5:1, legno su fondo 3,2:1 (solo grafica, mai testo), ruggine su fondo 4,2:1 (solo disegni). Scura — testo su fondo 14,3:1, testo-2 su fondo 7,6:1, #1A1C1E su accento 13,1:1. Se COLORE_ACCENTO cambia, ricalcola: sotto 4,5:1 con il bianco usa il testo scuro sul pulsante o scurisci l'accento, e scrivilo nel report.
 
 Tipografia: titoli Bricolage Grotesque Variable (pesi 600–800, interlinea 1,02, tracking −0,02em); testi Inter Variable (400, 500, 600). Scala: h1 clamp(2.5rem, 6vw + 1rem, 5.25rem); h2 clamp(1.9rem, 3.5vw + 1rem, 3.25rem); h3 1.375rem; testo 1.0625rem con interlinea 1,6; piccolo 0.875rem. Righe al massimo di 65 caratteri.
 
@@ -387,5 +387,5 @@ Poi commit, push e FERMATI.
 
 - `npm run anteprima` avvia studio/anteprima-server.mts (con tsx): serve dist/ e manda POST /api/lead direttamente alla funzione bd-lead con BD_MOCK=1. Nessun servizio esterno.
 - `npm run screenshot` usa Playwright: apre l'anteprima a 390 × 844 e 1440 × 900 per ogni angolo (?a=famiglia, terreno, investo), salva gli screenshot in studio/report/screenshot/ (escluso da git), registra gli errori di console e controlla che a 390 px document.documentElement.scrollWidth sia ≤ 390.
-- Ripieghi del browser: `npx playwright install chromium`; se il download è bloccato, un Chromium di sistema (which chromium, chromium-browser, google-chrome) con executablePath; se non c'è nessun browser, salti screenshot e Lighthouse e lo scrivi nel report con il motivo.
+- Ripieghi del browser: prima il Chromium già presente nell'ambiente (variabile PLAYWRIGHT_BROWSERS_PATH, di solito /opt/pw-browsers): playwright è fissato alla stessa versione (1.63.0), quindi non serve scaricare nulla; poi `npx playwright install chromium`; se il download è bloccato, un Chromium di sistema (which chromium, chromium-browser, google-chrome) con executablePath; se non c'è nessun browser, salti screenshot e Lighthouse e lo scrivi nel report con il motivo.
 - studio/controlli.mjs cresce a ogni step. Ogni controllo stampa OK o KO con una riga di spiegazione; un solo KO fa fallire npm run check.
