@@ -1,0 +1,53 @@
+// Prerender (CLAUDE.md §4): dopo `vite build` e `vite build --ssr src/entry-server.tsx --outDir dist-ssr`
+// scrive in dist/index.html l'HTML della pagina, titolo, descrizione, Open Graph e il preload del font dei titoli.
+// Così la pagina si legge tutta anche senza JavaScript e il titolo è già nel primo byte (LCP).
+
+import { readFileSync, readdirSync, writeFileSync, existsSync } from 'node:fs'
+import { join, dirname } from 'node:path'
+import { fileURLToPath, pathToFileURL } from 'node:url'
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
+const DIST = join(ROOT, 'dist')
+const SSR = ['entry-server.js', 'entry-server.mjs'].map((f) => join(ROOT, 'dist-ssr', f)).find((f) => existsSync(f))
+if (!SSR) throw new Error('Prerender: manca dist-ssr/entry-server.js. Esegui prima vite build --ssr.')
+
+const { render } = await import(pathToFileURL(SSR).href)
+const { html, titolo, descrizione, stile, canonico } = render()
+
+const attr = (testo) =>
+  String(testo).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+// Preload solo del font dei titoli (§9): il file hashato che Vite ha copiato in dist/assets.
+const fontTitoli = readdirSync(join(DIST, 'assets')).find((f) =>
+  /^bricolage-grotesque-latin-wght-normal[-.][\w-]+\.woff2$/.test(f),
+)
+if (!fontTitoli) throw new Error('Prerender: font dei titoli non trovato in dist/assets')
+
+const testa = [
+  `<meta name="description" content="${attr(descrizione)}" />`,
+  `<link rel="canonical" href="${attr(canonico)}" />`,
+  `<meta property="og:type" content="website" />`,
+  `<meta property="og:locale" content="it_IT" />`,
+  `<meta property="og:title" content="${attr(titolo)}" />`,
+  `<meta property="og:description" content="${attr(descrizione)}" />`,
+  `<meta property="og:url" content="${attr(canonico)}" />`,
+  `<meta name="theme-color" content="${stile === 'grafite' ? '#1a1c1e' : '#edece8'}" />`,
+  `<link rel="preload" href="/assets/${fontTitoli}" as="font" type="font/woff2" crossorigin />`,
+].join('\n    ')
+
+const percorso = join(DIST, 'index.html')
+let pagina = readFileSync(percorso, 'utf8')
+
+const sostituzioni = [
+  ['<title>Biodomus</title>', `<title>${attr(titolo)}</title>`],
+  ['<!--bd-head-->', testa],
+  ['<!--bd-app-->', html],
+]
+for (const [segnaposto, valore] of sostituzioni) {
+  if (!pagina.includes(segnaposto)) throw new Error(`Prerender: segnaposto ${segnaposto} non trovato in dist/index.html`)
+  pagina = pagina.replace(segnaposto, () => valore)
+}
+if (stile === 'grafite') pagina = pagina.replace('<html lang="it"', '<html lang="it" data-stile="grafite"')
+
+writeFileSync(percorso, pagina)
+console.log(`Prerender: dist/index.html scritto (${(Buffer.byteLength(pagina) / 1024).toFixed(1)} kB, font ${fontTitoli})`)

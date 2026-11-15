@@ -2,8 +2,9 @@
 // Node puro, nessuna dipendenza. Cresce a ogni step: aggiungi i controlli in fondo all'elenco.
 // Ogni controllo stampa OK o KO con una riga di spiegazione; un solo KO fa uscire con codice 1.
 
-import { existsSync, readFileSync, statSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
+import { gzipSync } from 'node:zlib'
 import { dirname, extname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -90,6 +91,129 @@ controllo('nessun segreto nel repository', () => {
 controllo('build presente', () => {
   const ok = esiste('dist/index.html')
   return { ok, nota: ok ? 'dist/index.html esiste' : 'dist/index.html manca: esegui npm run build prima dei controlli' }
+})
+
+// ---------- STEP 1 ----------
+
+const HTML = esiste('dist/index.html') ? leggi('dist/index.html') : ''
+
+function testoVisibile(html) {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<!--[\s\S]*?-->/g, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&#x27;|&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+const TITOLO = (HTML.match(/<title>([^<]*)<\/title>/) ?? [])[1] ?? ''
+const DESCRIZIONE = (HTML.match(/<meta name="description" content="([^"]*)"/) ?? [])[1] ?? ''
+const TESTO = `${TITOLO} ${DESCRIZIONE} ${testoVisibile(HTML)}`
+
+controllo('html in italiano con viewport, titolo e descrizione', () => {
+  const mancano = []
+  if (!/<html[^>]*\blang="it"/.test(HTML)) mancano.push('lang="it"')
+  if (!/<meta name="viewport"/.test(HTML)) mancano.push('meta viewport')
+  if (!TITOLO.trim()) mancano.push('title')
+  if (!DESCRIZIONE.trim()) mancano.push('meta description')
+  return mancano.length
+    ? { ok: false, nota: `mancano: ${mancano.join(', ')}` }
+    : { ok: true, nota: `«${TITOLO}» · descrizione di ${DESCRIZIONE.length} caratteri` }
+})
+
+controllo('un solo h1 nell\'HTML prerenderizzato', () => {
+  const n = (HTML.match(/<h1[\s>]/g) ?? []).length
+  return { ok: n === 1, nota: `${n} h1 trovati` }
+})
+
+controllo('header e footer già nell\'HTML (prerender)', () => {
+  const radice = HTML.slice(HTML.indexOf('<div id="root">'))
+  const ok = radice.includes('bd-header') && radice.includes('bd-footer')
+  return { ok, nota: ok ? 'header e footer sono dentro #root prima del JavaScript' : 'il prerender non ha scritto header o footer in #root' }
+})
+
+controllo('nessun segnaposto o valore vuoto nel testo', () => {
+  const vietati = [
+    ['⟪', /⟪/],
+    ['DA COMPILARE', /DA COMPILARE/],
+    ['undefined', /\bundefined\b/],
+    ['null', /\bnull\b/],
+    ['{SEGNAPOSTO}', /\{[A-Z][A-Z0-9_]*\}/],
+  ]
+  const trovati = vietati.filter(([, re]) => re.test(TESTO)).map(([nome]) => nome)
+  return trovati.length ? { ok: false, nota: `nel testo compare: ${trovati.join(', ')}` } : { ok: true, nota: 'testo pulito' }
+})
+
+controllo('nessuna asserzione ambientale generica (§3.13)', () => {
+  const re = /\b(eco|ecologic[oaie]?|green|sostenibil\w*|bio)\b|impatto zero|amica dell'ambiente/gi
+  const trovati = [...new Set((TESTO.match(re) ?? []).map((p) => p.toLowerCase()))]
+  return trovati.length
+    ? { ok: false, nota: `parole vietate: ${trovati.join(', ')}` }
+    : { ok: true, nota: 'nessuna parola vietata (Biodomus ammesso)' }
+})
+
+const ASSETS = esiste('dist/assets') ? readdirSync(join(ROOT, 'dist/assets')) : []
+const kbGzip = (file) => gzipSync(readFileSync(join(ROOT, 'dist/assets', file))).length / 1024
+
+controllo('JavaScript e CSS entro i pesi di §9', () => {
+  const js = ASSETS.filter((f) => f.endsWith('.js')).reduce((somma, f) => somma + kbGzip(f), 0)
+  const css = ASSETS.filter((f) => f.endsWith('.css')).reduce((somma, f) => somma + kbGzip(f), 0)
+  const ok = js <= 160 && css <= 30
+  return { ok, nota: `JS ${js.toFixed(1)} kB gzip (max 160), CSS ${css.toFixed(1)} kB gzip (max 30)` }
+})
+
+controllo('font solo latin ed entro 120 kB', () => {
+  const font = ASSETS.filter((f) => /\.(woff2?|ttf|otf)$/.test(f))
+  const nonLatin = font.filter((f) => !/-latin-/.test(f) || /-latin-ext-/.test(f))
+  const kb = font.reduce((somma, f) => somma + statSync(join(ROOT, 'dist/assets', f)).size / 1024, 0)
+  if (nonLatin.length) return { ok: false, nota: `font fuori dal sottoinsieme latin: ${nonLatin.join(', ')}` }
+  return { ok: kb <= 120, nota: `${font.length} file, ${kb.toFixed(1)} kB` }
+})
+
+controllo('nessuna risorsa esterna caricata da HTML o CSS', () => {
+  const esterne = []
+  const tag = /<(script|link|img|source|iframe)\b[^>]*>/gi
+  for (const [intero, nome] of HTML.matchAll(tag)) {
+    if (nome.toLowerCase() === 'link' && /rel="canonical"/.test(intero)) continue
+    for (const [, valore] of intero.matchAll(/\b(?:src|href|srcset)="([^"]+)"/g)) {
+      if (/^(https?:)?\/\//i.test(valore)) esterne.push(valore)
+    }
+  }
+  for (const css of ASSETS.filter((f) => f.endsWith('.css'))) {
+    for (const [, valore] of readFileSync(join(ROOT, 'dist/assets', css), 'utf8').matchAll(/url\(\s*['"]?([^'")]+)/g)) {
+      if (/^(https?:)?\/\//i.test(valore)) esterne.push(`${css}: ${valore}`)
+    }
+  }
+  return esterne.length ? { ok: false, nota: `risorse esterne: ${esterne.join(', ')}` } : { ok: true, nota: 'solo percorsi del sito' }
+})
+
+controllo('tre varianti dell\'angolo nel titolo (§7)', () => {
+  const h1 = (HTML.match(/<h1[\s\S]*?<\/h1>/) ?? [''])[0]
+  const mancanti = ['famiglia', 'terreno', 'investo'].filter((a) => !h1.includes(`bd-v-${a}`))
+  return mancanti.length ? { ok: false, nota: `mancano nel h1: ${mancanti.join(', ')}` } : { ok: true, nota: 'famiglia, terreno e investo nel h1' }
+})
+
+controllo('script dell\'angolo nel head prima del CSS', () => {
+  const script = HTML.indexOf('dataset.angolo')
+  const css = HTML.indexOf('rel="stylesheet"')
+  const ok = script > 0 && css > 0 && script < css && script < HTML.indexOf('</head>')
+  return { ok, nota: ok ? 'lo script imposta data-angolo prima di caricare il CSS' : 'script assente o dopo il CSS' }
+})
+
+controllo('accento uguale a COLORE_ACCENTO di §2', () => {
+  const daDati = (leggi('src/content/dati.ts').match(/COLORE_ACCENTO:\s*'(#[0-9a-fA-F]{6})'/) ?? [])[1]
+  const daToken = (leggi('src/styles/bd-tokens.css').match(/:root\s*\{[\s\S]*?--bd-accento:\s*(#[0-9a-fA-F]{6})/) ?? [])[1]
+  const ok = !!daDati && !!daToken && daDati.toLowerCase() === daToken.toLowerCase()
+  return { ok, nota: `dati.ts ${daDati ?? '?'} · bd-tokens.css ${daToken ?? '?'}` }
+})
+
+controllo('file di esempio dello scaffold eliminati', () => {
+  const restano = ['src/App.css', 'src/index.css', 'src/assets/react.svg', 'src/assets/vite.svg', 'src/assets/hero.png', 'public/icons.svg'].filter(esiste)
+  return restano.length ? { ok: false, nota: `restano: ${restano.join(', ')}` } : { ok: true, nota: 'nessun file di esempio' }
 })
 
 // ---------- esito ----------

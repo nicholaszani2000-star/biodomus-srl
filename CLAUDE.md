@@ -15,7 +15,7 @@ Pubblico, in ordine di importanza:
 1. coppie e famiglie che vogliono costruire una casa indipendente;
 2. chi ha già un terreno e cerca chi costruisce;
 3. chi investe in villette o piccoli complessi residenziali.
-Zona: province di Varese, Milano e Como. Arrivano quasi tutti da telefono, spesso dal browser interno di Instagram o Facebook, con connessione mobile.
+Zona: provincia di Varese, Milano e Como. Arrivano quasi tutti da telefono, spesso dal browser interno di Instagram o Facebook, con connessione mobile.
 
 Cosa fa Biodomus: non costruisce. Ascolta il progetto, lo porta alle aziende partner, rivede con il cliente preventivo e contratto, segue tempi e cantiere, e resta il suo unico referente. Il contratto di costruzione il cliente lo firma con l'impresa. La pagina lo dice in modo chiaro: è il motivo per cui ci si fida.
 
@@ -73,7 +73,7 @@ Brand e contatti
 - TELEFONO: +39 349 239 1107
 - WHATSAPP (link https://wa.me/ generato da TELEFONO, solo cifre con 39 davanti): sì
 - TEMPO_RISPOSTA: entro 2 giorni lavorativi
-- ZONA: province di Varese, Milano e Como
+- ZONA: provincia di Varese, Milano e Como
 - LOGO: nessun logo: wordmark tipografico
 
 Dati legali

@@ -1,0 +1,293 @@
+{
+  "meta": {
+    "titolo": "{BRAND} · Costruisci casa con un solo referente",
+    "descrizione": "Costruzione di case in {ZONA}: {BRAND} ti mette in contatto con imprese selezionate e ti segue fino alle chiavi."
+  },
+  "comuni": {
+    "saltaAlContenuto": "Vai al contenuto",
+    "tornaInizio": "{BRAND}, torna all'inizio",
+    "illustrazione": "Illustrazione"
+  },
+  "header": {
+    "linkComeFunziona": "Come funziona",
+    "cta": "Richiedi un preventivo"
+  },
+  "hero": {
+    "occhiello": "Costruzione di case in {ZONA}",
+    "angoli": {
+      "famiglia": {
+        "titolo": "La casa che vuoi, con un solo referente dal progetto alle chiavi.",
+        "sottotitolo": "{BRAND} ti mette in contatto con imprese selezionate in {ZONA} e segue il tuo progetto passo per passo."
+      },
+      "terreno": {
+        "titolo": "Hai il terreno. Ora serve chi lo trasforma in casa.",
+        "sottotitolo": "Raccontaci lotto e idea: {BRAND} porta il progetto all'impresa partner e ti segue fino alla consegna."
+      },
+      "investo": {
+        "titolo": "Costruire per investire, con un solo interlocutore.",
+        "sottotitolo": "Villette e piccoli complessi in {ZONA}: {BRAND} coordina impresa, tempi e cantiere."
+      }
+    },
+    "ctaPrimaria": "Richiedi un preventivo",
+    "ctaSecondaria": "Come funziona",
+    "sottoCta": "Ti risponde {REFERENTE}, {TEMPO_RISPOSTA}.",
+    "fatti": {
+      "tempi": "Consegna: {TEMPI}",
+      "classe": "Classe energetica {CLASSE} nelle ultime realizzazioni",
+      "sistema": "{SISTEMA_BREVE}"
+    }
+  },
+  "perChi": {
+    "titolo": "Per chi è {BRAND}",
+    "card": [
+      {
+        "profilo": "casa",
+        "titolo": "Vuoi costruire casa",
+        "testo": "Hai un'idea e un budget. Ti aiutiamo a capire cosa si può fare, dove e con chi.",
+        "cta": "Parti dal tuo progetto"
+      },
+      {
+        "profilo": "terreno",
+        "titolo": "Hai già il terreno",
+        "testo": "Portaci i dati del lotto: verifichiamo con l'impresa cosa si può costruire e a che costo.",
+        "cta": "Parti dal terreno"
+      },
+      {
+        "profilo": "investimento",
+        "titolo": "Vuoi investire",
+        "testo": "Villette o piccoli complessi residenziali: un solo interlocutore per impresa, tempi e cantiere.",
+        "cta": "Parliamo del progetto"
+      }
+    ]
+  },
+  "comeFunziona": {
+    "titolo": "Come funziona",
+    "intro": "Quattro passaggi. In ognuno sai chi fa cosa.",
+    "passaggi": [
+      {
+        "titolo": "Ci racconti il progetto",
+        "testo": "Compili il modulo. {REFERENTE} ti richiama, ascolta idea, zona, terreno e budget e ti dice con franchezza cosa è realistico."
+      },
+      {
+        "titolo": "Progetto e preventivo",
+        "testo": "L'impresa partner prepara progetto e preventivo dettagliato. Puoi anche partire dal progetto del tuo tecnico. {REFERENTE} li rivede con te, voce per voce."
+      },
+      {
+        "titolo": "Contratto e permessi",
+        "testo": "Firmi il contratto con l'impresa. Si avviano le pratiche per il permesso di costruire."
+      },
+      {
+        "titolo": "Cantiere e chiavi",
+        "testo": "{REFERENTE} resta il tuo riferimento durante il cantiere, fino alla consegna.",
+        "tempi": "Tempi indicativi: {TEMPI}."
+      }
+    ],
+    "cta": "Richiedi un preventivo"
+  },
+  "ruolo": {
+    "titolo": "Un solo referente, dall'inizio alla fine",
+    "testo": "{BRAND} non è un'impresa di costruzioni. Sceglie le imprese, coordina il lavoro e ti segue. Parli con una persona sola, non con dieci.",
+    "colonne": [
+      {
+        "titolo": "Cosa fa {BRAND}",
+        "voci": [
+          "Ascolta il progetto",
+          "Lo porta all'impresa adatta",
+          "Rivede con te preventivo e contratto",
+          "Segue tempi e cantiere"
+        ]
+      },
+      {
+        "titolo": "Cosa fa l'impresa",
+        "voci": [
+          "Progetta e costruisce",
+          "Firma il contratto con te e ne risponde"
+        ]
+      },
+      {
+        "titolo": "Cosa fai tu",
+        "voci": [
+          "Decidi",
+          "Firmi",
+          "Entri in casa"
+        ]
+      }
+    ],
+    "costoTitolo": "Quanto costa il servizio",
+    "costoTesto": "{COSTO_SERVIZIO}"
+  },
+  "sistema": {
+    "titolo": "Com'è fatta la casa, dentro le pareti",
+    "testo": "{SISTEMA}. Struttura e isolamento nascono insieme.",
+    "strati": [
+      {
+        "titolo": "Strato isolante esterno",
+        "testo": "Il cassero isolante resta nella parete e fa da isolamento."
+      },
+      {
+        "titolo": "Calcestruzzo armato",
+        "testo": "La struttura che porta la casa, con l'armatura in acciaio dentro il getto."
+      },
+      {
+        "titolo": "Strato isolante interno",
+        "testo": "Chiude l'isolamento verso l'interno."
+      },
+      {
+        "titolo": "Intonaco e finiture",
+        "testo": "Quello che vedi e tocchi ogni giorno."
+      }
+    ],
+    "fatti": {
+      "classe": "Classe energetica {CLASSE} nelle ultime realizzazioni di {P1_NOME}",
+      "garanzia": "{GARANZIA}"
+    },
+    "nota": "Illustrazione schematica, non in scala.",
+    "cta": "Richiedi un preventivo"
+  },
+  "realizzazioni": {
+    "titolo": "Alcune case realizzate da {P1_NOME}",
+    "superficie": "{mq} m²",
+    "classe": "classe {classe}",
+    "realizzataDa": "Realizzata da {P1_NOME}",
+    "nota": "Foto e dati forniti da {P1_NOME}.",
+    "cta": "Voglio una casa così"
+  },
+  "partner": {
+    "titolo": "Le aziende con cui lavoriamo",
+    "link": "Sito ufficiale"
+  },
+  "modulo": {
+    "titolo": "Richiedi un preventivo",
+    "intro": "Tre passaggi, un minuto. Ti risponde {REFERENTE}, {TEMPO_RISPOSTA}.",
+    "avanzamento": "Passo {passo} di 3",
+    "passo1": {
+      "titolo": "Il progetto",
+      "domandaProfilo": "Per cosa ci contatti?",
+      "profili": {
+        "casa": "Una casa per me o per la mia famiglia",
+        "investimento": "Un investimento (villette, piccoli complessi)",
+        "altro": "Altro"
+      },
+      "domandaTerreno": "Hai già il terreno?",
+      "terreno": {
+        "si": "Sì",
+        "cerco": "Lo sto cercando",
+        "no": "No"
+      }
+    },
+    "passo2": {
+      "titolo": "Dove e quando",
+      "comune": "Comune o zona",
+      "comuneSuggerimento": "Seguiamo progetti in {ZONA}.",
+      "budget": "Budget indicativo",
+      "budgetSuggerimento": "Serve solo a capire cosa è realistico. Non ti vincola.",
+      "tempistica": "Quando vorresti iniziare?",
+      "tempistiche": {
+        "entro-6": "Entro 6 mesi",
+        "6-12": "Tra 6 e 12 mesi",
+        "oltre-12": "Oltre 12 mesi",
+        "valuto": "Sto solo valutando"
+      }
+    },
+    "passo3": {
+      "titolo": "I tuoi contatti",
+      "nome": "Nome e cognome",
+      "email": "Email",
+      "telefono": "Telefono",
+      "telefonoSuggerimento": "Se lo lasci ti chiamiamo: si fa prima.",
+      "messaggio": "Messaggio",
+      "messaggioSegnaposto": "Superficie, stile, domande…",
+      "facoltativo": "facoltativo",
+      "privacy": "Usiamo questi dati solo per risponderti e preparare il preventivo con l'impresa partner. Dettagli nell'",
+      "privacyLink": "informativa privacy",
+      "privacyFine": "."
+    },
+    "pulsanti": {
+      "avanti": "Avanti",
+      "indietro": "Indietro",
+      "invia": "Invia la richiesta",
+      "invio": "Invio in corso…"
+    },
+    "errori": {
+      "nome": "Scrivi il tuo nome e cognome",
+      "email": "Controlla l'email: sembra incompleta",
+      "telefono": "Il telefono deve avere almeno 9 cifre",
+      "scelta": "Scegli una risposta",
+      "comune": "Scrivi il comune o la zona"
+    },
+    "successo": "Richiesta ricevuta. {REFERENTE} ti scrive {TEMPO_RISPOSTA}. Ti abbiamo mandato una copia via email: controlla anche lo spam.",
+    "erroreInvio": "Non siamo riusciti a inviare la richiesta. Riprova tra un minuto oppure scrivi a {EMAIL_PUBBLICA}.",
+    "email": {
+      "oggettoReferente": "Nuova richiesta · {profilo} · {comune} · {budget}",
+      "oggettoCliente": "Abbiamo ricevuto la tua richiesta · {BRAND}",
+      "corpoCliente": "Ciao {nome}, grazie per averci scritto. {REFERENTE} ti risponde {TEMPO_RISPOSTA}. Ecco cosa ci hai inviato: {riepilogo}. Per aggiungere qualcosa rispondi a questa email."
+    }
+  },
+  "faq": {
+    "titolo": "Domande frequenti",
+    "voci": [
+      {
+        "domanda": "Quanto costa costruire una casa?",
+        "risposta": "Dipende da superficie, finiture, terreno e impianti. Nel modulo indichi un budget indicativo: alla prima chiamata ti diciamo se è realistico per quello che vuoi."
+      },
+      {
+        "domanda": "Quanto tempo serve?",
+        "risposta": "I tempi indicati dall'impresa partner sono {TEMPI}. Prima ci sono progetto e permessi, che dipendono anche dal Comune."
+      },
+      {
+        "domanda": "Devo avere già il terreno?",
+        "risposta": "No. Scrivici anche senza: partiamo da zona e budget."
+      },
+      {
+        "domanda": "Con chi firmo il contratto?",
+        "risposta": "Con l'impresa che costruisce. {BRAND} ti affianca nella lettura di preventivo e contratto e resta il tuo riferimento."
+      },
+      {
+        "domanda": "Quanto costa il servizio di {BRAND}?",
+        "risposta": "{COSTO_SERVIZIO}"
+      },
+      {
+        "domanda": "Posso portare il progetto del mio architetto?",
+        "risposta": "Sì. L'impresa partner può partire da un progetto già fatto o prepararne uno con te."
+      },
+      {
+        "domanda": "In che zona lavorate?",
+        "risposta": "{ZONA}. Se sei fuori zona scrivici lo stesso: ti diciamo se possiamo aiutarti."
+      },
+      {
+        "domanda": "Com'è fatta la struttura?",
+        "risposta": "{SISTEMA}."
+      }
+    ]
+  },
+  "chiusura": {
+    "titolo": "Parliamo della tua casa.",
+    "testo": "Tre passaggi, un minuto. Ti risponde {REFERENTE}, {TEMPO_RISPOSTA}.",
+    "cta": "Richiedi un preventivo",
+    "secondariDomanda": "Preferisci parlarne subito?",
+    "chiama": "Chiama {TELEFONO}",
+    "whatsapp": "Scrivi su WhatsApp"
+  },
+  "footer": {
+    "contattiTelefonoWhatsapp": "Telefono e WhatsApp",
+    "contattiTelefono": "Telefono",
+    "legale": "{TITOLARE} · {FORMA} · Sede: {SEDE} · P.IVA {PIVA}",
+    "rea": "REA {REA}",
+    "capitale": "Capitale sociale {CAPITALE}",
+    "pec": "PEC {PEC}",
+    "ruolo": "{BRAND} non esegue lavori edili: progettazione e costruzione sono affidate e contrattualizzate con le imprese partner.",
+    "privacy": "Privacy",
+    "cookie": "Cookie",
+    "gestisciCookie": "Gestisci cookie"
+  },
+  "bannerCookie": {
+    "testo": "Usiamo cookie tecnici per far funzionare il sito. Con il tuo consenso usiamo anche il pixel di Meta per misurare le campagne.",
+    "rifiuta": "Rifiuta",
+    "accetta": "Accetta",
+    "chiudi": "Chiudi e rifiuta",
+    "policy": "Cookie policy"
+  },
+  "barraMobile": {
+    "cta": "Richiedi un preventivo"
+  }
+}

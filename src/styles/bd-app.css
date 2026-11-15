@@ -1,0 +1,23 @@
+/* Foglio di stile unico della landing: Tailwind v4 (preflight e utility), poi token e base.
+   I token diventano classi Tailwind con @theme inline (bg-fondo, text-testo-2, font-titoli…). */
+
+@import 'tailwindcss';
+@import './bd-tokens.css';
+@import './bd-base.css';
+
+@theme inline {
+  --color-fondo: var(--bd-fondo);
+  --color-carta: var(--bd-carta);
+  --color-testo: var(--bd-testo);
+  --color-testo-2: var(--bd-testo-2);
+  --color-linea: var(--bd-linea);
+  --color-accento: var(--bd-accento);
+  --color-su-accento: var(--bd-su-accento);
+  --color-legno: var(--bd-legno);
+  --color-ruggine: var(--bd-ruggine);
+  --color-ok: var(--bd-ok);
+  --font-titoli: var(--bd-font-titoli);
+  --font-testo: var(--bd-font-testo);
+  --radius-tecnico: var(--bd-raggio-tecnico);
+  --radius-card: var(--bd-raggio-card);
+}

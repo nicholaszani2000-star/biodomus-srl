@@ -1,10 +1,21 @@
 import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
+import { createRoot, hydrateRoot } from 'react-dom/client'
+import './styles/bd-app.css'
 import App from './App.tsx'
 
-createRoot(document.getElementById('root')!).render(
+const radice = document.getElementById('root')
+if (!radice) throw new Error('Manca #root in index.html')
+
+const app = (
   <StrictMode>
     <App />
-  </StrictMode>,
+  </StrictMode>
 )
+
+// Build di produzione: #root contiene già l'HTML prerenderizzato, quindi hydration.
+// In sviluppo (npm run dev) #root è vuoto e si renderizza da zero.
+if (radice.firstElementChild) {
+  hydrateRoot(radice, app)
+} else {
+  createRoot(radice).render(app)
+}
