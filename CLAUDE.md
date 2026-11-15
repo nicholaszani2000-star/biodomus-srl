@@ -206,7 +206,7 @@ CTA: primaria a pillola, piena di accento, altezza 56 px, testo 600, freccia che
 
 Movimento: GSAP con ScrollTrigger e Lenis (duration 1.1, syncTouch false, sincronizzato con gsap.ticker). Ingressi: y da 24 a 0 con autoAlpha, 0,7 s, ease «power3.out», stagger 0,08. Titoli h1 e h2 rivelati per righe con SplitText solo da 1024 px in su. Nessuna animazione blocca la lettura per più di 0,8 s.
 
-Dettaglio firma, «la sezione»: un disegno al tratto in SVG della parete (strato isolante esterno, calcestruzzo con armatura, strato isolante interno, intonaco) con i retini da tavola tecnica e le linee di quota. Mentre scorri si compone strato per strato e le quote si disegnano. Grande in BdSistema e nell'hero; in piccolo, come linea di quota numerata (BdQuota), separa le sezioni. Sullo sfondo una griglia da tavolo tecnico: linee di 1 px in --bd-linea all'8% di opacità.
+Dettaglio firma, «la sezione»: un disegno al tratto in SVG della parete (strato isolante esterno, calcestruzzo con armatura, strato isolante interno, intonaco) con i retini da tavola tecnica e le linee di quota. Mentre scorri si compone strato per strato e le quote si disegnano. Grande in BdSistema e nell'hero; in piccolo, come linea di quota numerata (BdQuota), separa le sezioni. Sullo sfondo una griglia da tavolo tecnico: linee di 1 px in --bd-linea al 60% di opacità, ogni 32 px (all'8% sul fondo cemento non si vedeva).
 
 Immagini: foto reali di case finite e cantieri, solo da fonti autorizzate (§2), con il credito. Se mancano: illustrazioni al tratto in SVG (sezione, pianta, assonometria) etichettate «Illustrazione». Mai foto di stock né render generati presentati come case costruite.
 
