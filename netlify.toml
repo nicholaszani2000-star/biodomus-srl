@@ -1,0 +1,12 @@
+# Netlify pubblica solo dist/ (CLAUDE.md §1). Gli header di sicurezza arrivano allo step 7.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  # Vite 8 richiede Node 20.19+ o 22.12+
+  NODE_VERSION = "22"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
