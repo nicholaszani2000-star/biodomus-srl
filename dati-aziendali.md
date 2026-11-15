@@ -9,6 +9,8 @@
 | Codice SDI | USAL8PV |
 | PEC | biodomus@cgn.legalmail.it |
 | Email | biodomus2025@libero.it |
+| Cellulare e WhatsApp | +39 349 2391107 |
+| Link WhatsApp | https://wa.me/393492391107 |
 
 ## Versione da copiare
 
@@ -20,4 +22,5 @@ P.I. 04059520124
 SDI: USAL8PV
 PEC: biodomus@cgn.legalmail.it
 Mail: biodomus2025@libero.it
+Cell. e WhatsApp: +39 349 2391107
 ```
