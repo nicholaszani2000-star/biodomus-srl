@@ -1,0 +1,13 @@
+# Dipendenze e build
+node_modules
+dist
+dist-ssr
+
+# Segreti: solo .env.example va nel repository
+.env
+.env.*
+!.env.example
+
+# Studio: file temporanei e screenshot
+studio/.tmp
+studio/report/screenshot/
