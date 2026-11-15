@@ -1,3 +1,5 @@
+> Copia di riferimento. La fonte dei dati è §2 di CLAUDE.md: se cambia un dato, si aggiorna prima lì.
+
 # Dati aziendali
 
 | Campo | Valore |

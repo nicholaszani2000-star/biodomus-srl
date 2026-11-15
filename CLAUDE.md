@@ -21,7 +21,7 @@ Cosa fa Biodomus: non costruisce. Ascolta il progetto, lo porta alle aziende par
 
 Criterio per ogni scelta: più richieste di preventivo qualificate, con informazioni vere. A parità di risultato, la soluzione più semplice e più leggera. Pagina pulita, poche cose per schermata, frasi corte.
 
-Avvio dei lavori: 11 gennaio 2027. Pubblicazione prevista: 11 gennaio 2027.
+Avvio dei lavori (step 0): 15 novembre 2026. Pubblicazione e lancio delle campagne: 11 gennaio 2027.
 
 Regola di lavoro: esegui solo lo step richiesto, fai il report di §12, FERMATI. Non anticipare parti degli step successivi.
 
@@ -61,8 +61,8 @@ Progetto
 - BRANCH: lavoro
 - NETLIFY_SITO: biodomus
 - DOMINIO (già registrato da noi): biodomussrls.it
-- DATA_AVVIO: 11 gennaio 2027
-- DATA_ONLINE: 11 gennaio 2027
+- DATA_AVVIO (step 0): 15 novembre 2026
+- DATA_ONLINE (pubblicazione e lancio delle campagne): 11 gennaio 2027
 
 Brand e contatti
 - BRAND: Biodomus
@@ -70,7 +70,8 @@ Brand e contatti
 - RUOLO_REFERENTE: fondatore e referente unico
 - EMAIL_LEAD (dove arrivano le richieste): biodomus2025@libero.it
 - EMAIL_PUBBLICA: biodomus2025@libero.it
-- TELEFONO: 3492391107
+- TELEFONO: +39 349 239 1107
+- WHATSAPP (link https://wa.me/ generato da TELEFONO, solo cifre con 39 davanti): sì
 - TEMPO_RISPOSTA: entro 2 giorni lavorativi
 - ZONA: province di Varese, Milano e Como
 - LOGO: nessun logo: wordmark tipografico
@@ -118,7 +119,7 @@ Design
 
 Servizi (si usano allo step 8)
 - SUPABASE_URL: (arriva allo step 8)
-- BREVO_MITTENTE: (arriva allo step 8)
+- BREVO_MITTENTE (sempre un indirizzo sul dominio di DOMINIO, mai di posta gratuita): (arriva allo step 8)
 - META_PIXEL: (vuoto: niente Pixel né API Conversioni finché non arriva)
 
 Regole condizionali
@@ -126,7 +127,8 @@ Regole condizionali
 - Un solo partner autorizzato, o nessuno: niente plurali sbagliati. «Le aziende partner» diventa «l'impresa partner» se ne resta una.
 - RAPPORTO_PARTNER diverso da «sì, confermato per iscritto»: non scrivere che l'impresa usa il sistema di P2. Descrivi solo SISTEMA, che è la descrizione comune ai due siti.
 - GARANZIA vuota: nessuna riga sulla garanzia. CLASSE vuota: nessuna classe energetica. REALIZZAZIONI vuota o P1_OK «no»: sezione Realizzazioni nascosta.
-- TELEFONO vuoto: niente pulsante Chiama. EMAIL_PUBBLICA vuota: si usa EMAIL_LEAD dove serve un'email visibile.
+- TELEFONO e WHATSAPP sono canali secondari: compaiono solo in BdChiusura (pulsanti secondari «Chiama» e «Scrivi su WhatsApp» sotto la CTA primaria) e nel footer, mai nell'hero, nella barra mobile o accanto al modulo. Il modulo resta l'unica CTA primaria. TELEFONO vuoto: niente «Chiama» e niente WhatsApp. WHATSAPP «no»: niente link WhatsApp.
+- EMAIL_PUBBLICA vuota: si usa EMAIL_LEAD dove serve un'email visibile.
 - Unità sempre: m², mesi, €, «classe energetica A4». Numeri in formato italiano: 250.000 €.
 - Niente valori U, decibel, classi sismiche o prezzi al m² se non arrivano per iscritto dai partner.
 - Fasce di budget del modulo, calcolate da BUDGET_MIN: «meno di BUDGET_MIN», «da BUDGET_MIN a BUDGET_MIN + 100.000 €», «da BUDGET_MIN + 100.000 € a BUDGET_MIN + 250.000 €», «oltre BUDGET_MIN + 250.000 €», «non lo so ancora».
@@ -161,7 +163,7 @@ File da creare, uno per riga:
 - src/styles/bd-tokens.css, src/styles/bd-base.css.
 - src/lib/bd-motion.ts — Lenis e ScrollTrigger sincronizzati, gsap.matchMedia per la riduzione del movimento. Solo nel browser.
 - src/lib/bd-consenso.ts — consenso cookie in localStorage con try/catch, scadenza 6 mesi, evento al cambio.
-- src/lib/bd-traccia.ts — carica il Pixel solo con consenso. track('Lead', {}, {eventID}). Senza consenso non fa nulla.
+- src/lib/bd-traccia.ts — carica il Pixel solo con consenso. track('Lead', {}, {eventID}) dopo l'invio del modulo; track('Contact') al clic su «Chiama» o «Scrivi su WhatsApp», senza dati personali. Senza consenso non fa nulla.
 - src/lib/bd-angolo.ts — legge ?a= e data-angolo.
 - src/lib/bd-utm.ts — salva utm_* e fbclid in sessionStorage alla prima visita.
 - src/components/ — BdHeader, BdFooter, BdCta, BdBarraMobile, BdSezione, BdQuota (linea di quota), BdWordmark, BdBannerCookie.
@@ -178,7 +180,7 @@ Requisiti verificati e insidie:
 - Netlify, piano Free: 300 crediti al mese con limite fisso. Production deploy 15 crediti; deploy preview e branch deploy 0; banda 20 crediti per GB; 2 crediti ogni 10.000 richieste; funzioni 10 crediti per GB-ora; Netlify Forms gratis. Finiti i crediti il sito va offline («Site not available») fino al passaggio a un piano a pagamento. Quindi: nessun deploy di produzione durante lo sviluppo, pagina leggera (§9).
 - Netlify scheduled functions: girano solo sui deploy pubblicati, durano al massimo 30 secondi, il cron è in UTC, in locale si provano con `netlify functions:invoke`.
 - Supabase Free: il progetto va in pausa dopo 7 giorni di bassa attività. Per questo la funzione manda prima l'email e c'è il keepalive.
-- Brevo: POST https://api.brevo.com/v3/smtp/email con header api-key. Il mittente deve essere verificato in Brevo, altrimenti errore 400. Piano Free: 300 email al giorno.
+- Brevo: POST https://api.brevo.com/v3/smtp/email con header api-key. Il mittente deve essere verificato in Brevo, altrimenti errore 400. Piano Free: 300 email al giorno. Brevo non può autenticare i domini di posta gratuita (libero.it, gmail.com, yahoo, hotmail, outlook, icloud): li sostituisce con un indirizzo brevosend.com e le email rischiano lo spam. Il mittente sta sul dominio di DOMINIO, autenticato in Brevo con codice Brevo, DKIM e DMARC nel DNS. EMAIL_LEAD può essere anche di posta gratuita: riceve soltanto.
 - Meta: Pixel e API Conversioni si deduplicano se hanno lo stesso nome evento («Lead») e lo stesso ID (eventID nel Pixel, event_id nel server) entro 48 ore. L'ID lo genera il browser con crypto.randomUUID() e lo manda alla funzione. Endpoint: https://graph.facebook.com/VERSIONE/PIXEL_ID/events: controlla la versione attuale sulla documentazione (a febbraio 2026 era v25.0). Email e telefono normalizzati e hashati SHA-256; fbp e fbc dai cookie solo con consenso; action_source «website»; event_source_url senza dati personali.
 - Prima di scriverli, verifica sulla documentazione ufficiale: SSR e prerender di Vite, formato attuale delle Netlify Functions (export default async (req: Request) => Response), Tailwind v4 con @tailwindcss/vite, installazione dei componenti React Bits e 21st.dev, opzioni di Lenis.
 
@@ -225,8 +227,8 @@ Sezioni in ordine, ognuna con il suo scopo:
 8. BdPartner — partner autorizzati: logo, nome, una riga, link al sito (rel="noopener"). Scopo: credibilità.
 9. BdModulo (#preventivo) — modulo in 3 passaggi (§8). Scopo: la conversione.
 10. BdFaq — 8 domande. Scopo: rispondere alle obiezioni prima della chiamata.
-11. BdChiusura — CTA finale con TEMPO_RISPOSTA.
-12. BdFooter — dati legali completi, privacy, cookie, «Gestisci cookie», nota sul ruolo.
+11. BdChiusura — CTA finale con TEMPO_RISPOSTA; sotto, i canali secondari «Chiama» e «Scrivi su WhatsApp» (regole condizionali di §2).
+12. BdFooter — contatti (telefono e WhatsApp, email pubblica, PEC), dati legali completi, privacy, cookie, «Gestisci cookie», nota sul ruolo.
 In più BdBarraMobile: barra fissa in basso solo su mobile, appare dopo l'hero e sparisce quando il modulo è visibile.
 
 CTA: 6 punti (header, hero, card di BdPerChi, dopo BdComeFunziona, dopo BdRealizzazioni o BdSistema, BdChiusura) più la barra mobile. Tutte portano a #preventivo con scroll morbido e focus sul primo campo del passaggio 1.
@@ -326,8 +328,10 @@ FAQ
 
 Chiusura
 - H2: «Parliamo della tua casa.» · testo: «Tre passaggi, un minuto. Ti risponde {REFERENTE}, {TEMPO_RISPOSTA}.» · CTA «Richiedi un preventivo»
+- Sotto la CTA, piccolo: «Preferisci parlarne subito?» · pulsanti secondari «Chiama {TELEFONO}» (tel:) e «Scrivi su WhatsApp» (https://wa.me/…, target _blank, rel noopener)
 
 Footer
+- Contatti: «Telefono e WhatsApp {TELEFONO} · {EMAIL_PUBBLICA}»
 - «{TITOLARE} · {FORMA} · Sede: {SEDE} · P.IVA {PIVA}», più REA, capitale sociale e PEC se presenti.
 - «{BRAND} non esegue lavori edili: progettazione e costruzione sono affidate e contrattualizzate con le imprese partner.»
 - Link: «Privacy» · «Cookie» · «Gestisci cookie»
