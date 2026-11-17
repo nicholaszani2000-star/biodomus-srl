@@ -1,7 +1,7 @@
 {
   "meta": {
     "titolo": "{BRAND} · Costruisci casa con un solo referente",
-    "descrizione": "Costruzione di case in {ZONA}: {BRAND} ti mette in contatto con imprese selezionate e ti segue fino alle chiavi."
+    "descrizione": "Costruzione di case in {ZONA}: {BRAND} ti mette in contatto con l'impresa adatta e ti segue fino alle chiavi."
   },
   "comuni": {
     "saltaAlContenuto": "Vai al contenuto",
@@ -17,7 +17,7 @@
     "angoli": {
       "famiglia": {
         "titolo": "La casa che vuoi, con un solo referente dal progetto alle chiavi.",
-        "sottotitolo": "{BRAND} ti mette in contatto con imprese selezionate in {ZONA} e segue il tuo progetto passo per passo."
+        "sottotitolo": "{BRAND} ti mette in contatto con l'impresa adatta in {ZONA} e segue il tuo progetto passo per passo."
       },
       "terreno": {
         "titolo": "Hai il terreno. Ora serve chi lo trasforma in casa.",
@@ -86,7 +86,7 @@
   },
   "ruolo": {
     "titolo": "Un solo referente, dall'inizio alla fine",
-    "testo": "{BRAND} non è un'impresa di costruzioni. Sceglie le imprese, coordina il lavoro e ti segue. Parli con una persona sola, non con dieci.",
+    "testo": "{BRAND} non è un'impresa di costruzioni. Sceglie l'impresa, coordina il lavoro e ti segue. Parli con una persona sola, non con dieci.",
     "colonne": [
       {
         "titolo": "Cosa fa {BRAND}",
@@ -275,7 +275,7 @@
     "rea": "REA {REA}",
     "capitale": "Capitale sociale {CAPITALE}",
     "pec": "PEC {PEC}",
-    "ruolo": "{BRAND} non esegue lavori edili: progettazione e costruzione sono affidate e contrattualizzate con le imprese partner.",
+    "ruolo": "{BRAND} non esegue lavori edili: progettazione e costruzione sono affidate e contrattualizzate con l'impresa partner.",
     "privacy": "Privacy",
     "cookie": "Cookie",
     "gestisciCookie": "Gestisci cookie"

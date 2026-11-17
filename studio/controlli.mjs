@@ -211,6 +211,21 @@ controllo('accento uguale a COLORE_ACCENTO di §2', () => {
   return { ok, nota: `dati.ts ${daDati ?? '?'} · bd-tokens.css ${daToken ?? '?'}` }
 })
 
+controllo('CTA dell\'header secondaria (§5: una sola primaria per schermata)', () => {
+  const header = (HTML.match(/<header[\s\S]*?<\/header>/) ?? [''])[0]
+  if (!header) return { ok: false, nota: 'header non trovato nell\'HTML' }
+  const ok = !header.includes('bd-cta--primaria')
+  return { ok, nota: ok ? 'la CTA dell\'header ha il bordo, la primaria resta alla sezione' : 'nell\'header c\'è una CTA primaria piena' }
+})
+
+controllo('niente plurali sui partner (§2: oggi una sola impresa di costruzioni)', () => {
+  const re = /\b(imprese|aziende)\s+(partner|selezionate)\b/gi
+  const trovati = [...new Set((TESTO.match(re) ?? []).map((p) => p.toLowerCase()))]
+  return trovati.length
+    ? { ok: false, nota: `plurale da correggere: ${trovati.join(', ')} (scrivi «l'impresa partner» o «l'impresa adatta»)` }
+    : { ok: true, nota: 'sempre «l\'impresa partner» al singolare' }
+})
+
 controllo('file di esempio dello scaffold eliminati', () => {
   const restano = ['src/App.css', 'src/index.css', 'src/assets/react.svg', 'src/assets/vite.svg', 'src/assets/hero.png', 'public/icons.svg'].filter(esiste)
   return restano.length ? { ok: false, nota: `restano: ${restano.join(', ')}` } : { ok: true, nota: 'nessun file di esempio' }

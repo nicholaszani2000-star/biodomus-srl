@@ -108,6 +108,30 @@ for (const vista of VISTE) {
       esito(stato.larghezza <= 390, `scroll orizzontale ${etichetta}`, `larghezza documento ${stato.larghezza} px`)
     }
 
+    // §5: una sola CTA primaria per schermata, al caricamento e scorrendo tutta la pagina.
+    const affollate = await pagina.evaluate(async () => {
+      const visibiliNelloSchermo = () =>
+        [...document.querySelectorAll('.bd-cta--primaria')].filter((el) => {
+          if (el.closest('[hidden]')) return false
+          const stile = getComputedStyle(el)
+          if (stile.display === 'none' || stile.visibility === 'hidden' || Number(stile.opacity) === 0) return false
+          const r = el.getBoundingClientRect()
+          return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < window.innerHeight
+        }).length
+      const problemi = []
+      const altezza = document.documentElement.scrollHeight
+      for (let y = 0; y < altezza; y += Math.round(window.innerHeight * 0.75)) {
+        window.scrollTo(0, y)
+        await new Promise((r) => setTimeout(r, 120))
+        const n = visibiliNelloSchermo()
+        if (n > 1) problemi.push(`${n} a ${Math.round(window.scrollY)} px`)
+      }
+      window.scrollTo(0, 0)
+      await new Promise((r) => setTimeout(r, 120))
+      return problemi
+    })
+    esito(affollate.length === 0, `una CTA primaria per schermata ${etichetta}`, affollate.length ? affollate.join(', ') : 'mai più di una')
+
     await pagina.screenshot({ path: join(USCITA, `${angolo}-${vista.width}.png`) })
     if (angolo === 'famiglia') await pagina.screenshot({ path: join(USCITA, `pagina-intera-${vista.width}.png`), fullPage: true })
     await pagina.close()

@@ -125,6 +125,7 @@ Servizi (si usano allo step 8)
 Regole condizionali
 - Partner con autorizzazione «no»: niente nome, logo, foto né realizzazioni di quell'azienda. Al loro posto «un'impresa partner» e le illustrazioni di §5.
 - Un solo partner autorizzato, o nessuno: niente plurali sbagliati. «Le aziende partner» diventa «l'impresa partner» se ne resta una.
+- Oggi l'impresa di costruzioni partner è una sola (P1; P2 produce il sistema costruttivo, non costruisce): tutti i testi dicono «l'impresa partner» o «l'impresa adatta», al singolare, mai «le imprese partner» né «imprese selezionate». Il plurale torna solo con almeno due imprese di costruzioni partner autorizzate.
 - RAPPORTO_PARTNER diverso da «sì, confermato per iscritto»: non scrivere che l'impresa usa il sistema di P2. Descrivi solo SISTEMA, che è la descrizione comune ai due siti.
 - GARANZIA vuota: nessuna riga sulla garanzia. CLASSE vuota: nessuna classe energetica. REALIZZAZIONI vuota o P1_OK «no»: sezione Realizzazioni nascosta.
 - TELEFONO e WHATSAPP sono canali secondari: compaiono solo in BdChiusura (pulsanti secondari «Chiama» e «Scrivi su WhatsApp» sotto la CTA primaria) e nel footer, mai nell'hero, nella barra mobile o accanto al modulo. Il modulo resta l'unica CTA primaria. TELEFONO vuoto: niente «Chiama» e niente WhatsApp. WHATSAPP «no»: niente link WhatsApp.
@@ -202,7 +203,7 @@ Tipografia: titoli Bricolage Grotesque Variable (pesi 600–800, interlinea 1,02
 
 Spazi: scala 4, 8, 12, 16, 24, 32, 48, 64, 96, 128 px. Sezioni: 96 px sopra e sotto su mobile, 160 px su desktop. Griglia: 4 colonne su mobile, 12 su desktop, gutter 16/24 px. Raggi: 4 px per i dettagli tecnici, 20 px per le card, pill per le CTA.
 
-CTA: primaria a pillola, piena di accento, altezza 56 px, testo 600, freccia che scorre di 4 px all'hover. Secondaria con bordo. Una sola primaria per schermata.
+CTA: primaria a pillola, piena di accento, altezza 56 px, testo 600, freccia che scorre di 4 px all'hover. Secondaria con bordo. Una sola primaria per schermata: la CTA dell'header è sempre secondaria (con bordo, compatta) e BdBarraMobile si nasconde quando un'altra CTA primaria è nello schermo. Lo verifica studio/screenshot.mjs.
 
 Movimento: GSAP con ScrollTrigger e Lenis (duration 1.1, syncTouch false, sincronizzato con gsap.ticker). Ingressi: y da 24 a 0 con autoAlpha, 0,7 s, ease «power3.out», stagger 0,08. Titoli h1 e h2 rivelati per righe con SplitText solo da 1024 px in su. Nessuna animazione blocca la lettura per più di 0,8 s.
 
@@ -217,7 +218,7 @@ Componenti: per effetti di testo e microinterazioni guarda React Bits (BlurText,
 ## §6 Struttura e strategia
 
 Sezioni in ordine, ognuna con il suo scopo:
-1. BdHeader — wordmark o logo, link «Come funziona», CTA «Richiedi un preventivo». Scopo: CTA sempre a un tocco.
+1. BdHeader — wordmark o logo, link «Come funziona», CTA «Richiedi un preventivo» secondaria (con bordo). Scopo: CTA sempre a un tocco, senza fare concorrenza alla primaria della sezione.
 2. BdHero — occhiello con ZONA, titolo e sottotitolo per angolo (§7), CTA primaria e secondaria, tre fatti brevi (TEMPI, CLASSE, SISTEMA_BREVE, solo quelli presenti), la sezione animata. Scopo: in 5 secondi chi sei, per chi, cosa fare.
 3. BdPerChi — tre card: «Vuoi costruire casa», «Hai già il terreno», «Vuoi investire». Ogni card porta al modulo con il profilo già scelto. Scopo: riconoscersi e fare il primo clic.
 4. BdComeFunziona — 4 passaggi con linea di quota animata. Scopo: togliere la paura di un processo lungo.
@@ -229,7 +230,7 @@ Sezioni in ordine, ognuna con il suo scopo:
 10. BdFaq — 8 domande. Scopo: rispondere alle obiezioni prima della chiamata.
 11. BdChiusura — CTA finale con TEMPO_RISPOSTA; sotto, i canali secondari «Chiama» e «Scrivi su WhatsApp» (regole condizionali di §2).
 12. BdFooter — contatti (telefono e WhatsApp, email pubblica, PEC), dati legali completi, privacy, cookie, «Gestisci cookie», nota sul ruolo.
-In più BdBarraMobile: barra fissa in basso solo su mobile, appare dopo l'hero e sparisce quando il modulo è visibile.
+In più BdBarraMobile: barra fissa in basso solo su mobile, appare dopo l'hero e sparisce quando il modulo o un'altra CTA primaria è nello schermo.
 
 CTA: 6 punti (header, hero, card di BdPerChi, dopo BdComeFunziona, dopo BdRealizzazioni o BdSistema, BdChiusura) più la barra mobile. Tutte portano a #preventivo con scroll morbido e focus sul primo campo del passaggio 1.
 
@@ -240,7 +241,7 @@ Senza sfarfallio: tutte le varianti di titolo e sottotitolo sono nell'HTML prere
 Angolo, utm_source, utm_medium, utm_campaign, utm_content e fbclid entrano nel modulo come campi nascosti e nella tabella. L'angolo preseleziona anche la risposta 1 del modulo.
 
 Titoli per angolo (in testi.json):
-- famiglia — H1: «La casa che vuoi, con un solo referente dal progetto alle chiavi.» Sottotitolo: «{BRAND} ti mette in contatto con imprese selezionate in {ZONA} e segue il tuo progetto passo per passo.»
+- famiglia — H1: «La casa che vuoi, con un solo referente dal progetto alle chiavi.» Sottotitolo: «{BRAND} ti mette in contatto con l'impresa adatta in {ZONA} e segue il tuo progetto passo per passo.»
 - terreno — H1: «Hai il terreno. Ora serve chi lo trasforma in casa.» Sottotitolo: «Raccontaci lotto e idea: {BRAND} porta il progetto all'impresa partner e ti segue fino alla consegna.»
 - investo — H1: «Costruire per investire, con un solo interlocutore.» Sottotitolo: «Villette e piccoli complessi in {ZONA}: {BRAND} coordina impresa, tempi e cantiere.»
 
@@ -273,7 +274,7 @@ Come funziona
 
 Un solo referente
 - H2: «Un solo referente, dall'inizio alla fine»
-- Testo: «{BRAND} non è un'impresa di costruzioni. Sceglie le imprese, coordina il lavoro e ti segue. Parli con una persona sola, non con dieci.»
+- Testo: «{BRAND} non è un'impresa di costruzioni. Sceglie l'impresa, coordina il lavoro e ti segue. Parli con una persona sola, non con dieci.»
 - «Cosa fa {BRAND}»: «Ascolta il progetto» · «Lo porta all'impresa adatta» · «Rivede con te preventivo e contratto» · «Segue tempi e cantiere»
 - «Cosa fa l'impresa»: «Progetta e costruisce» · «Firma il contratto con te e ne risponde»
 - «Cosa fai tu»: «Decidi» · «Firmi» · «Entri in casa»
@@ -333,7 +334,7 @@ Chiusura
 Footer
 - Contatti: «Telefono e WhatsApp {TELEFONO} · {EMAIL_PUBBLICA}»
 - «{TITOLARE} · {FORMA} · Sede: {SEDE} · P.IVA {PIVA}», più REA, capitale sociale e PEC se presenti.
-- «{BRAND} non esegue lavori edili: progettazione e costruzione sono affidate e contrattualizzate con le imprese partner.»
+- «{BRAND} non esegue lavori edili: progettazione e costruzione sono affidate e contrattualizzate con l'impresa partner.»
 - Link: «Privacy» · «Cookie» · «Gestisci cookie»
 
 Banner cookie
@@ -356,7 +357,7 @@ Accessibilità:
 
 1. Footer: titolare, sede e partita IVA (art. 35 DPR 633/1972); per le società anche REA, capitale sociale e PEC (art. 2250 c.c.). Con TITOLARE, PIVA o SEDE «[DA COMPILARE …]» lo step 8 non pubblica.
 2. Ruolo: la pagina dice che Biodomus non esegue lavori e che il contratto si firma con l'impresa. Il ruolo giuridico (RUOLO_LEGALE) va definito con il commercialista prima delle campagne: chi fa mediazione deve essere iscritto alla sezione REA e assicurato (L. 39/1989).
-3. Privacy (art. 13 GDPR) in /privacy.html: titolare, finalità (rispondere e preparare il preventivo), base giuridica (misure precontrattuali su richiesta, art. 6.1.b), destinatari (imprese partner per il preventivo; fornitori Netlify, Supabase, Brevo; Meta solo con consenso), trasferimenti fuori UE, conservazione 24 mesi dall'ultimo contatto, diritti, reclamo al Garante. Nessun uso per newsletter o promozioni: niente casella marketing.
+3. Privacy (art. 13 GDPR) in /privacy.html: titolare, finalità (rispondere e preparare il preventivo), base giuridica (misure precontrattuali su richiesta, art. 6.1.b), destinatari (l'impresa partner che prepara il preventivo; fornitori Netlify, Supabase, Brevo; Meta solo con consenso), trasferimenti fuori UE, conservazione 24 mesi dall'ultimo contatto, diritti, reclamo al Garante. Nessun uso per newsletter o promozioni: niente casella marketing.
 4. Cookie (linee guida del Garante del 10 giugno 2021): prima del consenso solo cookie tecnici; «Accetta» e «Rifiuta» con la stessa evidenza; la X chiude e vale come rifiuto; lo scroll non è consenso; niente cookie wall; la scelta resta valida 6 mesi; «Gestisci cookie» nel footer; cookie policy con i cookie del Pixel (_fbp, _fbc). Pixel e API Conversioni solo con consenso.
 5. Asserzioni ambientali: §3.13. Solo dati specifici e dimostrabili, con la fonte.
 6. Pratiche commerciali (Codice del Consumo, artt. 20–23): niente urgenza finta, niente recensioni non verificabili, niente obblighi di legge presentati come vantaggi (per esempio «progettata secondo le norme antisismiche»).

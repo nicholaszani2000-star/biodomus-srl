@@ -2,7 +2,7 @@ import BdCta from './BdCta.tsx'
 import BdWordmark from './BdWordmark.tsx'
 import { tt } from '../content/bd-testi.ts'
 
-/** Header fisso (§6.1): wordmark, «Come funziona» da 640 px, CTA sempre a un tocco. */
+/** Header fisso (§6.1): wordmark, «Come funziona» da 640 px, CTA sempre a un tocco ma secondaria (§5: una sola primaria per schermata). */
 export default function BdHeader() {
   return (
     <header className="bd-header sticky top-0 z-30 border-b border-linea bg-fondo/90 backdrop-blur-md">
@@ -14,7 +14,7 @@ export default function BdHeader() {
           <a href="#come-funziona" className="hidden font-medium text-testo no-underline hover:underline sm:inline">
             {tt('header.linkComeFunziona')}
           </a>
-          <BdCta compatta freccia={false}>
+          <BdCta variante="secondaria" compatta freccia={false}>
             {tt('header.cta')}
           </BdCta>
         </nav>

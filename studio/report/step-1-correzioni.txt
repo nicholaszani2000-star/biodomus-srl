@@ -1,0 +1,46 @@
+# Correzioni dello step 1 — 2026-11-17T07:14Z
+
+OK  CLAUDE.md presente e completo — il brief arriva fino al §13
+OK  netlify.toml pubblica dist — publish = "dist"
+OK  .env.example con tutte le variabili — 9 variabili, tutte senza valore
+OK  nessun segreto nel repository — 49 file di testo controllati, nessun segreto
+OK  build presente — dist/index.html esiste
+OK  html in italiano con viewport, titolo e descrizione — «Biodomus · Costruisci casa con un solo referente» · descrizione di 138 caratteri
+OK  un solo h1 nell'HTML prerenderizzato — 1 h1 trovati
+OK  header e footer già nell'HTML (prerender) — header e footer sono dentro #root prima del JavaScript
+OK  nessun segnaposto o valore vuoto nel testo — testo pulito
+OK  nessuna asserzione ambientale generica (§3.13) — nessuna parola vietata (Biodomus ammesso)
+OK  JavaScript e CSS entro i pesi di §9 — JS 123.1 kB gzip (max 160), CSS 4.4 kB gzip (max 30)
+OK  font solo latin ed entro 120 kB — 2 file, 87.5 kB
+OK  nessuna risorsa esterna caricata da HTML o CSS — solo percorsi del sito
+OK  tre varianti dell'angolo nel titolo (§7) — famiglia, terreno e investo nel h1
+OK  script dell'angolo nel head prima del CSS — lo script imposta data-angolo prima di caricare il CSS
+OK  accento uguale a COLORE_ACCENTO di §2 — dati.ts #383E42 · bd-tokens.css #383E42
+OK  CTA dell'header secondaria (§5: una sola primaria per schermata) — la CTA dell'header ha il bordo, la primaria resta alla sezione
+OK  niente plurali sui partner (§2: oggi una sola impresa di costruzioni) — sempre «l'impresa partner» al singolare
+OK  file di esempio dello scaffold eliminati — nessun file di esempio
+19 OK, 0 KO
+
+Screenshot · browser: Chromium di Playwright
+OK  console famiglia 390px — nessun errore
+OK  variante famiglia 390px — visibile: bd-v bd-v-famiglia
+OK  scroll orizzontale famiglia 390px — larghezza documento 390 px
+OK  una CTA primaria per schermata famiglia 390px — mai più di una
+OK  console terreno 390px — nessun errore
+OK  variante terreno 390px — visibile: bd-v bd-v-terreno
+OK  scroll orizzontale terreno 390px — larghezza documento 390 px
+OK  una CTA primaria per schermata terreno 390px — mai più di una
+OK  console investo 390px — nessun errore
+OK  variante investo 390px — visibile: bd-v bd-v-investo
+OK  scroll orizzontale investo 390px — larghezza documento 390 px
+OK  una CTA primaria per schermata investo 390px — mai più di una
+OK  console famiglia 1440px — nessun errore
+OK  variante famiglia 1440px — visibile: bd-v bd-v-famiglia
+OK  una CTA primaria per schermata famiglia 1440px — mai più di una
+OK  console terreno 1440px — nessun errore
+OK  variante terreno 1440px — visibile: bd-v bd-v-terreno
+OK  una CTA primaria per schermata terreno 1440px — mai più di una
+OK  console investo 1440px — nessun errore
+OK  variante investo 1440px — visibile: bd-v bd-v-investo
+OK  una CTA primaria per schermata investo 1440px — mai più di una
+OK  riduzione del movimento — niente Lenis, nessun errore
