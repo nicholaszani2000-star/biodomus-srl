@@ -1,5 +1,6 @@
 import { contatti, emailPubblica } from '../content/dati.ts'
 import { t, tt } from '../content/bd-testi.ts'
+import BdWordmark from './BdWordmark.tsx'
 
 /** Footer (§6.12 e §10.1): contatti, dati legali completi, nota sul ruolo, privacy e cookie. */
 export default function BdFooter() {
@@ -13,6 +14,7 @@ export default function BdFooter() {
   return (
     <footer className="bd-footer border-t border-linea bg-carta">
       <div className="bd-wrap grid gap-6 py-12 text-[0.9375rem] text-testo-2">
+        <BdWordmark posizione="footer" />
         <p className="m-0">
           {canali ? (
             <>

@@ -231,6 +231,179 @@ controllo('file di esempio dello scaffold eliminati', () => {
   return restano.length ? { ok: false, nota: `restano: ${restano.join(', ')}` } : { ok: true, nota: 'nessun file di esempio' }
 })
 
+// ---------- STEP 2 ----------
+
+const { createHash } = await import('node:crypto')
+const sharp = (await import('sharp')).default
+
+async function controlloAsync(nome, fn) {
+  try {
+    const esito = await fn()
+    risultati.push({ nome, ok: esito.ok, nota: esito.nota })
+  } catch (err) {
+    risultati.push({ nome, ok: false, nota: `errore nel controllo: ${err.message}` })
+  }
+}
+
+/** Tutti i file sotto una cartella (relativi alla radice), con filtro sul nome. */
+function fileSotto(rel, filtro = () => true) {
+  const dir = join(ROOT, rel)
+  if (!existsSync(dir)) return []
+  const fuori = []
+  for (const voce of readdirSync(dir, { withFileTypes: true })) {
+    const percorso = `${rel}/${voce.name}`
+    if (voce.isDirectory()) fuori.push(...fileSotto(percorso, filtro))
+    else if (filtro(voce.name)) fuori.push(percorso)
+  }
+  return fuori
+}
+const impronta = (rel) => createHash('sha1').update(readFileSync(join(ROOT, rel))).digest('hex')
+const DATI_TS = leggi('src/content/dati.ts')
+const autorizzato = (chiave) => new RegExp(`\\b${chiave}:\\s*true`).test(DATI_TS)
+const nomeDato = (chiave) => (DATI_TS.match(new RegExp(`\\b${chiave}:\\s*'([^']+)'`)) ?? [])[1]
+
+controllo('verde del logo solo dentro il logo e le favicon (§2)', () => {
+  const verdi = /#(4F8F17|8DC21E)\b/i
+  const ammessi = new Set(['src/assets/svg/bd-logo.svg', 'src/assets/svg/bd-logo-orizzontale.svg', 'public/favicon.svg'])
+  const testo = (n) => /\.(css|ts|tsx|json|svg|html|webmanifest)$/.test(n)
+  const daControllare = [
+    ...fileSotto('src', testo),
+    ...fileSotto('public', testo),
+    'index.html',
+    ...ASSETS.filter((f) => f.endsWith('.css')).map((f) => `dist/assets/${f}`),
+  ].filter((f) => !ammessi.has(f) && !/^dist\/assets\/bd-logo/.test(f))
+  const trovati = daControllare.filter((f) => verdi.test(leggi(f)))
+  return trovati.length
+    ? { ok: false, nota: `il verde del logo è usato fuori dal logo in: ${trovati.join(', ')}` }
+    : { ok: true, nota: `${daControllare.length} file di stile e componenti senza il verde del logo` }
+})
+
+controllo('illustrazioni AI del kit fuori da src/ e dist/ (§2)', () => {
+  const regola = leggi('CLAUDE.md').includes('Illustrazioni generate con l\'AI (studio/originali/biodomus-asset/illustrazioni/): fuori dalla pagina')
+  if (!regola) return { ok: true, nota: 'CLAUDE.md non le esclude più: controllo sospeso' }
+  const kit = fileSotto('studio/originali/biodomus-asset/illustrazioni')
+  const impronteKit = new Set(kit.map(impronta))
+  const nomiKit = /villa-tramonto|villa-dal-disegno|percorso-\d/i
+  const sito = [...fileSotto('src'), ...fileSotto('public'), ...(esiste('dist') ? fileSotto('dist') : [])]
+  const trovati = sito.filter((f) => nomiKit.test(f) || impronteKit.has(impronta(f)))
+  return trovati.length
+    ? { ok: false, nota: `illustrazioni AI nel sito: ${trovati.join(', ')}` }
+    : { ok: true, nota: `${kit.length} file del kit, nessuno in src/, public/ o dist/` }
+})
+
+const MANIFESTO = esiste('src/content/immagini.json') ? JSON.parse(leggi('src/content/immagini.json')) : null
+
+controllo('immagini.json completo: alt, credito, misure, file esistenti', () => {
+  if (!MANIFESTO) return { ok: false, nota: 'src/content/immagini.json manca: esegui npm run immagini' }
+  const problemi = []
+  for (const v of MANIFESTO.immagini) {
+    if (!v.alt?.trim()) problemi.push(`${v.id}: alt vuoto`)
+    if (!v.credito?.trim()) problemi.push(`${v.id}: credito vuoto`)
+    if (!(v.width > 0 && v.height > 0)) problemi.push(`${v.id}: width/height mancanti`)
+    if (!v.dove?.trim()) problemi.push(`${v.id}: «dove» vuoto`)
+    const file =
+      v.formati[0] === 'svg' ? [v.file] : v.formati.flatMap((f) => v.larghezze.map((l) => `${v.file}-${l}.${f}`))
+    for (const f of file) if (!esiste(f)) problemi.push(`${v.id}: manca ${f}`)
+  }
+  for (const [chiave, l] of Object.entries(MANIFESTO.logo ?? {})) if (!esiste(l.file)) problemi.push(`logo ${chiave}: manca ${l.file}`)
+  return problemi.length
+    ? { ok: false, nota: problemi.join('; ') }
+    : { ok: true, nota: `${MANIFESTO.immagini.length} immagini e ${Object.keys(MANIFESTO.logo ?? {}).length} logo, tutti con alt, credito e misure` }
+})
+
+controllo('pesi delle immagini entro §9', () => {
+  const kb = (f) => statSync(join(ROOT, f)).size / 1024
+  const fuori = []
+  for (const v of MANIFESTO?.immagini ?? []) {
+    if (v.formati[0] === 'svg') continue
+    const limite = /hero/i.test(v.dove) ? 160 : 120
+    for (const f of v.formati) for (const l of v.larghezze.filter((x) => x <= 1200)) {
+      const file = `${v.file}-${l}.${f}`
+      if (esiste(file) && kb(file) > limite) fuori.push(`${file} ${kb(file).toFixed(0)} kB > ${limite}`)
+    }
+  }
+  for (const f of fileSotto('src/assets/svg', (n) => n.endsWith('.svg'))) if (kb(f) > 12) fuori.push(`${f} ${kb(f).toFixed(1)} kB > 12`)
+  if (esiste('public/og-image.jpg') && kb('public/og-image.jpg') > 200) fuori.push(`og-image.jpg ${kb('public/og-image.jpg').toFixed(0)} kB > 200`)
+  return fuori.length ? { ok: false, nota: fuori.join('; ') } : { ok: true, nota: 'foto ≤ 160/120 kB a 1200 px, SVG ≤ 12 kB, og-image ≤ 200 kB' }
+})
+
+await controlloAsync('nessun metadato EXIF o GPS nelle immagini del sito (§10.10)', async () => {
+  const raster = [...fileSotto('src/assets', (n) => /\.(jpe?g|png|webp|avif)$/i.test(n)), ...fileSotto('public', (n) => /\.(jpe?g|png|webp|avif)$/i.test(n))]
+  const conMetadati = []
+  for (const f of raster) {
+    const m = await sharp(join(ROOT, f)).metadata()
+    if (m.exif || m.xmp || m.iptc) conMetadati.push(f)
+  }
+  return conMetadati.length
+    ? { ok: false, nota: `metadati presenti in: ${conMetadati.join(', ')}` }
+    : { ok: true, nota: `${raster.length} immagini raster, nessuna con EXIF, XMP o IPTC` }
+})
+
+controllo('niente logo, foto o nome dei partner senza autorizzazione (§10.7)', () => {
+  const problemi = []
+  const sito = [...fileSotto('src'), ...fileSotto('public'), ...(esiste('dist') ? fileSotto('dist') : [])]
+  for (const [ok, chiave, parola] of [
+    [autorizzato('P1_OK'), 'P1', /edilnoma/i],
+    [autorizzato('P2_OK'), 'P2', /bioisotherm/i],
+  ]) {
+    if (ok) continue
+    // file con il nome del partner, o identici agli originali caricati in studio/originali/
+    const originali = [...fileSotto('studio/originali/foto'), ...fileSotto('studio/originali/loghi-partner')]
+    const impronte = new Set(originali.filter((f) => chiave === 'P1' || parola.test(f)).map(impronta))
+    for (const f of sito) if (parola.test(f) || impronte.has(impronta(f))) problemi.push(`${f} (${chiave}_OK no)`)
+    // il nome del partner non compare nella pagina
+    const nome = nomeDato(`${chiave}_NOME`)
+    if (nome && HTML.includes(nome)) problemi.push(`dist/index.html contiene «${nome}» (${chiave}_OK no)`)
+  }
+  return problemi.length ? { ok: false, nota: problemi.join('; ') } : { ok: true, nota: 'nessun file o nome di partner non autorizzati nel sito' }
+})
+
+await controlloAsync('favicon, icone, manifest e og-image con le misure giuste', async () => {
+  const attese = [
+    ['public/apple-touch-icon.png', 180, 180],
+    ['public/icona-192.png', 192, 192],
+    ['public/icona-512.png', 512, 512],
+    ['public/icona-512-maskable.png', 512, 512],
+    ['public/og-image.jpg', 1200, 630],
+  ]
+  const problemi = []
+  for (const [f, w, h] of attese) {
+    if (!esiste(f)) {
+      problemi.push(`manca ${f}`)
+      continue
+    }
+    const m = await sharp(join(ROOT, f)).metadata()
+    if (m.width !== w || m.height !== h) problemi.push(`${f} è ${m.width}×${m.height}, servono ${w}×${h}`)
+  }
+  for (const f of ['public/favicon.ico', 'public/favicon.svg', 'public/site.webmanifest']) if (!esiste(f)) problemi.push(`manca ${f}`)
+  if (esiste('public/site.webmanifest')) {
+    const mw = JSON.parse(leggi('public/site.webmanifest'))
+    for (const icona of mw.icons ?? []) if (!esiste(`public${icona.src}`)) problemi.push(`il manifest punta a ${icona.src}, che non esiste`)
+  }
+  const testa = (HTML.match(/<head>[\s\S]*<\/head>/) ?? [''])[0]
+  for (const [cosa, re] of [
+    ['favicon.ico', /rel="icon" href="\/favicon\.ico"/],
+    ['favicon.svg', /rel="icon" href="\/favicon\.svg"/],
+    ['apple-touch-icon', /rel="apple-touch-icon" href="\/apple-touch-icon\.png"/],
+    ['manifest', /rel="manifest" href="\/site\.webmanifest"/],
+    ['og:image', /property="og:image" content="https:\/\/[^"]+\/og-image\.jpg"/],
+  ])
+    if (!re.test(testa)) problemi.push(`nel <head> manca ${cosa}`)
+  return problemi.length ? { ok: false, nota: problemi.join('; ') } : { ok: true, nota: 'favicon 32 e SVG, icona iPhone 180, icone 192 e 512, manifest, og-image 1200 × 630 e link nel <head>' }
+})
+
+controllo('logo nel sito: positivo senza payoff, con width e height (§2)', () => {
+  const problemi = []
+  for (const f of ['src/assets/svg/bd-logo.svg', 'src/assets/svg/bd-logo-orizzontale.svg']) {
+    if (!esiste(f)) problemi.push(`manca ${f}`)
+    else if (/COSTRUZIONI|payoff/i.test(leggi(f))) problemi.push(`${f} contiene il payoff`)
+  }
+  const loghi = HTML.match(/<(img|source)[^>]*bd-logo[^>]*>/g) ?? []
+  if (loghi.length < 3) problemi.push(`nell'HTML ${loghi.length} riferimenti al logo invece di 3 (header impilato, header orizzontale, footer)`)
+  for (const tag of loghi) if (!/\bwidth="\d+"/.test(tag) || !/\bheight="\d+"/.test(tag)) problemi.push(`logo senza width o height: ${tag.slice(0, 80)}`)
+  return problemi.length ? { ok: false, nota: problemi.join('; ') } : { ok: true, nota: 'header impilato 44 px e orizzontale 34 px, footer 48 px, tutti con width e height' }
+})
+
 // ---------- esito ----------
 
 let ko = 0

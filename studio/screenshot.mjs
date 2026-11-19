@@ -108,6 +108,28 @@ for (const vista of VISTE) {
       esito(stato.larghezza <= 390, `scroll orizzontale ${etichetta}`, `larghezza documento ${stato.larghezza} px`)
     }
 
+    // Step 2: nell'header il logo impilato alto 44 px fino a 1023 px, l'orizzontale alto 34 px da 1024 px.
+    if (angolo === 'famiglia') {
+      const logo = await pagina.evaluate(() => {
+        const img = document.querySelector('.bd-logo--header img')
+        const footer = document.querySelector('img.bd-logo--footer')
+        if (!img) return null
+        return {
+          file: img.currentSrc.split('/').pop(),
+          altezza: Math.round(img.getBoundingClientRect().height),
+          caricato: img.complete && img.naturalWidth > 0,
+          altezzaFooter: footer ? Math.round(footer.getBoundingClientRect().height) : 0,
+        }
+      })
+      const atteso = vista.width >= 1024 ? { file: /^bd-logo-orizzontale-/, altezza: 34 } : { file: /^bd-logo-(?!orizzontale)/, altezza: 44 }
+      const ok = !!logo && logo.caricato && atteso.file.test(logo.file) && logo.altezza === atteso.altezza && logo.altezzaFooter === 48
+      esito(
+        ok,
+        `logo nell'header e nel footer ${vista.width}px`,
+        logo ? `${logo.file} alto ${logo.altezza} px${logo.caricato ? '' : ' (non caricato)'}, footer ${logo.altezzaFooter} px` : 'logo non trovato',
+      )
+    }
+
     // §5: una sola CTA primaria per schermata, al caricamento e scorrendo tutta la pagina.
     const affollate = await pagina.evaluate(async () => {
       const visibiliNelloSchermo = () =>

@@ -102,7 +102,7 @@ export const dati = {
   WHATSAPP: true,
   TEMPO_RISPOSTA: 'entro 2 giorni lavorativi',
   ZONA: 'provincia di Varese, Milano e Como',
-  LOGO: null, // nessun logo: wordmark tipografico
+  LOGO: 'logo fornito: kit in studio/originali/biodomus-asset/ (sul sito il positivo senza payoff)',
 
   TITOLARE: 'BIODOMUS SRLS',
   FORMA: 'società a responsabilità limitata semplificata',

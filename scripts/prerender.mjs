@@ -12,7 +12,7 @@ const SSR = ['entry-server.js', 'entry-server.mjs'].map((f) => join(ROOT, 'dist-
 if (!SSR) throw new Error('Prerender: manca dist-ssr/entry-server.js. Esegui prima vite build --ssr.')
 
 const { render } = await import(pathToFileURL(SSR).href)
-const { html, titolo, descrizione, stile, canonico } = render()
+const { html, titolo, descrizione, stile, canonico, immagineAlt } = render()
 
 const attr = (testo) =>
   String(testo).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -31,6 +31,12 @@ const testa = [
   `<meta property="og:title" content="${attr(titolo)}" />`,
   `<meta property="og:description" content="${attr(descrizione)}" />`,
   `<meta property="og:url" content="${attr(canonico)}" />`,
+  // Immagine di condivisione (public/og-image.jpg, 1200 × 630): URL assoluto, come vuole Open Graph.
+  `<meta property="og:image" content="${attr(new URL('og-image.jpg', canonico).href)}" />`,
+  `<meta property="og:image:width" content="1200" />`,
+  `<meta property="og:image:height" content="630" />`,
+  `<meta property="og:image:alt" content="${attr(immagineAlt)}" />`,
+  `<meta name="twitter:card" content="summary_large_image" />`,
   `<meta name="theme-color" content="${stile === 'grafite' ? '#1a1c1e' : '#edece8'}" />`,
   `<link rel="preload" href="/assets/${fontTitoli}" as="font" type="font/woff2" crossorigin />`,
 ].join('\n    ')

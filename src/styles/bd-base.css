@@ -282,6 +282,26 @@ html[data-angolo='investo'] .bd-v-investo {
   .bd-wordmark svg {
     flex: none;
   }
+
+  /* Logo del kit (§2): altezze fisse, larghezza dalle proporzioni; width e height sono nell'HTML. */
+  .bd-logo,
+  .bd-logo img {
+    display: block;
+    width: auto;
+    max-width: none;
+    height: 44px;
+  }
+
+  .bd-logo--footer {
+    height: 48px;
+  }
+
+  @media (min-width: 1024px) {
+    .bd-logo--header,
+    .bd-logo--header img {
+      height: 34px;
+    }
+  }
 }
 
 /* ---------- Riduzione del movimento ---------- */

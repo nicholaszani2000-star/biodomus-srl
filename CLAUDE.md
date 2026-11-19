@@ -74,7 +74,7 @@ Brand e contatti
 - WHATSAPP (link https://wa.me/ generato da TELEFONO, solo cifre con 39 davanti): sì
 - TEMPO_RISPOSTA: entro 2 giorni lavorativi
 - ZONA: provincia di Varese, Milano e Como
-- LOGO: nessun logo: wordmark tipografico
+- LOGO: logo fornito: kit in studio/originali/biodomus-asset/ (sul sito il positivo senza payoff)
 
 Dati legali
 - TITOLARE (la società, titolare della partita IVA e del trattamento dei dati; il referente è REFERENTE): BIODOMUS SRLS
@@ -124,6 +124,8 @@ Servizi (si usano allo step 8)
 
 Regole condizionali
 - Partner con autorizzazione «no»: niente nome, logo, foto né realizzazioni di quell'azienda. Al loro posto «un'impresa partner» e le illustrazioni di §5.
+- Logo fornito (kit in studio/originali/biodomus-asset/): sul sito solo le versioni senza payoff, perché «COSTRUZIONI • CASE SU MISURA» direbbe che Biodomus costruisce (§10.2). Il verde del logo resta dentro il logo: non diventa un colore dell'interfaccia.
+- Illustrazioni generate con l'AI (studio/originali/biodomus-asset/illustrazioni/): fuori dalla pagina finché non decido diversamente. Se entrano, sempre con la dicitura «Illustrazione» e mai presentate come case costruite.
 - Un solo partner autorizzato, o nessuno: niente plurali sbagliati. «Le aziende partner» diventa «l'impresa partner» se ne resta una.
 - Oggi l'impresa di costruzioni partner è una sola (P1; P2 produce il sistema costruttivo, non costruisce): tutti i testi dicono «l'impresa partner» o «l'impresa adatta», al singolare, mai «le imprese partner» né «imprese selezionate». Il plurale torna solo con almeno due imprese di costruzioni partner autorizzate.
 - RAPPORTO_PARTNER diverso da «sì, confermato per iscritto»: non scrivere che l'impresa usa il sistema di P2. Descrivi solo SISTEMA, che è la descrizione comune ai due siti.

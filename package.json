@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "test": "tsx --test studio/test/*.test.ts",
     "controlli": "node studio/controlli.mjs",
+    "immagini": "node studio/svg/genera-svg.mjs && node studio/immagini.mjs",
     "check": "npm run typecheck && npm run lint && npm run test && npm run build && npm run controlli",
     "anteprima": "tsx studio/anteprima-server.mts",
     "screenshot": "node studio/screenshot.mjs"

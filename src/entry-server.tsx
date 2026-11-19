@@ -10,6 +10,8 @@ export interface Prerender {
   descrizione: string
   stile: string
   canonico: string
+  /** Descrizione di public/og-image.jpg: logo e titolo dell'angolo famiglia, come nell'immagine. */
+  immagineAlt: string
 }
 
 // Usato solo da scripts/prerender.mjs dopo `vite build --ssr`: non è un componente.
@@ -25,5 +27,6 @@ export function render(): Prerender {
     descrizione: tt('meta.descrizione'),
     stile: dati.STILE,
     canonico: dominio ? `https://${dominio}/` : `https://${dati.NETLIFY_SITO}.netlify.app/`,
+    immagineAlt: `${dati.BRAND}: ${tt('hero.angoli.famiglia.titolo')}`,
   }
 }
