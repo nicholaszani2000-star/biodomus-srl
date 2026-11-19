@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="296 160 940 409" width="900" height="391.6" role="img" aria-labelledby="t"><title id="t">Biodomus</title><defs>
+<linearGradient id="argento" gradientUnits="userSpaceOnUse" x1="0" y1="160" x2="0" y2="569">
+<stop offset="0" stop-color="#FFFFFF"/><stop offset=".36" stop-color="#E2E5E7"/><stop offset=".53" stop-color="#979EA5"/><stop offset=".7" stop-color="#E1E4E6"/><stop offset="1" stop-color="#B4BAC0"/></linearGradient>
+<linearGradient id="lime" gradientUnits="userSpaceOnUse" x1="0" y1="160" x2="0" y2="569">
+<stop offset="0" stop-color="#D9F26A"/><stop offset=".45" stop-color="#9CCF22"/><stop offset=".7" stop-color="#6FA514"/><stop offset="1" stop-color="#A8DA35"/></linearGradient>
+<linearGradient id="fianco" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5D636A"/><stop offset="1" stop-color="#2A2E32"/></linearGradient>
+<filter id="smusso" x="-5%" y="-10%" width="110%" height="130%">
+<feGaussianBlur in="SourceAlpha" stdDeviation="2.4" result="b"/>
+<feSpecularLighting in="b" surfaceScale="4" specularConstant=".9" specularExponent="30" lighting-color="#FFFFFF" result="s">
+<feDistantLight azimuth="235" elevation="48"/></feSpecularLighting>
+<feComposite in="s" in2="SourceAlpha" operator="in" result="s2"/>
+<feComposite in="SourceGraphic" in2="s2" operator="arithmetic" k1="0" k2="1" k3=".55" k4="0"/></filter>
+<filter id="alone" x="-10%" y="-20%" width="120%" height="140%">
+<feGaussianBlur in="SourceAlpha" stdDeviation="14"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 .72  0 0 0 0 .38  0 0 0 .32 0"/></filter>
+<g id="n"><path fill-rule="evenodd" d="M1150 428L861 188L665 298L665 240L604 229L544 254L544 352.6L322 483L433 478L602 391L602 249L634 251L634 475L774 456L774 331L665 392.2L665 353L850.1 249.1ZM468 465L532 431L532 514L468 532ZM837 344h36v34h-36ZM888 344h36v34h-36ZM837 391h36v34h-36ZM888 391h36v34h-36Z"/></g><g id="v"><path fill-rule="evenodd" d="M547 517.5C768 439.2 989 459.7 1210 532.5C989 488.5 768 483.4 547 517.5Z"/></g>
+</defs>
+<g filter="url(#alone)"><use href="#n"/><use href="#v"/></g>
+<g fill="url(#fianco)"><use href="#n" x="4" y="9"/><use href="#n" x="3.6" y="8"/><use href="#n" x="3.1" y="7"/><use href="#n" x="2.7" y="6"/><use href="#n" x="2.2" y="5"/><use href="#n" x="1.8" y="4"/><use href="#n" x="1.3" y="3"/><use href="#n" x="0.9" y="2"/><use href="#n" x="0.4" y="1"/></g><g fill="#3E6B0C"><use href="#v" x="4" y="9"/><use href="#v" x="3.6" y="8"/><use href="#v" x="3.1" y="7"/><use href="#v" x="2.7" y="6"/><use href="#v" x="2.2" y="5"/><use href="#v" x="1.8" y="4"/><use href="#v" x="1.3" y="3"/><use href="#v" x="0.9" y="2"/><use href="#v" x="0.4" y="1"/></g>
+<g filter="url(#smusso)"><g fill="url(#argento)"><use href="#n"/></g><g fill="url(#lime)"><use href="#v"/></g></g></svg>
