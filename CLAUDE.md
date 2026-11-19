@@ -114,7 +114,7 @@ Villa a Cislago · Cislago · 363 · 2026 · A4
 Villa Sara · – · 237 · 2017 · A
 
 Design
-- STILE: Cemento (chiaro, grigio caldo)
+- STILE: Misto (primo schermo scuro come il logo, resto chiaro)
 - COLORE_ACCENTO (antracite dei serramenti): #383E42
 
 Servizi (si usano allo step 8)
@@ -124,7 +124,7 @@ Servizi (si usano allo step 8)
 
 Regole condizionali
 - Partner con autorizzazione «no»: niente nome, logo, foto né realizzazioni di quell'azienda. Al loro posto «un'impresa partner» e le illustrazioni di §5.
-- Logo fornito (kit in studio/originali/biodomus-asset/): sul sito solo le versioni senza payoff, perché «COSTRUZIONI • CASE SU MISURA» direbbe che Biodomus costruisce (§10.2). Il verde del logo resta dentro il logo: non diventa un colore dell'interfaccia.
+- Logo fornito (kit in studio/originali/biodomus-asset/): sul sito solo le versioni senza payoff, perché «COSTRUZIONI • CASE SU MISURA» direbbe che Biodomus costruisce (§10.2). Il lime del logo (#8DC21E) esce dal logo solo nelle sezioni scure, come colore dei dettagli grafici (§5): mai su testi né pulsanti. Il verde della versione positiva (#4F8F17) resta solo nel logo.
 - Illustrazioni generate con l'AI (studio/originali/biodomus-asset/illustrazioni/): fuori dalla pagina finché non decido diversamente. Se entrano, sempre con la dicitura «Illustrazione» e mai presentate come case costruite.
 - Un solo partner autorizzato, o nessuno: niente plurali sbagliati. «Le aziende partner» diventa «l'impresa partner» se ne resta una.
 - Oggi l'impresa di costruzioni partner è una sola (P1; P2 produce il sistema costruttivo, non costruisce): tutti i testi dicono «l'impresa partner» o «l'impresa adatta», al singolare, mai «le imprese partner» né «imprese selezionate». Il plurale torna solo con almeno due imprese di costruzioni partner autorizzate.
@@ -189,17 +189,19 @@ Requisiti verificati e insidie:
 
 ## §5 Design system
 
-Atmosfera: «dal disegno alla casa». I materiali di una casa moderna: intonaco grigio, cemento, serramenti antracite, legno di rovere. Ordine da tavola tecnica, calore da casa finita. Molto spazio, poche cose per schermata. Niente colori accesi, niente gradienti: grigi caldi, un antracite deciso e il legno solo come dettaglio.
+Atmosfera: «dal disegno alla casa». I materiali di una casa moderna: intonaco grigio, cemento, serramenti antracite, legno di rovere. Ordine da tavola tecnica, calore da casa finita. Molto spazio, poche cose per schermata. Niente colori accesi, niente gradienti: grigi caldi, un antracite deciso e il legno solo come dettaglio. L'unico colore acceso è il lime del logo, solo nei dettagli delle sezioni scure.
 
-STILE scelto: Cemento (chiaro, grigio caldo). Se è «Cemento» usi la palette chiara, se è «Grafite» quella scura.
+STILE scelto: Misto (primo schermo scuro come il logo, resto chiaro). Con «Cemento» tutta la pagina usa la palette chiara, con «Grafite» quella scura. Con «Misto» l'hero, e l'header finché sta sopra l'hero, usano la palette scura; tutto il resto usa la chiara. I token scuri valgono dentro un contenitore con la classe .bd-tema-scuro: basta mettere la classe sulla sezione.
 
 L'accento è l'antracite dei serramenti: pulsanti e link, deciso e sobrio. Il legno di rovere scalda i dettagli grafici (icone, numeri dei passaggi, linee di quota, sottolineature), mai il testo. Il «ruggine» dell'armatura compare solo nei disegni (tondini), mai sul testo.
+
+Dettagli grafici: il token --bd-dettaglio vale rovere #A87B4F sul chiaro e lime del logo #8DC21E sullo scuro. Lo usano icone, numeri dei passaggi, linee di quota, sottolineature e tondini dei disegni, mai testi né pulsanti. Sullo scuro i pulsanti primari sono #E4E1DA con testo #1A1C1E.
 
 Palette chiara (token in bd-tokens.css):
 - --bd-fondo #EDECE8 (intonaco grigio), --bd-carta #F8F7F5 (card), --bd-testo #1F2326 (grafite), --bd-testo-2 #595E62, --bd-linea #D3D1CC (solo bordi e griglia), --bd-accento #383E42 (antracite: pulsanti con testo bianco, link), --bd-accento-hover #262B2E, --bd-legno #A87B4F (rovere: solo dettagli grafici), --bd-ruggine #B4542D (solo disegni), --bd-ok #4F6B58 (conferme).
 Palette scura:
-- --bd-fondo #1A1C1E, --bd-carta #232629, --bd-testo #ECEBE8, --bd-testo-2 #A9ADB0, --bd-linea #3A3E42, --bd-accento #E4E1DA (pulsanti con testo #1A1C1E, link), --bd-legno #C49A6C (solo dettagli grafici), --bd-ruggine #E08A62 (solo disegni), --bd-ok #9DB5A3.
-Contrasti misurati (WCAG): chiara — testo su fondo 13,4:1, testo-2 su fondo 5,5:1, accento su fondo 9,2:1 (link), bianco su accento 10,8:1 (pulsanti), ok su carta 5,5:1, legno su fondo 3,2:1 (solo grafica, mai testo), ruggine su fondo 4,2:1 (solo disegni). Scura — testo su fondo 14,3:1, testo-2 su fondo 7,6:1, #1A1C1E su accento 13,1:1. Se COLORE_ACCENTO cambia, ricalcola: sotto 4,5:1 con il bianco usa il testo scuro sul pulsante o scurisci l'accento, e scrivilo nel report.
+- --bd-fondo #1A1C1E, --bd-carta #232629, --bd-testo #ECEBE8, --bd-testo-2 #A9ADB0, --bd-linea #3A3E42, --bd-accento #E4E1DA (pulsanti con testo #1A1C1E, link), --bd-legno #C49A6C (solo dettagli grafici), --bd-dettaglio #8DC21E (lime del logo: dettagli grafici e tondini al posto di legno e ruggine), --bd-ruggine #E08A62 (solo disegni), --bd-ok #9DB5A3.
+Contrasti misurati (WCAG): chiara — testo su fondo 13,4:1, testo-2 su fondo 5,5:1, accento su fondo 9,2:1 (link), bianco su accento 10,8:1 (pulsanti), ok su carta 5,5:1, legno su fondo 3,2:1 (solo grafica, mai testo), ruggine su fondo 4,2:1 (solo disegni). Scura — testo su fondo 14,3:1, testo-2 su fondo 7,6:1, #1A1C1E su accento 13,1:1, lime su fondo 8,0:1 (solo grafica). Se COLORE_ACCENTO cambia, ricalcola: sotto 4,5:1 con il bianco usa il testo scuro sul pulsante o scurisci l'accento, e scrivilo nel report.
 
 Tipografia: titoli Bricolage Grotesque Variable (pesi 600–800, interlinea 1,02, tracking −0,02em); testi Inter Variable (400, 500, 600). Scala: h1 clamp(2.5rem, 6vw + 1rem, 5.25rem); h2 clamp(1.9rem, 3.5vw + 1rem, 3.25rem); h3 1.375rem; testo 1.0625rem con interlinea 1,6; piccolo 0.875rem. Righe al massimo di 65 caratteri.
 
@@ -207,9 +209,9 @@ Spazi: scala 4, 8, 12, 16, 24, 32, 48, 64, 96, 128 px. Sezioni: 96 px sopra e so
 
 CTA: primaria a pillola, piena di accento, altezza 56 px, testo 600, freccia che scorre di 4 px all'hover. Secondaria con bordo. Una sola primaria per schermata: la CTA dell'header è sempre secondaria (con bordo, compatta) e BdBarraMobile si nasconde quando un'altra CTA primaria è nello schermo. Lo verifica studio/screenshot.mjs.
 
-Movimento: GSAP con ScrollTrigger e Lenis (duration 1.1, syncTouch false, sincronizzato con gsap.ticker). Ingressi: y da 24 a 0 con autoAlpha, 0,7 s, ease «power3.out», stagger 0,08. Titoli h1 e h2 rivelati per righe con SplitText solo da 1024 px in su. Nessuna animazione blocca la lettura per più di 0,8 s.
+Movimento: GSAP con ScrollTrigger e Lenis (duration 1.1, syncTouch false, sincronizzato con gsap.ticker). Ingressi: y da 24 a 0 con autoAlpha, 0,7 s, ease «power3.out», stagger 0,08. Titoli h1 e h2 rivelati per righe con SplitText solo da 1024 px in su. Nessuna animazione blocca la lettura per più di 0,8 s. Effetti 3D: la sezione in prospettiva e, da 1024 px con puntatore fine, le card di BdPerChi che si inclinano di qualche grado seguendo il puntatore (perspective CSS e GSAP, massimo 6°). Niente WebGL. Con riduzione del movimento niente inclinazione e la sezione già composta.
 
-Dettaglio firma, «la sezione»: un disegno al tratto in SVG della parete (strato isolante esterno, calcestruzzo con armatura, strato isolante interno, intonaco) con i retini da tavola tecnica e le linee di quota. Mentre scorri si compone strato per strato e le quote si disegnano. Grande in BdSistema e nell'hero; in piccolo, come linea di quota numerata (BdQuota), separa le sezioni. Sullo sfondo una griglia da tavolo tecnico: linee di 1 px in --bd-linea al 60% di opacità, ogni 32 px (all'8% sul fondo cemento non si vedeva).
+Dettaglio firma, «la sezione»: un disegno al tratto in SVG della parete in prospettiva cavaliera. I quattro strati (isolante esterno, calcestruzzo con armatura, isolante interno, intonaco) sono blocchi staccati, con i retini da tavola tecnica sulle facce in sezione e le linee di quota. Mentre scorri gli strati si avvicinano fino a ricomporre la parete e le quote si disegnano. Grande nell'hero, nella versione scura: linee chiare, tondini e quote in lime con un alone leggero. Grande anche in BdSistema, nella versione chiara. In piccolo, come linea di quota numerata (BdQuota), separa le sezioni. Sullo sfondo una griglia da tavolo tecnico: linee di 1 px in --bd-linea al 60% di opacità, ogni 32 px.
 
 Immagini: foto reali di case finite e cantieri, solo da fonti autorizzate (§2), con il credito. Se mancano: illustrazioni al tratto in SVG (sezione, pianta, assonometria) etichettate «Illustrazione». Mai foto di stock né render generati presentati come case costruite.
 
@@ -220,8 +222,8 @@ Componenti: per effetti di testo e microinterazioni guarda React Bits (BlurText,
 ## §6 Struttura e strategia
 
 Sezioni in ordine, ognuna con il suo scopo:
-1. BdHeader — wordmark o logo, link «Come funziona», CTA «Richiedi un preventivo» secondaria (con bordo). Scopo: CTA sempre a un tocco, senza fare concorrenza alla primaria della sezione.
-2. BdHero — occhiello con ZONA, titolo e sottotitolo per angolo (§7), CTA primaria e secondaria, tre fatti brevi (TEMPI, CLASSE, SISTEMA_BREVE, solo quelli presenti), la sezione animata. Scopo: in 5 secondi chi sei, per chi, cosa fare.
+1. BdHeader — wordmark o logo, link «Come funziona», CTA «Richiedi un preventivo» secondaria (con bordo). Scopo: CTA sempre a un tocco, senza fare concorrenza alla primaria della sezione. Con STILE «Misto», sopra l'hero l'header è scuro con il logo negativo; quando l'hero esce dallo schermo diventa chiaro con il logo positivo (IntersectionObserver, transizione di 200 ms, nessuno spostamento del layout).
+2. BdHero — occhiello con ZONA, titolo e sottotitolo per angolo (§7), CTA primaria e secondaria, tre fatti brevi (TEMPI, CLASSE, SISTEMA_BREVE, solo quelli presenti), la sezione animata. Con STILE «Misto» ha il tema scuro. Scopo: in 5 secondi chi sei, per chi, cosa fare.
 3. BdPerChi — tre card: «Vuoi costruire casa», «Hai già il terreno», «Vuoi investire». Ogni card porta al modulo con il profilo già scelto. Scopo: riconoscersi e fare il primo clic.
 4. BdComeFunziona — 4 passaggi con linea di quota animata. Scopo: togliere la paura di un processo lungo.
 5. BdRuolo — chi fa cosa: Biodomus, l'impresa, il cliente; quanto costa il servizio. Scopo: fiducia verso un intermediario.
