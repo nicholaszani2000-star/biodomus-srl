@@ -230,11 +230,11 @@ async function main() {
   writeFileSync(join(PUBLIC, 'site.webmanifest'), JSON.stringify(manifestWeb, null, 2) + '\n')
 
   // 5. Immagine di condivisione: quella del kit così com'è; altrimenti composta con sharp (senza testo)
-  const ogKit = join(KIT, 'condivisione', 'og-image.jpg')
+  const ogKit = join(KIT, 'condivisione', 'og-image-scuro.jpg') // STILE «Misto»: primo schermo scuro
   const ogOut = join(PUBLIC, 'og-image.jpg')
   if (existsSync(ogKit)) {
     copyFileSync(ogKit, ogOut)
-    report.og = 'copiata dal kit (condivisione/og-image.jpg)'
+    report.og = 'copiata dal kit (condivisione/og-image-scuro.jpg)'
   } else {
     const fondo = { create: { width: 1200, height: 630, channels: 3, background: colori[d.STILE] ?? colori.Cemento } }
     const strati = [{ input: await sharp(join(OUT_SVG, 'bd-assonometria.svg'), { density: 150 }).resize({ height: 520 }).png().toBuffer(), left: 640, top: 55 }]
@@ -263,7 +263,7 @@ async function main() {
       id: 'assonometria',
       file: 'src/assets/svg/bd-assonometria.svg',
       alt: 'Assonometria schematica di una casa moderna su due piani, con vetrate, serramenti antracite e rivestimento in legno.',
-      dove: 'BdHero, immagine accanto al titolo finché non ci sono foto autorizzate',
+      dove: 'ripiego per BdRealizzazioni se mancano foto autorizzate; oggi non usata',
       dicitura: 'Illustrazione',
     },
     {
