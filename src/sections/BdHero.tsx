@@ -1,4 +1,5 @@
 import BdCta from '../components/BdCta.tsx'
+import BdIllustrazione from '../components/BdIllustrazione.tsx'
 import BdParete from '../components/BdParete.tsx'
 import { dati } from '../content/dati.ts'
 import { t, tt } from '../content/bd-testi.ts'
@@ -8,6 +9,7 @@ import { ANGOLI } from '../lib/bd-angolo.ts'
  * Primo schermo (§6.2, copy di §7 e §8). Con STILE «Misto» ha il tema scuro: .bd-tema-scuro porta i token scuri (§5).
  * Le tre varianti di titolo e sottotitolo sono tutte nell'HTML; il CSS mostra quella dell'angolo (§7), senza sfarfallio.
  * Il titolo è testo prerenderizzato (LCP); la parete è un SVG inline che bd-motion ricompone mentre scorri.
+ * In fondo l'illustrazione «villa dal disegno» (§2): la casa nasce dal disegno mentre la pagina passa dallo scuro al chiaro.
  */
 export default function BdHero() {
   const stile: string = dati.STILE
@@ -57,6 +59,8 @@ export default function BdHero() {
           <figcaption className="bd-piccolo">{tt('hero.parete.nota')}</figcaption>
         </figure>
       </div>
+
+      <BdIllustrazione id="villa-dal-disegno" sfumatura="verso-chiaro" subito />
     </section>
   )
 }

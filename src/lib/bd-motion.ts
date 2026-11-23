@@ -98,6 +98,22 @@ function preparaPareti(): void {
   })
 }
 
+/**
+ * Illustrazioni sfumate (§2): l'immagine scorre un po' più lenta della pagina dentro la sua cornice mascherata.
+ * Parallasse leggera, solo senza riduzione del movimento (§3.8). Ingrandita del 14% così non scopre mai i bordi.
+ */
+function preparaIllustrazioni(): void {
+  document.querySelectorAll<HTMLElement>('[data-bd-illustrazione]').forEach((figura) => {
+    const immagine = figura.querySelector('img')
+    if (!immagine) return
+    gsap.fromTo(
+      immagine,
+      { yPercent: -6, scale: 1.14 },
+      { yPercent: 6, scale: 1.14, ease: 'none', scrollTrigger: { trigger: figura, start: 'top bottom', end: 'bottom top', scrub: true } },
+    )
+  })
+}
+
 /** Titolo dell'hero rivelato per righe (solo desktop, §5): parte dallo stato nascosto deciso dallo script nel head. */
 function rivelaTitoloHero(): void {
   const radice = document.documentElement
@@ -231,6 +247,7 @@ export function avviaMovimento(): void {
       preparaIngressi(Boolean(largo))
       preparaQuote()
       preparaPareti()
+      preparaIllustrazioni()
 
       const pulizie: (() => void)[] = []
       if (largo) {

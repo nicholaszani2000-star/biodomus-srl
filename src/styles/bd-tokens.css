@@ -5,10 +5,14 @@
    (.bd-header--scuro, solo con .bd-js: senza JavaScript l'header resta chiaro).
    --bd-accento deve coincidere con COLORE_ACCENTO di §2: lo verifica studio/controlli.mjs.
    --bd-dettaglio: icone, numeri, linee di quota, sottolineature (rovere sul chiaro, lime del logo sullo scuro), mai testo.
-   --bd-tondino: i tondini dell'armatura nei disegni (ruggine sul chiaro, lime del logo sullo scuro). */
+   --bd-tondino: i tondini dell'armatura nei disegni (ruggine sul chiaro, lime del logo sullo scuro).
+   --bd-fondo-chiaro e --bd-testo-2-chiaro non cambiano nel tema scuro: servono all'illustrazione in fondo all'hero,
+   dove la pagina passa dallo scuro al chiaro. */
 
 :root {
   --bd-fondo: #edece8; /* intonaco grigio */
+  --bd-fondo-chiaro: #edece8;
+  --bd-testo-2-chiaro: #595e62;
   --bd-carta: #f8f7f5; /* card */
   --bd-testo: #1f2326; /* grafite */
   --bd-testo-2: #595e62;

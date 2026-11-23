@@ -42,6 +42,9 @@
     },
     "fattiTitolo": "In breve"
   },
+  "illustrazioni": {
+    "dicitura": "Illustrazione"
+  },
   "perChi": {
     "titolo": "Per chi è {BRAND}",
     "card": [

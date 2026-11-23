@@ -4,12 +4,14 @@
 //   src/assets/img/          foto autorizzate in AVIF e WebP, 480 · 768 · 1200 · 1600 px, senza metadati
 //   src/assets/svg/          bd-logo*.svg dal kit, positivi e negativi (mai payoff né 3D)
 //   src/assets/partner/      loghi dei partner con autorizzazione «sì»
+//   src/assets/illustrazioni/  le illustrazioni AI scelte (§2), così come le ha preparate il kit, senza metadati
 //   public/                  favicon, icone, site.webmanifest, og-image.jpg
 //   src/content/immagini.json  manifesto: file, larghezze, width/height, alt, credito, dove, autorizzazione
 //   studio/report/contact-sheet.jpg  tutte le immagini esportate, con nome e peso
 //
 // Le foto e i loghi di un partner con autorizzazione «no» restano in studio/ e non entrano nel manifesto.
-// Le illustrazioni AI del kit (biodomus-asset/illustrazioni/) restano fuori dalla pagina (§2).
+// Le illustrazioni AI del kit (biodomus-asset/illustrazioni/): entrano solo quelle elencate in ILLUSTRAZIONI_AI (§2),
+// sempre con la dicitura «Illustrazione» e un alt che lo dice; le altre restano in studio/.
 
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { basename, dirname, extname, join, relative } from 'node:path'
@@ -22,6 +24,7 @@ const KIT = join(ORIGINALI, 'biodomus-asset')
 const OUT_IMG = join(ROOT, 'src', 'assets', 'img')
 const OUT_SVG = join(ROOT, 'src', 'assets', 'svg')
 const OUT_PARTNER = join(ROOT, 'src', 'assets', 'partner')
+const OUT_ILL = join(ROOT, 'src', 'assets', 'illustrazioni')
 const PUBLIC = join(ROOT, 'public')
 const MANIFESTO = join(ROOT, 'src', 'content', 'immagini.json')
 const CONTACT_SHEET = join(ROOT, 'studio', 'report', 'contact-sheet.jpg')
@@ -30,6 +33,26 @@ export const LARGHEZZE = [480, 768, 1200, 1600]
 export const LIMITE_KB = { hero: 160, altre: 120 } // a 1200 px (§9)
 const QUALITA = { avif: { da: 60, min: 40 }, webp: { da: 75, min: 40 } }
 const ASPETTO = { hero: 3 / 2, realizzazione: 4 / 3 }
+
+// Illustrazioni AI scelte da Niko il 23 novembre 2026 (CLAUDE.md §2). Per ognuna un ritaglio per il telefono e uno largo,
+// già pronti nel kit in AVIF e WebP: si copiano rinominati «bd-<id>-<larghezza>», come le foto.
+// Mai il pannello 3 del percorso: i muri sono in laterizio, non il sistema di §2.
+export const ILLUSTRAZIONI_AI = [
+  {
+    id: 'villa-dal-disegno',
+    mobile: 'villa-dal-disegno-672',
+    largo: 'villa-dal-disegno-panoramica-1200',
+    alt: 'Illustrazione: una villa moderna al tramonto che a sinistra è ancora un disegno di linee e a destra è già finita.',
+    dove: "BdHero, in fondo: la casa che nasce dal disegno, sfumata dal fondo scuro dell'hero al chiaro della pagina",
+  },
+  {
+    id: 'villa-tramonto',
+    mobile: 'villa-tramonto-640',
+    largo: 'villa-tramonto-1052',
+    alt: 'Illustrazione: una villa moderna su due piani al tramonto, con le luci accese e una piscina davanti.',
+    dove: 'subito prima del modulo (#preventivo): la casa finita, sfumata nel fondo chiaro',
+  },
+]
 
 const kB = (byte) => byte / 1024
 const slug = (testo) =>
@@ -248,7 +271,42 @@ async function main() {
   const ogMeta = await sharp(ogOut).metadata()
   if (ogMeta.width !== 1200 || ogMeta.height !== 630) throw new Error(`og-image ${ogMeta.width}×${ogMeta.height}: servono 1200×630`)
 
-  // 6. Manifesto: illustrazioni SVG disegnate per il progetto (§5) e foto autorizzate
+  // 5b. Illustrazioni AI scelte (§2): copie dei ritagli del kit, verificate senza metadati ed entro i pesi di §9
+  rmSync(OUT_ILL, { recursive: true, force: true })
+  mkdirSync(OUT_ILL, { recursive: true })
+  const vociAi = []
+  for (const ill of ILLUSTRAZIONI_AI) {
+    const varianti = {}
+    for (const [chiave, base] of [['mobile', ill.mobile], ['largo', ill.largo]]) {
+      const dimensioni = await sharp(join(KIT, 'illustrazioni', `${base}.avif`)).metadata()
+      for (const formato of ['avif', 'webp']) {
+        const da = join(KIT, 'illustrazioni', `${base}.${formato}`)
+        const meta = await sharp(da).metadata()
+        if (meta.exif || meta.xmp || meta.iptc) throw new Error(`${base}.${formato} ha ancora metadati: ripuliscilo prima`)
+        if (kB(statSync(da).size) > LIMITE_KB.altre) throw new Error(`${base}.${formato} pesa più di ${LIMITE_KB.altre} kB (§9)`)
+        copyFileSync(da, join(OUT_ILL, `bd-${ill.id}-${dimensioni.width}.${formato}`))
+      }
+      varianti[chiave] = { larghezza: dimensioni.width, width: dimensioni.width, height: dimensioni.height }
+    }
+    vociAi.push({
+      id: ill.id,
+      tipo: 'illustrazione-ai',
+      file: `src/assets/illustrazioni/bd-${ill.id}`,
+      formati: ['avif', 'webp'],
+      larghezze: [varianti.mobile.larghezza, varianti.largo.larghezza],
+      width: varianti.largo.width,
+      height: varianti.largo.height,
+      varianti,
+      alt: ill.alt,
+      credito: "Illustrazione generata con l'AI, non è una casa costruita",
+      dicitura: 'Illustrazione',
+      dove: ill.dove,
+      autorizzazione: 'scelta di Niko del 23 novembre 2026 (CLAUDE.md §2)',
+    })
+    report.note.push(`Illustrazione AI ${ill.id}: ${ill.mobile} e ${ill.largo} → src/assets/illustrazioni/`)
+  }
+
+  // 6. Manifesto: illustrazioni SVG disegnate per il progetto (§5), illustrazioni AI scelte e foto autorizzate
   const svg = (nome) => {
     const testo = readFileSync(join(OUT_SVG, nome), 'utf8')
     const [, , w, h] = (testo.match(/viewBox="([^"]+)"/) ?? [])[1].split(/\s+/).map(Number)
@@ -294,7 +352,7 @@ async function main() {
       autorizzazione: 'non serve: disegno originale del progetto',
     }
   })
-  voci.unshift(...vociIllustrazioni)
+  voci.unshift(...vociIllustrazioni, ...vociAi)
 
   const manifesto = {
     nota: 'Generato da studio/immagini.mjs (npm run immagini). Alt, credito e «dove» si cambiano lì, non qui.',
@@ -331,6 +389,7 @@ function fileEsportati() {
   aggiungi(OUT_IMG, (n) => /\.(avif|webp)$/.test(n))
   aggiungi(OUT_SVG, (n) => n.endsWith('.svg'))
   aggiungi(OUT_PARTNER, (n) => /\.(svg|png)$/.test(n))
+  aggiungi(OUT_ILL, (n) => /\.avif$/.test(n))
   aggiungi(PUBLIC, (n) => /\.(svg|png|ico|jpg)$/.test(n))
   return voci
 }

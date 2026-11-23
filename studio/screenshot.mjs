@@ -2,6 +2,7 @@
 // Se l'anteprima non è già avviata, la avvia da solo e la chiude alla fine.
 // Browser, in ordine: Chromium di Playwright (PLAYWRIGHT_BROWSERS_PATH), Chromium o Chrome di sistema; senza browser salta.
 // Controlla: errori di console, scroll orizzontale a 390 px, variante giusta del titolo per angolo, primo schermo,
+// le due illustrazioni sfumate (ritaglio giusto per la larghezza, AVIF, dicitura «Illustrazione» visibile),
 // logo e tema dell'header, la parete che si ricompone scorrendo, la barra mobile, una sola CTA primaria per schermata,
 // la riduzione del movimento a 390 e 1440 px.
 // Screenshot in studio/report/screenshot/ (escluso da git), riepilogo in studio/report/screenshot/riepilogo.json.
@@ -313,6 +314,47 @@ for (const vista of VISTE) {
       return problemi
     })
     esito(affollate.length === 0, `una CTA primaria per schermata ${etichetta}`, affollate.length ? affollate.join(', ') : 'mai più di una')
+
+    // §2: le due illustrazioni AI, sfumate, con il ritaglio giusto per la larghezza e la dicitura visibile
+    if (angolo === 'famiglia') {
+      const illustrazioni = []
+      for (const id of ['villa-dal-disegno', 'villa-tramonto']) {
+        await pagina.evaluate((id) => {
+          const figura = document.querySelector(`.bd-illustrazione--${id}`)
+          const r = figura.getBoundingClientRect()
+          window.scrollTo(0, window.scrollY + r.top + r.height / 2 - window.innerHeight / 2)
+        }, id)
+        await pagina.waitForTimeout(900)
+        await pagina.screenshot({ path: join(USCITA, `illustrazione-${id}-${vista.width}.png`) })
+        illustrazioni.push(
+          await pagina.evaluate((id) => {
+            const figura = document.querySelector(`.bd-illustrazione--${id}`)
+            const img = figura.querySelector('img')
+            const nota = figura.querySelector('figcaption')
+            const stileNota = nota ? getComputedStyle(nota) : null
+            return {
+              id,
+              file: img.currentSrc.split('/').pop(),
+              caricata: img.complete && img.naturalWidth > 0,
+              alt: img.alt,
+              nota: nota?.textContent.trim() ?? '',
+              notaVisibile: !!stileNota && nota.getClientRects().length > 0 && stileNota.visibility === 'visible' && Number(stileNota.opacity) > 0,
+            }
+          }, id),
+        )
+      }
+      const ritagli = vista.width < 768 ? ['villa-dal-disegno-672', 'villa-tramonto-640'] : ['villa-dal-disegno-1200', 'villa-tramonto-1052']
+      const ok = illustrazioni.every(
+        (x, i) => x.caricata && x.file.startsWith(`bd-${ritagli[i]}-`) && x.file.endsWith('.avif') && x.alt.startsWith('Illustrazione') && x.nota === 'Illustrazione' && x.notaVisibile,
+      )
+      esito(
+        ok,
+        `illustrazioni sfumate ${vista.width}px`,
+        illustrazioni.map((x) => `${x.id}: ${x.file}${x.caricata ? '' : ' (non caricata)'}, «${x.nota}» ${x.notaVisibile ? 'visibile' : 'nascosta'}`).join(' · '),
+      )
+      await pagina.evaluate(() => window.scrollTo(0, 0))
+      await pagina.waitForTimeout(600)
+    }
 
     if (angolo === 'famiglia') await pagina.screenshot({ path: join(USCITA, `pagina-intera-${vista.width}.png`), fullPage: true })
     await pagina.close()

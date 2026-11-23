@@ -125,7 +125,7 @@ Servizi (si usano allo step 8)
 Regole condizionali
 - Partner con autorizzazione «no»: niente nome, logo, foto né realizzazioni di quell'azienda. Al loro posto «un'impresa partner» e le illustrazioni di §5.
 - Logo fornito (kit in studio/originali/biodomus-asset/): sul sito solo le versioni senza payoff, perché «COSTRUZIONI • CASE SU MISURA» direbbe che Biodomus costruisce (§10.2). Il lime del logo (#8DC21E) esce dal logo solo nelle sezioni scure, come colore dei dettagli grafici (§5): mai su testi né pulsanti. Il verde della versione positiva (#4F8F17) resta solo nel logo.
-- Illustrazioni generate con l'AI (studio/originali/biodomus-asset/illustrazioni/): fuori dalla pagina finché non decido diversamente. Se entrano, sempre con la dicitura «Illustrazione» e mai presentate come case costruite.
+- Illustrazioni generate con l'AI (studio/originali/biodomus-asset/illustrazioni/): dal 23 novembre 2026 ne entrano due, sfumate nella pagina con BdIllustrazione: «villa dal disegno» in fondo all'hero, dove la pagina passa dallo scuro al chiaro, e «villa al tramonto» subito prima del modulo. Sempre con la dicitura «Illustrazione» visibile e un alt che comincia con «Illustrazione:», mai presentate come case costruite né vicino al nome o alle realizzazioni dell'impresa partner. Le altre restano fuori; il pannello 3 del percorso (muri in laterizio) mai, perché non è il sistema di SISTEMA.
 - Un solo partner autorizzato, o nessuno: niente plurali sbagliati. «Le aziende partner» diventa «l'impresa partner» se ne resta una.
 - Oggi l'impresa di costruzioni partner è una sola (P1; P2 produce il sistema costruttivo, non costruisce): tutti i testi dicono «l'impresa partner» o «l'impresa adatta», al singolare, mai «le imprese partner» né «imprese selezionate». Il plurale torna solo con almeno due imprese di costruzioni partner autorizzate.
 - RAPPORTO_PARTNER diverso da «sì, confermato per iscritto»: non scrivere che l'impresa usa il sistema di P2. Descrivi solo SISTEMA, che è la descrizione comune ai due siti.
@@ -169,7 +169,7 @@ File da creare, uno per riga:
 - src/lib/bd-traccia.ts — carica il Pixel solo con consenso. track('Lead', {}, {eventID}) dopo l'invio del modulo; track('Contact') al clic su «Chiama» o «Scrivi su WhatsApp», senza dati personali. Senza consenso non fa nulla.
 - src/lib/bd-angolo.ts — legge ?a= e data-angolo.
 - src/lib/bd-utm.ts — salva utm_* e fbclid in sessionStorage alla prima visita.
-- src/components/ — BdHeader, BdFooter, BdCta, BdBarraMobile, BdSezione, BdQuota (linea di quota), BdWordmark, BdBannerCookie.
+- src/components/ — BdHeader, BdFooter, BdCta, BdBarraMobile, BdSezione, BdQuota (linea di quota), BdWordmark, BdBannerCookie, BdParete (la sezione in prospettiva, SVG inline con prefisso per istanza), BdIllustrazione (illustrazioni AI sfumate di §2).
 - src/sections/ — BdHero, BdPerChi, BdComeFunziona, BdRuolo, BdSistema, BdRealizzazioni, BdPartner, BdModulo, BdFaq, BdChiusura.
 - netlify/functions/bd-lead.mts — risponde a POST /api/lead (export const config = { path: "/api/lead" }). Accetta JSON e form-urlencoded. Validazione, honeypot, tempo minimo di compilazione 3 secondi, corpo massimo 10 kB. Quattro passaggi, che partono insieme e non si bloccano a vicenda: 1) email a EMAIL_LEAD con Brevo; 2) email di conferma al cliente; 3) riga su Supabase via REST con la chiave segreta, solo nell'header apikey (le chiavi sb_secret_… non sono JWT: in Authorization vengono rifiutate); 4) evento Lead all'API Conversioni solo se il cliente ha accettato i cookie di marketing. Un passaggio che fallisce va nei log. Se falliscono sia l'email sia Supabase risponde 502 e la pagina mostra l'email pubblica come ripiego. Risposta JSON {ok, id}; se la richiesta non chiede JSON (invio senza JavaScript) risponde 303 verso /grazie.html. Con BD_MOCK=1 non chiama servizi esterni e scrive il contatto in studio/report/lead-mock.jsonl.
 - netlify/functions/bd-keepalive.mts — schedule "@daily": una lettura sulla tabella dei contatti, così il progetto Supabase Free non va in pausa.
@@ -189,7 +189,7 @@ Requisiti verificati e insidie:
 
 ## §5 Design system
 
-Atmosfera: «dal disegno alla casa». I materiali di una casa moderna: intonaco grigio, cemento, serramenti antracite, legno di rovere. Ordine da tavola tecnica, calore da casa finita. Molto spazio, poche cose per schermata. Niente colori accesi, niente gradienti: grigi caldi, un antracite deciso e il legno solo come dettaglio. L'unico colore acceso è il lime del logo, solo nei dettagli delle sezioni scure.
+Atmosfera: «dal disegno alla casa». I materiali di una casa moderna: intonaco grigio, cemento, serramenti antracite, legno di rovere. Ordine da tavola tecnica, calore da casa finita. Molto spazio, poche cose per schermata. Niente colori accesi, niente gradienti decorativi: grigi caldi, un antracite deciso e il legno solo come dettaglio. L'unica sfumatura è quella delle illustrazioni di §2 nel fondo. L'unico colore acceso è il lime del logo, solo nei dettagli delle sezioni scure.
 
 STILE scelto: Misto (primo schermo scuro come il logo, resto chiaro). Con «Cemento» tutta la pagina usa la palette chiara, con «Grafite» quella scura. Con «Misto» l'hero, e l'header finché sta sopra l'hero, usano la palette scura; tutto il resto usa la chiara. I token scuri valgono dentro un contenitore con la classe .bd-tema-scuro: basta mettere la classe sulla sezione.
 
@@ -213,7 +213,7 @@ Movimento: GSAP con ScrollTrigger e Lenis (duration 1.1, syncTouch false, sincro
 
 Dettaglio firma, «la sezione»: un disegno al tratto in SVG della parete in prospettiva cavaliera. I quattro strati (isolante esterno, calcestruzzo con armatura, isolante interno, intonaco) sono blocchi staccati, con i retini da tavola tecnica sulle facce in sezione e le linee di quota. Mentre scorri gli strati si avvicinano fino a ricomporre la parete e le quote si disegnano. Grande nell'hero, nella versione scura: linee chiare, tondini e quote in lime con un alone leggero. Grande anche in BdSistema, nella versione chiara. In piccolo, come linea di quota numerata (BdQuota), separa le sezioni. Sullo sfondo una griglia da tavolo tecnico: linee di 1 px in --bd-linea al 60% di opacità, ogni 32 px.
 
-Immagini: foto reali di case finite e cantieri, solo da fonti autorizzate (§2), con il credito. Se mancano: illustrazioni al tratto in SVG (sezione, pianta, assonometria) etichettate «Illustrazione». Mai foto di stock né render generati presentati come case costruite.
+Immagini: foto reali di case finite e cantieri, solo da fonti autorizzate (§2), con il credito. Se mancano: illustrazioni al tratto in SVG (sezione, pianta, assonometria) etichettate «Illustrazione». Mai foto di stock né render generati presentati come case costruite. Le due illustrazioni AI di §2 non hanno cornice: si dissolvono nel fondo (maschera CSS in alto e in basso, da 768 px anche ai lati), con un ritaglio per il telefono e uno largo in AVIF e WebP, e scorrono con una parallasse leggera; senza JavaScript e con la riduzione del movimento sono ferme.
 
 Riduzione del movimento: niente Lenis, pin né SplitText; la sezione appare già composta; dissolvenze al massimo di 200 ms.
 
@@ -223,14 +223,14 @@ Componenti: per effetti di testo e microinterazioni guarda React Bits (BlurText,
 
 Sezioni in ordine, ognuna con il suo scopo:
 1. BdHeader — wordmark o logo, link «Come funziona», CTA «Richiedi un preventivo» secondaria (con bordo). Scopo: CTA sempre a un tocco, senza fare concorrenza alla primaria della sezione. Con STILE «Misto», sopra l'hero l'header è scuro con il logo negativo; quando l'hero esce dallo schermo diventa chiaro con il logo positivo (IntersectionObserver, transizione di 200 ms, nessuno spostamento del layout).
-2. BdHero — occhiello con ZONA, titolo e sottotitolo per angolo (§7), CTA primaria e secondaria, tre fatti brevi (TEMPI, CLASSE, SISTEMA_BREVE, solo quelli presenti), la sezione animata. Con STILE «Misto» ha il tema scuro. Scopo: in 5 secondi chi sei, per chi, cosa fare.
+2. BdHero — occhiello con ZONA, titolo e sottotitolo per angolo (§7), CTA primaria e secondaria, tre fatti brevi (TEMPI, CLASSE, SISTEMA_BREVE, solo quelli presenti), la sezione animata e, in fondo, l'illustrazione «villa dal disegno» che porta dallo scuro al chiaro. Con STILE «Misto» ha il tema scuro. Scopo: in 5 secondi chi sei, per chi, cosa fare.
 3. BdPerChi — tre card: «Vuoi costruire casa», «Hai già il terreno», «Vuoi investire». Ogni card porta al modulo con il profilo già scelto. Scopo: riconoscersi e fare il primo clic.
 4. BdComeFunziona — 4 passaggi con linea di quota animata. Scopo: togliere la paura di un processo lungo.
 5. BdRuolo — chi fa cosa: Biodomus, l'impresa, il cliente; quanto costa il servizio. Scopo: fiducia verso un intermediario.
 6. BdSistema — la sezione grande, ogni strato si apre al tocco con una frase. Scopo: qualità tangibile senza gergo.
 7. BdRealizzazioni — solo con P1_OK «sì» e REALIZZAZIONI piena: card con foto, nome, comune, m², anno, classe e «Realizzata da P1_NOME». Scopo: prova concreta.
 8. BdPartner — partner autorizzati: logo, nome, una riga, link al sito (rel="noopener"). Scopo: credibilità.
-9. BdModulo (#preventivo) — modulo in 3 passaggi (§8). Scopo: la conversione.
+9. BdModulo (#preventivo) — modulo in 3 passaggi (§8), subito dopo l'illustrazione «villa al tramonto». Scopo: la conversione.
 10. BdFaq — 8 domande. Scopo: rispondere alle obiezioni prima della chiamata.
 11. BdChiusura — CTA finale con TEMPO_RISPOSTA; sotto, i canali secondari «Chiama» e «Scrivi su WhatsApp» (regole condizionali di §2).
 12. BdFooter — contatti (telefono e WhatsApp, email pubblica, PEC), dati legali completi, privacy, cookie, «Gestisci cookie», nota sul ruolo.

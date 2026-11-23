@@ -730,8 +730,9 @@ html[data-angolo='investo'] .bd-v-investo {
   }
 
   /* Hero */
+  /* In basso niente padding: l'hero finisce con l'illustrazione che sfuma nel chiaro della pagina */
   .bd-hero {
-    padding-block: 28px 56px;
+    padding-block: 28px 0;
   }
 
   .bd-hero__griglia {
@@ -843,7 +844,7 @@ html[data-angolo='investo'] .bd-v-investo {
 
   @media (min-width: 1024px) {
     .bd-hero {
-      padding-block: 48px 112px;
+      padding-block: 48px 0;
     }
 
     .bd-hero__griglia {
@@ -946,5 +947,95 @@ html[data-angolo='investo'] .bd-v-investo {
   .bd-logo-doppio > .bd-logo,
   .bd-barra-mobile--vista {
     transition: none;
+  }
+}
+
+/* ---------- Illustrazioni AI sfumate (§2: sempre con la dicitura «Illustrazione», mai presentate come case costruite) ---------- */
+
+@layer components {
+  .bd-illustrazione {
+    position: relative;
+    margin: 0;
+  }
+
+  /* Niente bordi: l'immagine si dissolve nel fondo in alto e in basso, da 768 px anche ai lati */
+  .bd-illustrazione__cornice {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 3 / 2;
+    max-width: 1200px;
+    margin-inline: auto;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 26%, #000 66%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, #000 26%, #000 66%, transparent 100%);
+  }
+
+  .bd-illustrazione__cornice picture {
+    display: block;
+    height: 100%;
+  }
+
+  .bd-illustrazione__img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .bd-illustrazione__nota {
+    max-width: 1200px;
+    margin: 4px auto 0;
+    padding-inline: 16px;
+    color: var(--bd-testo-2);
+    font-size: 0.875rem;
+    text-align: right;
+  }
+
+  /* In fondo all'hero: sotto l'immagine la pagina passa dallo scuro dell'hero al chiaro delle sezioni */
+  .bd-illustrazione--verso-chiaro {
+    margin-top: 8px;
+    padding-bottom: 12px;
+    background-image: linear-gradient(to bottom, transparent 0%, transparent 42%, var(--bd-fondo-chiaro) 92%);
+  }
+
+  .bd-illustrazione--verso-chiaro .bd-illustrazione__nota {
+    color: var(--bd-testo-2-chiaro);
+  }
+
+  /* Subito prima del modulo: meno spazio sopra il titolo «Richiedi un preventivo» */
+  .bd-illustrazione--chiaro + .bd-sezione {
+    padding-top: 24px;
+  }
+
+  .bd-illustrazione--villa-dal-disegno .bd-illustrazione__img {
+    object-position: 30% 50%;
+  }
+
+  .bd-illustrazione--villa-tramonto .bd-illustrazione__img {
+    object-position: 58% 50%;
+  }
+
+  @media (min-width: 768px) {
+    .bd-illustrazione__cornice {
+      -webkit-mask-image:
+        linear-gradient(to bottom, transparent 0%, #000 26%, #000 66%, transparent 100%),
+        linear-gradient(to right, transparent 0%, #000 14%, #000 86%, transparent 100%);
+      -webkit-mask-composite: source-in;
+      mask-image:
+        linear-gradient(to bottom, transparent 0%, #000 26%, #000 66%, transparent 100%),
+        linear-gradient(to right, transparent 0%, #000 14%, #000 86%, transparent 100%);
+      mask-composite: intersect;
+    }
+
+    .bd-illustrazione--villa-dal-disegno .bd-illustrazione__cornice {
+      aspect-ratio: 1200 / 381;
+    }
+
+    .bd-illustrazione--villa-tramonto .bd-illustrazione__cornice {
+      aspect-ratio: 5 / 2;
+    }
+
+    .bd-illustrazione--chiaro + .bd-sezione {
+      padding-top: 40px;
+    }
   }
 }

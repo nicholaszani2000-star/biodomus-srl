@@ -302,19 +302,6 @@ controllo('verde del logo: il positivo solo nel logo, il lime solo nei dettagli 
     : { ok: true, nota: `${daControllare.length} file: verde #4F8F17 solo nel logo, lime solo in --bd-dettaglio e --bd-tondino del tema scuro` }
 })
 
-controllo('illustrazioni AI del kit fuori da src/ e dist/ (§2)', () => {
-  const regola = leggi('CLAUDE.md').includes('Illustrazioni generate con l\'AI (studio/originali/biodomus-asset/illustrazioni/): fuori dalla pagina')
-  if (!regola) return { ok: true, nota: 'CLAUDE.md non le esclude più: controllo sospeso' }
-  const kit = fileSotto('studio/originali/biodomus-asset/illustrazioni')
-  const impronteKit = new Set(kit.map(impronta))
-  const nomiKit = /villa-tramonto|villa-dal-disegno|percorso-\d/i
-  const sito = [...fileSotto('src'), ...fileSotto('public'), ...(esiste('dist') ? fileSotto('dist') : [])]
-  const trovati = sito.filter((f) => nomiKit.test(f) || impronteKit.has(impronta(f)))
-  return trovati.length
-    ? { ok: false, nota: `illustrazioni AI nel sito: ${trovati.join(', ')}` }
-    : { ok: true, nota: `${kit.length} file del kit, nessuno in src/, public/ o dist/` }
-})
-
 const MANIFESTO = esiste('src/content/immagini.json') ? JSON.parse(leggi('src/content/immagini.json')) : null
 
 controllo('immagini.json completo: alt, credito, misure, file esistenti', () => {
@@ -750,6 +737,43 @@ controllo('ancore delle CTA verso id esistenti, primarie solo verso #preventivo 
   return problemi.length
     ? { ok: false, nota: problemi.join('; ') }
     : { ok: true, nota: `${cta.length} CTA: ancore verso ${[...new Set(interne.map((c) => c.href))].join(' e ')}, tutte esistenti; primarie solo verso #preventivo` }
+})
+
+// §2 (decisione del 23 novembre 2026): entrano solo due illustrazioni AI, sfumate, sempre dichiarate come illustrazioni.
+const ILLUSTRAZIONI_SCELTE = {
+  'villa-dal-disegno': ['villa-dal-disegno-672', 'villa-dal-disegno-panoramica-1200'],
+  'villa-tramonto': ['villa-tramonto-640', 'villa-tramonto-1052'],
+}
+
+controllo('illustrazioni AI: solo le due scelte, con «Illustrazione» visibile e alt che lo dice (§2, §10.9)', () => {
+  const problemi = []
+  const voci = (MANIFESTO?.immagini ?? []).filter((v) => v.tipo === 'illustrazione-ai')
+  for (const v of voci) if (!ILLUSTRAZIONI_SCELTE[v.id]) problemi.push(`illustrazione non prevista dal brief: ${v.id}`)
+  // Nel sito nessun altro file del kit (per nome o per impronta) e mai il percorso: il pannello 3 ha i muri in laterizio
+  const kit = fileSotto('studio/originali/biodomus-asset/illustrazioni')
+  const basiScelte = Object.values(ILLUSTRAZIONI_SCELTE).flat()
+  const scelte = new Set(kit.filter((f) => basiScelte.some((b) => f.includes(`/${b}.`)) && /\.(avif|webp)$/.test(f)).map(impronta))
+  const vietate = new Set(kit.map(impronta).filter((i) => !scelte.has(i)))
+  const sito = [...fileSotto('src'), ...fileSotto('public'), ...(esiste('dist') ? fileSotto('dist') : [])]
+  const fuori = sito.filter((f) => /percorso-\d/i.test(f) || vietate.has(impronta(f)))
+  if (fuori.length) problemi.push(`illustrazioni del kit non scelte nel sito: ${fuori.join(', ')}`)
+  // In pagina: dentro una figure con la dicitura visibile e un alt che comincia con «Illustrazione»
+  const figure = HTML.match(/<figure[^>]*data-bd-illustrazione[\s\S]*?<\/figure>/g) ?? []
+  if (figure.length !== 2) problemi.push(`${figure.length} illustrazioni in pagina invece di 2`)
+  for (const f of figure) {
+    const alt = attributo((f.match(/<img[^>]*>/) ?? [''])[0], 'alt') ?? ''
+    if (!alt.startsWith('Illustrazione')) problemi.push(`alt che non dice «Illustrazione»: ${alt.slice(0, 40)}`)
+    if (!/<figcaption[^>]*>Illustrazione<\/figcaption>/.test(f)) problemi.push('manca la dicitura «Illustrazione» visibile')
+  }
+  // Posizioni: la villa dal disegno in fondo all'hero, la villa al tramonto subito prima del modulo; mai tra realizzazioni o partner
+  if (!/bd-illustrazione--villa-dal-disegno/.test(HERO)) problemi.push('«villa dal disegno» non è in fondo all\'hero')
+  const tramonto = HTML.indexOf('bd-illustrazione--villa-tramonto')
+  const dopo = tramonto < 0 ? null : (HTML.slice(tramonto).match(/<section id="([^"]+)"/) ?? [])[1]
+  if (dopo !== 'preventivo') problemi.push('«villa al tramonto» non è subito prima del modulo')
+  for (const id of ['realizzazioni', 'partner']) if (/bd-illustrazione/.test(sezioneHtml(id))) problemi.push(`illustrazione dentro #${id}`)
+  return problemi.length
+    ? { ok: false, nota: problemi.join('; ') }
+    : { ok: true, nota: 'villa dal disegno in fondo all\'hero, villa al tramonto prima del modulo; entrambe con «Illustrazione» visibile e alt che lo dice; nessun altro file del kit' }
 })
 
 controllo('ingressi senza visibility hidden: tutto raggiungibile con il tasto Tab (§5, §9)', () => {

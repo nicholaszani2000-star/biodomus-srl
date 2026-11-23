@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import BdBarraMobile from './components/BdBarraMobile.tsx'
 import BdFooter from './components/BdFooter.tsx'
 import BdHeader from './components/BdHeader.tsx'
+import BdIllustrazione from './components/BdIllustrazione.tsx'
 import BdQuota from './components/BdQuota.tsx'
 import { tt } from './content/bd-testi.ts'
 import BdHero from './sections/BdHero.tsx'
@@ -30,6 +31,8 @@ export default function App() {
         <BdQuota numero="02" />
         {/* Ancora provvisoria della CTA «Come funziona»: allo step 5 la sostituisce la sezione vera (§6.4). */}
         <div id="come-funziona" className="bd-ancora" />
+        {/* Sempre subito prima del modulo (§2, §6): la casa finita prima della richiesta. Le sezioni nuove vanno sopra. */}
+        <BdIllustrazione id="villa-tramonto" sfumatura="chiaro" />
         <BdModulo />
       </main>
       <BdFooter />

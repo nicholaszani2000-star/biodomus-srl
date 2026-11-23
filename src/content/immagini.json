@@ -76,6 +76,70 @@
       "dicitura": "Illustrazione",
       "dove": "BdRealizzazioni, al posto delle foto finché P1_OK è «no» (oggi la sezione è nascosta)",
       "autorizzazione": "non serve: disegno originale del progetto"
+    },
+    {
+      "id": "villa-dal-disegno",
+      "tipo": "illustrazione-ai",
+      "file": "src/assets/illustrazioni/bd-villa-dal-disegno",
+      "formati": [
+        "avif",
+        "webp"
+      ],
+      "larghezze": [
+        672,
+        1200
+      ],
+      "width": 1200,
+      "height": 381,
+      "varianti": {
+        "mobile": {
+          "larghezza": 672,
+          "width": 672,
+          "height": 448
+        },
+        "largo": {
+          "larghezza": 1200,
+          "width": 1200,
+          "height": 381
+        }
+      },
+      "alt": "Illustrazione: una villa moderna al tramonto che a sinistra è ancora un disegno di linee e a destra è già finita.",
+      "credito": "Illustrazione generata con l'AI, non è una casa costruita",
+      "dicitura": "Illustrazione",
+      "dove": "BdHero, in fondo: la casa che nasce dal disegno, sfumata dal fondo scuro dell'hero al chiaro della pagina",
+      "autorizzazione": "scelta di Niko del 23 novembre 2026 (CLAUDE.md §2)"
+    },
+    {
+      "id": "villa-tramonto",
+      "tipo": "illustrazione-ai",
+      "file": "src/assets/illustrazioni/bd-villa-tramonto",
+      "formati": [
+        "avif",
+        "webp"
+      ],
+      "larghezze": [
+        640,
+        1052
+      ],
+      "width": 1052,
+      "height": 478,
+      "varianti": {
+        "mobile": {
+          "larghezza": 640,
+          "width": 640,
+          "height": 291
+        },
+        "largo": {
+          "larghezza": 1052,
+          "width": 1052,
+          "height": 478
+        }
+      },
+      "alt": "Illustrazione: una villa moderna su due piani al tramonto, con le luci accese e una piscina davanti.",
+      "credito": "Illustrazione generata con l'AI, non è una casa costruita",
+      "dicitura": "Illustrazione",
+      "dove": "subito prima del modulo (#preventivo): la casa finita, sfumata nel fondo chiaro",
+      "autorizzazione": "scelta di Niko del 23 novembre 2026 (CLAUDE.md §2)"
     }
   ]
 }
