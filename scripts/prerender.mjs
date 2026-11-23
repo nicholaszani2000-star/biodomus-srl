@@ -11,7 +11,7 @@ const DIST = join(ROOT, 'dist')
 const SSR = ['entry-server.js', 'entry-server.mjs'].map((f) => join(ROOT, 'dist-ssr', f)).find((f) => existsSync(f))
 if (!SSR) throw new Error('Prerender: manca dist-ssr/entry-server.js. Esegui prima vite build --ssr.')
 
-const { render } = await import(pathToFileURL(SSR).href)
+const { render, renderGrazie } = await import(pathToFileURL(SSR).href)
 const { html, titolo, descrizione, stile, canonico, immagineAlt } = render()
 
 const attr = (testo) =>
@@ -43,6 +43,7 @@ const testa = [
 
 const percorso = join(DIST, 'index.html')
 let pagina = readFileSync(percorso, 'utf8')
+const modello = pagina
 
 const sostituzioni = [
   ['<title>Biodomus</title>', `<title>${attr(titolo)}</title>`],
@@ -57,3 +58,19 @@ if (stile === 'grafite') pagina = pagina.replace('<html lang="it"', '<html lang=
 
 writeFileSync(percorso, pagina)
 console.log(`Prerender: dist/index.html scritto (${(Buffer.byteLength(pagina) / 1024).toFixed(1)} kB, font ${fontTitoli})`)
+
+// /grazie.html: dove bd-lead manda (303) chi invia il modulo senza JavaScript.
+// Stesso CSS della landing, nessun JavaScript, fuori dall'indice dei motori di ricerca.
+const grazie = renderGrazie()
+let paginaGrazie = modello
+  .replace(/\s*<script type="module"[^>]*><\/script>/g, '')
+  .replace(/\s*<link rel="modulepreload"[^>]*>/g, '')
+  .replace('<title>Biodomus</title>', () => `<title>${attr(grazie.titolo)}</title>`)
+  .replace('<!--bd-head-->', () =>
+    [`<meta name="robots" content="noindex" />`, `<meta name="theme-color" content="${stile === 'grafite' ? '#1a1c1e' : '#edece8'}" />`].join('\n    '),
+  )
+  .replace('<!--bd-app-->', () => grazie.html)
+if (stile === 'grafite') paginaGrazie = paginaGrazie.replace('<html lang="it"', '<html lang="it" data-stile="grafite"')
+if (/<script type="module"|<!--bd-/.test(paginaGrazie)) throw new Error('Prerender: grazie.html incompleta')
+writeFileSync(join(DIST, 'grazie.html'), paginaGrazie)
+console.log(`Prerender: dist/grazie.html scritto (${(Buffer.byteLength(paginaGrazie) / 1024).toFixed(1)} kB)`)

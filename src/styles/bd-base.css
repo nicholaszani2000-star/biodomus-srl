@@ -304,6 +304,356 @@ html[data-angolo='investo'] .bd-v-investo {
   }
 }
 
+/* ---------- Modulo di preventivo (§6.9) ---------- */
+
+@layer components {
+  .bd-m {
+    display: grid;
+    gap: 32px;
+  }
+
+  @media (min-width: 1024px) {
+    .bd-m {
+      grid-template-columns: 5fr 7fr;
+      gap: 64px;
+      align-items: start;
+    }
+
+    .bd-m-intro {
+      position: sticky;
+      top: calc(var(--bd-header-h) + 32px);
+    }
+  }
+
+  .bd-m-intro {
+    display: grid;
+    gap: 16px;
+    max-width: 65ch;
+  }
+
+  .bd-m-scheda {
+    border: 1px solid var(--bd-linea);
+    border-radius: var(--bd-raggio-card);
+    background: var(--bd-carta);
+    padding: 24px 16px;
+  }
+
+  @media (min-width: 640px) {
+    .bd-m-scheda {
+      padding: 40px;
+    }
+  }
+
+  .bd-m-form {
+    display: grid;
+    gap: 24px;
+  }
+
+  /* Avanzamento: tre tacche come una linea di quota (dettaglio grafico, aria-hidden) */
+  .bd-m-avanzamento {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .bd-m-tacca {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--bd-linea);
+    transition: background-color 0.2s ease;
+  }
+
+  .bd-m-tacca--fatta {
+    background: var(--bd-legno);
+  }
+
+  .bd-m-passo {
+    display: grid;
+    gap: 24px;
+  }
+
+  .bd-m-titolo {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+  }
+
+  .bd-m-contatore {
+    font-family: var(--bd-font-testo);
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--bd-testo-2);
+  }
+
+  .bd-m-gruppo {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .bd-m-domanda,
+  .bd-m-etichetta {
+    padding: 0;
+    font-weight: 600;
+    color: var(--bd-testo);
+  }
+
+  .bd-m-domanda {
+    margin-bottom: 12px;
+  }
+
+  .bd-m-facoltativo {
+    font-weight: 400;
+    color: var(--bd-testo-2);
+  }
+
+  .bd-m-suggerimento {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--bd-testo-2);
+  }
+
+  .bd-m-scelte {
+    display: grid;
+    gap: 8px;
+  }
+
+  .bd-m-scelte--brevi {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (min-width: 640px) {
+    .bd-m-gruppo:has(input[name='terreno']) .bd-m-scelte {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  /* Scelta a card: la label intera è l'area di tocco (≥ 56 px); il radio vero resta nel flusso. */
+  .bd-m-scelta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 56px;
+    padding: 12px 16px;
+    border: 1.5px solid var(--bd-linea);
+    border-radius: 14px;
+    background: var(--bd-campo);
+    color: var(--bd-testo);
+    line-height: 1.35;
+    cursor: pointer;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .bd-m-scelta:hover {
+    border-color: var(--bd-bordo-campo);
+  }
+
+  .bd-m-scelta:has(input:checked) {
+    border-color: var(--bd-accento);
+    box-shadow: inset 0 0 0 1px var(--bd-accento);
+  }
+
+  .bd-m-scelta:has(input:focus-visible) {
+    outline: 2px solid var(--bd-accento);
+    outline-offset: 3px;
+  }
+
+  .bd-m-scelta input {
+    flex: none;
+    display: grid;
+    place-content: center;
+    width: 22px;
+    height: 22px;
+    margin: 0;
+    border: 1.5px solid var(--bd-bordo-campo);
+    border-radius: 50%;
+    background: var(--bd-campo);
+    appearance: none;
+    cursor: pointer;
+  }
+
+  .bd-m-scelta input::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--bd-accento);
+    transform: scale(0);
+    transition: transform 0.15s ease;
+  }
+
+  .bd-m-scelta input:checked {
+    border-color: var(--bd-accento);
+  }
+
+  .bd-m-scelta input:checked::before {
+    transform: scale(1);
+  }
+
+  .bd-m-scelta input:focus-visible {
+    outline: none;
+  }
+
+  .bd-m-gruppo:has([aria-invalid='true']) .bd-m-scelta {
+    border-color: var(--bd-errore);
+  }
+
+  .bd-m-campo {
+    display: grid;
+    gap: 8px;
+  }
+
+  .bd-m-input {
+    width: 100%;
+    min-height: 52px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--bd-bordo-campo);
+    border-radius: 12px;
+    background: var(--bd-campo);
+    color: var(--bd-testo);
+    font: inherit;
+    font-size: 1.0625rem; /* ≥ 16 px: niente zoom automatico su iOS */
+  }
+
+  .bd-m-input::placeholder {
+    color: var(--bd-testo-2);
+    opacity: 1;
+  }
+
+  .bd-m-input:focus-visible {
+    border-color: var(--bd-accento);
+    outline: 2px solid var(--bd-accento);
+    outline-offset: 2px;
+  }
+
+  .bd-m-input[aria-invalid='true'] {
+    border-color: var(--bd-errore);
+  }
+
+  .bd-m-area {
+    min-height: 120px;
+    resize: vertical;
+  }
+
+  .bd-m-errore {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--bd-errore);
+  }
+
+  .bd-m-errore::before {
+    content: '!';
+    content: '!' / ''; /* decorativo: i lettori di schermo non lo leggono */
+    flex: none;
+    display: inline-grid;
+    place-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--bd-errore);
+    color: var(--bd-campo);
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+    transform: translateY(2px);
+  }
+
+  .bd-m-riepilogo:empty {
+    display: none;
+  }
+
+  .bd-m-riepilogo-box {
+    display: grid;
+    gap: 8px;
+    padding: 16px;
+    border: 1.5px solid var(--bd-errore);
+    border-radius: 12px;
+    color: var(--bd-errore);
+  }
+
+  .bd-m-riepilogo-box ul {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+    padding-left: 20px;
+    list-style: disc;
+  }
+
+  .bd-m-riepilogo-box a {
+    color: var(--bd-errore);
+  }
+
+  .bd-m-errore-invio {
+    margin: 0;
+    padding: 16px;
+    border: 1.5px solid var(--bd-errore);
+    border-radius: 12px;
+    color: var(--bd-testo);
+  }
+
+  .bd-m-privacy {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--bd-testo-2);
+  }
+
+  .bd-m-pulsanti {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .bd-m-pulsanti .bd-cta {
+    flex: 1 1 auto;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .bd-m-pulsanti .bd-cta:disabled {
+    cursor: progress;
+    opacity: 0.75;
+  }
+
+  @media (min-width: 640px) {
+    .bd-m-pulsanti .bd-cta {
+      flex: 0 0 auto;
+    }
+  }
+
+  .bd-m-successo {
+    display: grid;
+    gap: 16px;
+    justify-items: start;
+    font-size: 1.125rem;
+    font-weight: 500;
+  }
+
+  .bd-m-successo svg {
+    color: var(--bd-ok);
+  }
+
+  /* Honeypot: fuori dallo schermo (non display:none, che alcuni bot riconoscono) */
+  .bd-hp {
+    position: absolute;
+    left: -10000px;
+    top: auto;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+}
+
 /* ---------- Riduzione del movimento ---------- */
 
 @media (prefers-reduced-motion: reduce) {

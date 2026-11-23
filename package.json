@@ -14,7 +14,8 @@
     "immagini": "node studio/svg/genera-svg.mjs && node studio/immagini.mjs",
     "check": "npm run typecheck && npm run lint && npm run test && npm run build && npm run controlli",
     "anteprima": "tsx studio/anteprima-server.mts",
-    "screenshot": "node studio/screenshot.mjs"
+    "screenshot": "node studio/screenshot.mjs",
+    "e2e": "node studio/e2e-modulo.mjs"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "5.3.0",

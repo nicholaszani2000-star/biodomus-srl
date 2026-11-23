@@ -213,15 +213,37 @@
       "email": "Controlla l'email: sembra incompleta",
       "telefono": "Il telefono deve avere almeno 9 cifre",
       "scelta": "Scegli una risposta",
-      "comune": "Scrivi il comune o la zona"
+      "comune": "Scrivi il comune o la zona",
+      "riepilogo": "Controlla questi campi:"
     },
     "successo": "Richiesta ricevuta. {REFERENTE} ti scrive {TEMPO_RISPOSTA}. Ti abbiamo mandato una copia via email: controlla anche lo spam.",
     "erroreInvio": "Non siamo riusciti a inviare la richiesta. Riprova tra un minuto oppure scrivi a {EMAIL_PUBBLICA}.",
     "email": {
       "oggettoReferente": "Nuova richiesta · {profilo} · {comune} · {budget}",
       "oggettoCliente": "Abbiamo ricevuto la tua richiesta · {BRAND}",
-      "corpoCliente": "Ciao {nome}, grazie per averci scritto. {REFERENTE} ti risponde {TEMPO_RISPOSTA}. Ecco cosa ci hai inviato: {riepilogo}. Per aggiungere qualcosa rispondi a questa email."
+      "corpoCliente": "Ciao {nome}, grazie per averci scritto. {REFERENTE} ti risponde {TEMPO_RISPOSTA}. Ecco cosa ci hai inviato: {riepilogo}. Per aggiungere qualcosa rispondi a questa email.",
+      "titoloReferente": "Nuova richiesta dal sito",
+      "etichette": {
+        "angolo": "Angolo della campagna",
+        "pagina": "Pagina",
+        "consenso": "Consenso ai cookie di marketing",
+        "dataOra": "Data e ora",
+        "codice": "Codice richiesta",
+        "si": "sì",
+        "no": "no",
+        "vuoto": "—"
+      }
+    },
+    "senzaJs": {
+      "titoloErrore": "Alcuni campi vanno corretti",
+      "torna": "Torna al modulo",
+      "tornaSito": "Torna al sito"
     }
+  },
+  "grazie": {
+    "metaTitolo": "Richiesta ricevuta · {BRAND}",
+    "titolo": "Grazie per averci scritto.",
+    "tornaSitoEtichetta": "{BRAND}: torna alla pagina principale"
   },
   "faq": {
     "titolo": "Domande frequenti",

@@ -58,12 +58,14 @@ controllo('.env.example con tutte le variabili', () => {
 })
 
 // Le stringhe sono spezzate apposta, così questo file non trova sé stesso.
+// Dallo step 3 si cercano le chiavi vere (prefisso più una coda lunga), non le parole: il codice delle funzioni
+// e la migrazione citano «sb_secret_…» e «service_role» nei commenti, e i test usano chiavi finte corte.
 const SEGRETI = [
-  { nome: 'chiave segreta Supabase', re: new RegExp(['sb', 'secret', ''].join('_')) },
-  { nome: 'chiave service role Supabase', re: new RegExp(['service', 'role'].join('_')) },
-  { nome: 'chiave API Brevo', re: new RegExp(['xkeysib', ''].join('-')) },
+  { nome: 'chiave segreta Supabase', re: new RegExp(['sb', 'secret', ''].join('_') + '[A-Za-z0-9_-]{20,}') },
+  { nome: 'chiave legacy Supabase (JWT)', re: new RegExp('e' + 'yJ' + '[A-Za-z0-9_-]{10,}\\.[A-Za-z0-9_-]{10,}\\.[A-Za-z0-9_-]{10,}') },
+  { nome: 'chiave API Brevo', re: new RegExp(['xkeysib', ''].join('-') + '[A-Za-z0-9]{20,}') },
   { nome: 'token Meta', re: new RegExp('(?<![A-Za-z0-9+/=])' + 'E' + 'AA' + '[A-Za-z0-9]{20,}') },
-  { nome: 'chiave 21st.dev', re: new RegExp(['21st', 'sk', ''].join('_')) },
+  { nome: 'chiave 21st.dev', re: new RegExp(['21st', 'sk', ''].join('_') + '[A-Za-z0-9]{10,}') },
 ]
 const IGNORATI = new Set(['.env.example', 'CLAUDE.md'])
 const BINARI = new Set(['.png', '.jpg', '.jpeg', '.webp', '.avif', '.gif', '.ico', '.heic', '.pdf', '.zip', '.woff', '.woff2', '.ttf', '.otf', '.mp4', '.webm'])
@@ -402,6 +404,132 @@ controllo('logo nel sito: positivo senza payoff, con width e height (§2)', () =
   if (loghi.length < 3) problemi.push(`nell'HTML ${loghi.length} riferimenti al logo invece di 3 (header impilato, header orizzontale, footer)`)
   for (const tag of loghi) if (!/\bwidth="\d+"/.test(tag) || !/\bheight="\d+"/.test(tag)) problemi.push(`logo senza width o height: ${tag.slice(0, 80)}`)
   return problemi.length ? { ok: false, nota: problemi.join('; ') } : { ok: true, nota: 'header impilato 44 px e orizzontale 34 px, footer 48 px, tutti con width e height' }
+})
+
+// ---------- STEP 3 ----------
+
+const FORM = (HTML.match(/<form[^>]*>[\s\S]*?<\/form>/) ?? [])[0] ?? ''
+const CAMPI_MODULO = [
+  'profilo', 'terreno', 'comune', 'budget', 'tempistica', 'nome', 'email', 'telefono', 'messaggio',
+  'angolo', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'fbclid', 'pagina', 'event_id', 'avviato_il', 'consenso_marketing', 'sito_web',
+]
+// Gli attributi HTML non distinguono maiuscole e minuscole (React scrive «autoComplete»)
+const attributo = (tag, nome) => (tag.match(new RegExp(`\\s${nome}="([^"]*)"`, 'i')) ?? [])[1]
+const controlliForm = FORM.match(/<(input|textarea|select)\b[^>]*>/g) ?? []
+
+controllo('modulo nell\'HTML prerenderizzato: action, method e campi con name (§4)', () => {
+  if (!FORM) return { ok: false, nota: 'nessun <form> in dist/index.html' }
+  const apertura = FORM.match(/<form[^>]*>/)[0]
+  const problemi = []
+  if (attributo(apertura, 'action') !== '/api/lead') problemi.push(`action="${attributo(apertura, 'action')}" invece di /api/lead`)
+  if ((attributo(apertura, 'method') ?? '').toLowerCase() !== 'post') problemi.push('method diverso da post')
+  const senzaNome = controlliForm.filter((tag) => !attributo(tag, 'name'))
+  if (senzaNome.length) problemi.push(`${senzaNome.length} campi senza name`)
+  const nomi = new Set(controlliForm.map((tag) => attributo(tag, 'name')))
+  const mancanti = CAMPI_MODULO.filter((n) => !nomi.has(n))
+  if (mancanti.length) problemi.push(`mancano i campi: ${mancanti.join(', ')}`)
+  if (!/<button[^>]*type="submit"/.test(FORM)) problemi.push('manca il pulsante di invio')
+  if (!/id="preventivo"/.test(HTML)) problemi.push('manca la sezione #preventivo')
+  return problemi.length
+    ? { ok: false, nota: problemi.join('; ') }
+    : { ok: true, nota: `POST /api/lead, ${CAMPI_MODULO.length} campi con name (${controlliForm.length} controlli), invio presente anche senza JavaScript` }
+})
+
+controllo('ogni campo visibile del modulo ha una label collegata (§9)', () => {
+  const visibili = controlliForm.filter((tag) => attributo(tag, 'type') !== 'hidden')
+  const senzaLabel = visibili.filter((tag) => {
+    const id = attributo(tag, 'id')
+    return !id || !new RegExp(`<label[^>]*\\sfor="${id}"`).test(FORM)
+  })
+  const idDescritti = FORM.match(/aria-describedby="([^"]*)"/g) ?? []
+  const orfani = idDescritti.flatMap((a) => a.slice(18, -1).split(' ')).filter((id) => !HTML.includes(`id="${id}"`))
+  if (senzaLabel.length) return { ok: false, nota: `senza label: ${senzaLabel.map((t) => attributo(t, 'name')).join(', ')}` }
+  if (orfani.length) return { ok: false, nota: `aria-describedby verso id inesistenti: ${orfani.join(', ')}` }
+  const live = /aria-live="polite"/.test(FORM)
+  return live
+    ? { ok: true, nota: `${visibili.length} campi visibili, tutti con <label for>; suggerimenti collegati; riepilogo errori aria-live` }
+    : { ok: false, nota: 'manca il riepilogo degli errori con aria-live="polite"' }
+})
+
+controllo('honeypot presente e nascosto (§4)', () => {
+  const tag = controlliForm.find((t) => attributo(t, 'name') === 'sito_web')
+  if (!tag) return { ok: false, nota: 'manca il campo sito_web' }
+  const problemi = []
+  if (attributo(tag, 'tabindex') !== '-1') problemi.push('tabindex diverso da -1')
+  if (attributo(tag, 'autocomplete') !== 'off') problemi.push('autocomplete diverso da off')
+  if (!/<div class="bd-hp" aria-hidden="true">(?:(?!<\/div>)[\s\S])*name="sito_web"/.test(FORM)) problemi.push('non è dentro .bd-hp con aria-hidden')
+  const css = ASSETS.filter((f) => f.endsWith('.css')).map((f) => readFileSync(join(ROOT, 'dist/assets', f), 'utf8')).join('')
+  const regola = (css.match(/\.bd-hp\{[^}]*\}/) ?? [])[0] ?? ''
+  if (!/position:absolute/.test(regola) || !/left:-10000px/.test(regola)) problemi.push('il CSS di .bd-hp non lo porta fuori dallo schermo')
+  return problemi.length ? { ok: false, nota: problemi.join('; ') } : { ok: true, nota: 'sito_web fuori dallo schermo, tabindex -1, autocomplete off, aria-hidden' }
+})
+
+controllo('nessun dato personale negli URL (§4)', () => {
+  const problemi = []
+  const moduli = HTML.match(/<form[^>]*>/g) ?? []
+  for (const f of moduli) {
+    if ((attributo(f, 'method') ?? 'get').toLowerCase() !== 'post') problemi.push('un <form> usa GET')
+    if ((attributo(f, 'action') ?? '').includes('?')) problemi.push('action con querystring')
+  }
+  const campiPersonali = ['nome', 'email', 'telefono', 'messaggio', 'comune']
+  const reQuery = new RegExp(`[?&](${campiPersonali.join('|')})=`)
+  const js = ASSETS.filter((f) => f.endsWith('.js')).map((f) => readFileSync(join(ROOT, 'dist/assets', f), 'utf8')).join('\n')
+  if (/\/api\/lead\?/.test(js) || /\/api\/lead\?/.test(HTML)) problemi.push('/api/lead chiamata con una querystring')
+  if (reQuery.test(HTML)) problemi.push('un link dell\'HTML porta campi del modulo in querystring')
+  const funzione = esiste('netlify/functions/bd-lead.mts') ? leggi('netlify/functions/bd-lead.mts') : ''
+  const destinazioni = [...funzione.matchAll(/vaiA\('([^']*)'\)/g)].map((m) => m[1])
+  if (!destinazioni.length || destinazioni.some((d) => d.includes('?'))) problemi.push('il 303 della funzione porta una querystring')
+  const modulo = esiste('src/sections/BdModulo.tsx') ? leggi('src/sections/BdModulo.tsx') : ''
+  if (!/method: 'POST'/.test(modulo)) problemi.push('il modulo non invia con POST')
+  if (!/pagina: `\$\{window\.location\.origin\}\$\{window\.location\.pathname\}`/.test(modulo)) problemi.push('il campo pagina non è solo origine + percorso')
+  return problemi.length
+    ? { ok: false, nota: problemi.join('; ') }
+    : { ok: true, nota: 'form e fetch in POST, nessuna querystring con campi del modulo, 303 verso /grazie.html, pagina senza querystring' }
+})
+
+controllo('pagina /grazie.html per l\'invio senza JavaScript', () => {
+  if (!esiste('dist/grazie.html')) return { ok: false, nota: 'manca dist/grazie.html (la genera scripts/prerender.mjs)' }
+  const g = leggi('dist/grazie.html')
+  const problemi = []
+  if (!/<meta name="robots" content="noindex"/.test(g)) problemi.push('manca noindex')
+  if (/<script type="module"/.test(g)) problemi.push('carica JavaScript')
+  if (!/<link rel="stylesheet"[^>]*\/assets\/[^"]+\.css/.test(g)) problemi.push('manca il CSS della landing')
+  if (!/<h1/.test(g) || /<!--bd-|DA COMPILARE|\{[A-Z_]+\}/.test(g)) problemi.push('contenuto incompleto')
+  return problemi.length ? { ok: false, nota: problemi.join('; ') } : { ok: true, nota: 'stesso CSS, nessun JavaScript, noindex, testi da testi.json' }
+})
+
+controllo('funzioni e tabella: /api/lead, keepalive @daily, RLS senza policy', () => {
+  const problemi = []
+  const lead = esiste('netlify/functions/bd-lead.mts') ? leggi('netlify/functions/bd-lead.mts') : ''
+  const keep = esiste('netlify/functions/bd-keepalive.mts') ? leggi('netlify/functions/bd-keepalive.mts') : ''
+  const sql = esiste('supabase/migrations/001_bd_leads.sql') ? leggi('supabase/migrations/001_bd_leads.sql') : ''
+  if (!/export const config: Config = \{ path: '\/api\/lead' \}/.test(lead)) problemi.push('bd-lead senza config.path /api/lead')
+  if (!/export default async function/.test(lead)) problemi.push('bd-lead senza default export')
+  if (!/schedule: '@daily'/.test(keep)) problemi.push('bd-keepalive senza schedule @daily')
+  if (!/enable row level security/i.test(sql)) problemi.push('RLS non attiva su bd_leads')
+  if (/create policy/i.test(sql)) problemi.push('la migrazione crea una policy')
+  const colonne = ['id', 'creato_il', 'profilo', 'terreno', 'comune', 'budget', 'tempistica', 'nome', 'email', 'telefono', 'messaggio', 'angolo', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'fbclid', 'pagina', 'consenso_marketing', 'stato']
+  const mancanti = colonne.filter((c) => !new RegExp(`^\\s+${c}\\s`, 'm').test(sql))
+  if (mancanti.length) problemi.push(`colonne mancanti: ${mancanti.join(', ')}`)
+  const commenti = colonne.filter((c) => !new RegExp(`comment on column public\\.bd_leads\\.${c}\\s+is\\s`, 'i').test(sql))
+  if (commenti.length) problemi.push(`colonne senza commento: ${commenti.join(', ')}`)
+  if (!/create index[^;]*creato_il/i.test(sql)) problemi.push('manca l\'indice su creato_il')
+  return problemi.length ? { ok: false, nota: problemi.join('; ') } : { ok: true, nota: `${colonne.length} colonne commentate, indice su creato_il, RLS attiva e nessuna policy` }
+})
+
+controllo('npm test passa', () => {
+  try {
+    const uscita = execFileSync('npx', ['tsx', '--test', ...readdirSync(join(ROOT, 'studio/test')).filter((f) => f.endsWith('.test.ts')).map((f) => join('studio/test', f))], {
+      cwd: ROOT,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    })
+    const pass = (uscita.match(/^# pass (\d+)/m) ?? [])[1]
+    return { ok: true, nota: `${pass ?? '?'} test superati (validazione, antispam, normalizzazione, SHA-256, BD_MOCK, 303, 502)` }
+  } catch (err) {
+    const fail = ((err.stdout ?? '').match(/^# fail (\d+)/m) ?? [])[1]
+    return { ok: false, nota: `${fail ?? 'alcuni'} test falliti: npm test per i dettagli` }
+  }
 })
 
 // ---------- esito ----------

@@ -15,6 +15,9 @@
   --bd-legno: #a87b4f; /* rovere: solo dettagli grafici, mai testo */
   --bd-ruggine: #b4542d; /* solo disegni */
   --bd-ok: #4f6b58;
+  --bd-errore: #9b2c1f; /* errori del modulo: 6,4:1 sul fondo, 7,1:1 sulla carta */
+  --bd-campo: #ffffff; /* fondo dei campi del modulo */
+  --bd-bordo-campo: #7d8285; /* bordo dei campi: 3,6:1 sulla carta, 3,9:1 sul bianco (WCAG 1.4.11) */
   --bd-griglia: color-mix(in srgb, var(--bd-linea) 60%, transparent);
 
   --bd-font-titoli: 'Bricolage Grotesque', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -40,6 +43,9 @@ html[data-stile='grafite'] {
   --bd-legno: #c49a6c;
   --bd-ruggine: #e08a62;
   --bd-ok: #9db5a3;
+  --bd-errore: #f2a091; /* 8,3:1 sul fondo scuro */
+  --bd-campo: #1a1c1e;
+  --bd-bordo-campo: #8a8f93;
   --bd-griglia: color-mix(in srgb, var(--bd-linea) 70%, transparent);
 
   color-scheme: dark;

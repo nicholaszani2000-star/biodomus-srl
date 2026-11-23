@@ -6,10 +6,11 @@ import BdHeader from './components/BdHeader.tsx'
 import BdQuota from './components/BdQuota.tsx'
 import BdSezione from './components/BdSezione.tsx'
 import { tt } from './content/bd-testi.ts'
+import BdModulo from './sections/BdModulo.tsx'
 import { ANGOLI } from './lib/bd-angolo.ts'
 import { salvaUtm } from './lib/bd-utm.ts'
 
-// Step 1: impalcatura. Le sezioni vere di §6 arrivano dallo step 3 (modulo) allo step 6.
+// Impalcatura dello step 1 più il modulo (step 3). Le altre sezioni di §6 arrivano dallo step 4 allo step 6.
 export default function App() {
   useEffect(() => {
     // Dopo l'hydration: parametri della campagna e movimento (caricato a parte, fuori dal primo bundle).
@@ -52,14 +53,7 @@ export default function App() {
 
         <BdQuota numero="01" />
 
-        <BdSezione id="preventivo" titoloId="preventivo-titolo">
-          <div className="bd-misura grid gap-4">
-            <h2 id="preventivo-titolo" className="m-0" data-bd-focus="">
-              {tt('modulo.titolo')}
-            </h2>
-            <p className="m-0 text-testo-2">{tt('modulo.intro')}</p>
-          </div>
-        </BdSezione>
+        <BdModulo />
       </main>
       <BdFooter />
       <BdBarraMobile />

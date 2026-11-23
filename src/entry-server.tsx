@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
-import { renderToString } from 'react-dom/server'
+import { renderToStaticMarkup, renderToString } from 'react-dom/server'
 import App from './App.tsx'
+import BdGrazie from './components/BdGrazie.tsx'
 import { dati } from './content/dati.ts'
 import { tt } from './content/bd-testi.ts'
 
@@ -29,4 +30,9 @@ export function render(): Prerender {
     canonico: dominio ? `https://${dominio}/` : `https://${dati.NETLIFY_SITO}.netlify.app/`,
     immagineAlt: `${dati.BRAND}: ${tt('hero.angoli.famiglia.titolo')}`,
   }
+}
+
+/** /grazie.html (dopo l'invio senza JavaScript): HTML statico, senza hydration. */
+export function renderGrazie(): { html: string; titolo: string } {
+  return { html: renderToStaticMarkup(<BdGrazie />), titolo: tt('grazie.metaTitolo') }
 }
