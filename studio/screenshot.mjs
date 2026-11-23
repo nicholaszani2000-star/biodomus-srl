@@ -86,6 +86,17 @@ for (const vista of VISTE) {
       if (m.type() === 'error') errori.push(m.text())
     })
     pagina.on('pageerror', (e) => errori.push(e.message))
+    // CLS del caricamento (§9 ≤ 0,05): somma dei layout-shift senza input recente, dall'inizio della pagina
+    await pagina.addInitScript(() => {
+      window.__bdCls = 0
+      try {
+        new PerformanceObserver((lista) => {
+          for (const voce of lista.getEntries()) if (!voce.hadRecentInput) window.__bdCls += voce.value
+        }).observe({ type: 'layout-shift', buffered: true })
+      } catch {
+        window.__bdCls = -1
+      }
+    })
     await pagina.goto(`${BASE}/?a=${angolo}`, { waitUntil: 'networkidle' })
     // Da 1024 px il titolo si rivela per righe (bd-rivela): si aspetta la fine prima della foto del primo schermo
     await pagina.waitForFunction(() => !document.documentElement.classList.contains('bd-rivela'), null, { timeout: 4000 }).catch(() => {})
@@ -98,7 +109,25 @@ for (const vista of VISTE) {
       const varianti = [...document.querySelectorAll('h1 .bd-v')].filter(visibile).map((el) => el.className)
       const titolo = document.querySelector('h1')
       const cta = document.querySelector('#inizio .bd-cta--primaria')
+      // Contrasto WCAG tra testo e fondo della CTA primaria dell'hero
+      const rgb = (c) => {
+        let m = c.match(/^rgba?\(([^)]+)\)/)
+        if (m) return m[1].split(/[\s,/]+/).slice(0, 3).map(Number)
+        m = c.match(/^color\(srgb ([^)]+)\)/)
+        return m ? m[1].split(/[\s/]+/).slice(0, 3).map((v) => Number(v) * 255) : null
+      }
+      const luce = (c) => {
+        const v = rgb(c)
+        if (!v) return null
+        const [r, g, b] = v.map((x) => x / 255).map((x) => (x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4))
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b
+      }
+      const stileCta = cta ? getComputedStyle(cta) : null
+      const l1 = stileCta ? luce(stileCta.color) : null
+      const l2 = stileCta ? luce(stileCta.backgroundColor) : null
       return {
+        cls: Math.round((window.__bdCls ?? -1) * 1000) / 1000,
+        contrastoCta: l1 !== null && l2 !== null ? Math.round(((Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05)) * 10) / 10 : null,
         larghezza: document.documentElement.scrollWidth,
         varianti,
         h1: document.querySelectorAll('h1').length,
@@ -118,6 +147,8 @@ for (const vista of VISTE) {
     if (vista.width === 390) {
       esito(stato.larghezza <= 390, `scroll orizzontale ${etichetta}`, `larghezza documento ${stato.larghezza} px`)
     }
+    esito(stato.cls >= 0 && stato.cls <= 0.05, `CLS al caricamento ${etichetta}`, `${stato.cls} (massimo 0,05)`)
+    esito(stato.contrastoCta !== null && stato.contrastoCta >= 4.5, `contrasto della CTA primaria ${etichetta}`, `${stato.contrastoCta}:1 (minimo 4,5:1)`)
     // §6.2: in un solo schermo chi sei, per chi, cosa fare — titolo e CTA primaria visibili senza scorrere
     esito(
       stato.ctaFine !== null && stato.ctaFine <= vista.height && stato.titoloOpacita === 1,
@@ -175,6 +206,31 @@ for (const vista of VISTE) {
       const mobile = vista.width < 768
 
       const apertura = await leggiStato()
+
+      // §5: --bd-dettaglio (rovere sul chiaro, lime sullo scuro) mai come colore di un testo visibile
+      const testiDettaglio = await pagina.evaluate(() => {
+        const esa = (h) => {
+          const m = h.trim().match(/^#([0-9a-f]{6})$/i)
+          return m ? [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16)).join(', ') : null
+        }
+        const trovati = []
+        const giro = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
+        for (let nodo = giro.nextNode(); nodo; nodo = giro.nextNode()) {
+          const el = nodo.parentElement
+          if (!el || !nodo.textContent.trim() || el.closest('svg, script, style, noscript')) continue
+          if (!el.getClientRects().length) continue
+          const stile = getComputedStyle(el)
+          if (stile.visibility !== 'visible') continue
+          const dettaglio = esa(stile.getPropertyValue('--bd-dettaglio'))
+          if (dettaglio && stile.color === `rgb(${dettaglio})`) trovati.push(`${el.tagName.toLowerCase()}.${el.className}: «${nodo.textContent.trim().slice(0, 30)}»`)
+        }
+        return trovati
+      })
+      esito(
+        testiDettaglio.length === 0,
+        `colore dei dettagli mai sui testi ${vista.width}px`,
+        testiDettaglio.length ? testiDettaglio.slice(0, 4).join(' · ') : 'nessun testo visibile in --bd-dettaglio',
+      )
       await scorriA(() => {
         const parete = document.querySelector('#inizio [data-bd-parete]')
         const r = parete.getBoundingClientRect()
@@ -187,6 +243,10 @@ for (const vista of VISTE) {
         `parete che si ricompone scorrendo ${vista.width}px`,
         `--bd-esplodi ${apertura.esplodi} all'apertura, ${ricomposta.esplodi} con il disegno al 25% dello schermo`,
       )
+
+      // Il prompt dello step 4 chiede la barra visibile dopo 900 px di scorrimento a 390 × 844
+      await scorriA(() => window.scrollTo(0, 900), 600)
+      const a900 = await leggiStato()
 
       await scorriA(() => {
         const header = document.querySelector('.bd-header')
@@ -205,9 +265,11 @@ for (const vista of VISTE) {
       }, 600)
       const sulModulo = await leggiStato()
       esito(
-        mobile ? !apertura.barra && dopoHero.barra && !sulModulo.barra : !apertura.barra && !dopoHero.barra && !sulModulo.barra,
+        mobile
+          ? !apertura.barra && a900.barra && dopoHero.barra && !sulModulo.barra
+          : !apertura.barra && !a900.barra && !dopoHero.barra && !sulModulo.barra,
         `barra mobile ${vista.width}px`,
-        `all'apertura ${apertura.barra ? 'visibile' : 'nascosta'}, dopo l'hero ${dopoHero.barra ? 'visibile' : 'nascosta'}, sul modulo ${sulModulo.barra ? 'visibile' : 'nascosta'}${mobile ? '' : ' (da 768 px non c\'è)'}`,
+        `all'apertura ${apertura.barra ? 'visibile' : 'nascosta'}, a 900 px ${a900.barra ? 'visibile' : 'nascosta'}, su «Per chi è» ${dopoHero.barra ? 'visibile' : 'nascosta'}, sul modulo ${sulModulo.barra ? 'visibile' : 'nascosta'}${mobile ? '' : ' (da 768 px non c\'è)'}`,
       )
       await scorriA(() => window.scrollTo(0, 0), 900)
     }

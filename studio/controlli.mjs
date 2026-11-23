@@ -721,6 +721,26 @@ controllo('titolo dell\'hero rivelato per righe solo da 1024 px, con ripiego (§
     : { ok: true, nota: 'nascosto prima del primo disegno solo da 1024 px; senza JavaScript compare da solo dopo 1,6 s' }
 })
 
+controllo('hero senza immagini in lazy loading (LCP, §9)', () => {
+  const lazy = (HERO.match(/<img[^>]*loading="lazy"[^>]*>/g) ?? []).length
+  return lazy
+    ? { ok: false, nota: `${lazy} immagini dell'hero con loading="lazy": ritarderebbero il primo schermo` }
+    : { ok: true, nota: 'nessuna immagine lazy nell\'hero (oggi il primo schermo è testo prerenderizzato e SVG inline)' }
+})
+
+controllo('ancore delle CTA verso id esistenti, primarie solo verso #preventivo (§6)', () => {
+  const cta = ctaIn(HTML)
+  const interne = cta.filter((c) => c.href?.startsWith('#'))
+  const senzaBersaglio = [...new Set(interne.map((c) => c.href).filter((h) => !HTML.includes(` id="${h.slice(1)}"`)))]
+  const primarieAltrove = cta.filter((c) => c.primaria && c.href !== '#preventivo').map((c) => c.href)
+  const problemi = []
+  if (senzaBersaglio.length) problemi.push(`ancore senza bersaglio: ${senzaBersaglio.join(', ')}`)
+  if (primarieAltrove.length) problemi.push(`CTA primarie verso ${primarieAltrove.join(', ')}`)
+  return problemi.length
+    ? { ok: false, nota: problemi.join('; ') }
+    : { ok: true, nota: `${cta.length} CTA: ancore verso ${[...new Set(interne.map((c) => c.href))].join(' e ')}, tutte esistenti; primarie solo verso #preventivo` }
+})
+
 controllo('ingressi senza visibility hidden: tutto raggiungibile con il tasto Tab (§5, §9)', () => {
   // Solo il codice: i commenti spiegano proprio perché autoAlpha non si usa
   const motion = leggi('src/lib/bd-motion.ts').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
