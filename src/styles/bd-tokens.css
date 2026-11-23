@@ -1,7 +1,8 @@
 /* Token del design system (CLAUDE.md §5).
    STILE «Cemento» = palette chiara su :root. «Grafite» = palette scura su tutta la pagina, attivata da
    data-stile="grafite" sull'elemento html (lo scrive il prerender leggendo dati.ts).
-   STILE «Misto» = palette chiara su :root e palette scura solo dentro .bd-tema-scuro (hero e header sopra l'hero).
+   STILE «Misto» = palette chiara su :root e palette scura solo dentro .bd-tema-scuro (l'hero) e nell'header sopra l'hero
+   (.bd-header--scuro, solo con .bd-js: senza JavaScript l'header resta chiaro).
    --bd-accento deve coincidere con COLORE_ACCENTO di §2: lo verifica studio/controlli.mjs.
    --bd-dettaglio: icone, numeri, linee di quota, sottolineature (rovere sul chiaro, lime del logo sullo scuro), mai testo.
    --bd-tondino: i tondini dell'armatura nei disegni (ruggine sul chiaro, lime del logo sullo scuro). */
@@ -37,7 +38,8 @@
 }
 
 html[data-stile='grafite'],
-.bd-tema-scuro {
+.bd-tema-scuro,
+.bd-js .bd-header--scuro {
   --bd-fondo: #1a1c1e;
   --bd-carta: #232629;
   --bd-testo: #ecebe8;

@@ -17,8 +17,8 @@ let avviato = false
 
 const LARGO = '(min-width: 1024px)'
 const PUNTATORE = '(min-width: 1024px) and (hover: hover) and (pointer: fine)'
-// Oltre questo tempo dall'apertura il titolo dell'hero si mostra senza animazione (il ripiego CSS parte a 1,6 s).
-const RIVELA_ENTRO_MS = 1500
+// Oltre questo tempo dall'apertura il titolo dell'hero si mostra senza animazione (il ripiego CSS parte a 0,6 s).
+const RIVELA_ENTRO_MS = 650
 
 function giaVisibile(elemento: Element): boolean {
   return elemento.getBoundingClientRect().top < window.innerHeight * 0.92

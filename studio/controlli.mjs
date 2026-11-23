@@ -290,9 +290,10 @@ controllo('verde del logo: il positivo solo nel logo, il lime solo nei dettagli 
     if (VERDE.test(contenuto)) problemi.push(`${f}: verde del logo positivo`)
     if (LIME.test(contenuto.replace(TOKEN_LIME, ''))) problemi.push(`${f}: lime fuori dai token dei dettagli`)
   }
-  const token = leggi('src/styles/bd-tokens.css')
+  const token = leggi('src/styles/bd-tokens.css').replace(/\/\*[\s\S]*?\*\//g, '')
   const chiaro = (token.match(/:root\s*\{[\s\S]*?\}/) ?? [''])[0]
-  const scuro = (token.match(/\.bd-tema-scuro\s*\{[\s\S]*?\}/) ?? [''])[0]
+  // Il blocco scuro: il selettore elenca .bd-tema-scuro (e l'header sopra l'hero)
+  const scuro = (token.match(/\.bd-tema-scuro[^{]*\{[\s\S]*?\}/) ?? [''])[0]
   if (LIME.test(chiaro)) problemi.push('bd-tokens.css: lime nella palette chiara')
   if (!/--bd-dettaglio:\s*#8DC21E/i.test(scuro)) problemi.push('bd-tokens.css: nel tema scuro --bd-dettaglio non è il lime del logo')
   if (/--bd-(accento|testo|testo-2)\s*:\s*#8DC21E/i.test(token)) problemi.push('bd-tokens.css: lime usato per testi o pulsanti')
@@ -594,13 +595,17 @@ controllo('hero e header scuri al caricamento con STILE «Misto», il resto chia
   if (STILE !== 'misto') return { ok: true, nota: `STILE «${STILE}»: controllo non applicabile` }
   const problemi = []
   if (!classi((HERO.match(/^<section[^>]*>/) ?? [''])[0]).includes('bd-tema-scuro')) problemi.push('l\'hero non ha bd-tema-scuro')
-  if (!classi((HTML.match(/<header[^>]*>/) ?? [''])[0]).includes('bd-tema-scuro')) problemi.push('l\'header prerenderizzato è chiaro: al caricamento cambierebbe colore')
+  // L'header è scuro dal primo disegno solo con JavaScript: classe bd-header--scuro nel prerender, token scuri sotto .bd-js
+  if (!classi((HTML.match(/<header[^>]*>/) ?? [''])[0]).includes('bd-header--scuro')) problemi.push('l\'header prerenderizzato non ha bd-header--scuro: al caricamento cambierebbe colore')
+  const testa = HTML.slice(0, HTML.indexOf('</head>'))
+  if (!/classList\.add\('bd-js'\)/.test(testa)) problemi.push('lo script nel head non aggiunge bd-js')
+  if (!/[^{}]*\.bd-js \.bd-header--scuro[^{}]*\{[^}]*--bd-fondo:\s*#1a1c1e/i.test(CSS_SITO)) problemi.push('i token scuri non valgono per .bd-js .bd-header--scuro')
   if (!/<meta name="theme-color" content="#1a1c1e"/i.test(HTML)) problemi.push('theme-color diverso dal fondo scuro')
   const scure = (HTML.match(/<section[^>]*class="[^"]*\bbd-tema-scuro\b/g) ?? []).length
   if (scure !== 1) problemi.push(`${scure} sezioni scure invece della sola hero`)
   return problemi.length
     ? { ok: false, nota: problemi.join('; ') }
-    : { ok: true, nota: 'hero con bd-tema-scuro, header scuro già nel prerender, theme-color #1a1c1e, le altre sezioni chiare' }
+    : { ok: true, nota: 'hero con bd-tema-scuro; header scuro dal primo disegno con JavaScript (bd-js), chiaro senza; theme-color #1a1c1e; le altre sezioni chiare' }
 })
 
 controllo('hero: occhiello con la zona, una sola CTA primaria, «Come funziona» secondaria, chi risponde (§6.2, §8)', () => {
@@ -643,12 +648,14 @@ controllo('la sezione nell\'hero: SVG inline con quattro strati, titolo accessib
   const titolo = attributo((svg.match(/^<svg[^>]*>/) ?? [''])[0], 'aria-labelledby')
   if (!titolo || !new RegExp(`<title id="${titolo}">[^<]{20,}</title>`).test(svg)) problemi.push('titolo accessibile assente')
   if (!svg.includes('--bd-esplodi')) problemi.push('gli strati non dipendono da --bd-esplodi')
+  if (/var\(--bd-esplodi,\s*(?!0\))/.test(svg)) problemi.push('senza JavaScript la parete non è composta (--bd-esplodi deve valere 0 di default)')
+  if (!/\.bd-js \[data-bd-parete\] svg\{[^}]*--bd-esplodi:\s*1/.test(CSS_SITO)) problemi.push('con JavaScript la parete non parte staccata (.bd-js [data-bd-parete] svg)')
   if (!/prefers-reduced-motion:\s*reduce/.test(svg)) problemi.push('nessuna regola per la riduzione del movimento')
   const didascalia = testoVisibile((HERO.match(/<figcaption[\s\S]*?<\/figcaption>/) ?? [''])[0])
   if (!/Illustrazione/.test(didascalia)) problemi.push('didascalia senza «Illustrazione»')
   return problemi.length
     ? { ok: false, nota: problemi.join('; ') }
-    : { ok: true, nota: `4 strati, titolo #${titolo}, --bd-esplodi per lo scroll, composta con la riduzione del movimento, «${didascalia}»` }
+    : { ok: true, nota: `4 strati, titolo #${titolo}; senza JavaScript composta con le quote, con JavaScript staccata e ricomposta scorrendo; «${didascalia}»` }
 })
 
 controllo('id unici nell\'HTML (ancore, etichette e retini SVG senza doppioni)', () => {
@@ -691,9 +698,12 @@ controllo('barra mobile: CTA primaria verso il modulo, nascosta finché non serv
   if (classi(tag).includes('bd-barra-mobile--vista')) problemi.push('visibile già nel prerender')
   if (!/\sinert=""/.test(tag)) problemi.push('nel prerender non è inert')
   if (!/\.bd-barra-mobile\{[^}]*visibility:hidden/.test(CSS_SITO)) problemi.push('il CSS non la nasconde finché il JavaScript non la mostra')
+  // env(safe-area-inset-bottom) vale più di 0 solo con viewport-fit=cover: senza, su iPhone la CTA finisce sotto la barra di sistema
+  if (!/<meta name="viewport" content="[^"]*viewport-fit=cover/.test(HTML)) problemi.push('meta viewport senza viewport-fit=cover: il margine sicuro in basso non funziona')
+  if (!/safe-area-inset-bottom/.test(tag + CSS_SITO)) problemi.push('nessun margine per safe-area-inset-bottom')
   return problemi.length
     ? { ok: false, nota: problemi.join('; ') }
-    : { ok: true, nota: 'solo sotto 768 px, nascosta e inert nel prerender, una CTA primaria verso #preventivo' }
+    : { ok: true, nota: 'solo sotto 768 px, nascosta e inert nel prerender, una CTA primaria verso #preventivo, margine sicuro in basso (viewport-fit=cover)' }
 })
 
 controllo('telefono e WhatsApp mai nell\'hero, nella barra mobile o accanto al modulo (§2)', () => {
@@ -713,12 +723,13 @@ controllo('titolo dell\'hero rivelato per righe solo da 1024 px, con ripiego (§
     problemi.push('lo script nel head non limita bd-rivela a 1024 px senza riduzione del movimento')
   }
   if (!/<h1[^>]*data-bd-rivela=""/.test(HERO)) problemi.push('il h1 non ha data-bd-rivela')
-  if (!/@keyframes bd-mostra/.test(CSS_SITO) || !/\.bd-rivela \[data-bd-rivela\]\{[^}]*bd-mostra/.test(CSS_SITO)) {
-    problemi.push('manca il ripiego CSS che mostra il titolo se il JavaScript non arriva')
-  }
+  const ripiego = (CSS_SITO.match(/\.bd-rivela \[data-bd-rivela\]\{[^}]*animation:([^;}]*bd-mostra[^;}]*)/) ?? [])[1] ?? ''
+  const secondi = [...ripiego.matchAll(/(\d*\.?\d+)(m?s)\b/g)].reduce((somma, m) => somma + Number(m[1]) / (m[2] === 'ms' ? 1000 : 1), 0)
+  if (!/@keyframes bd-mostra/.test(CSS_SITO) || !ripiego) problemi.push('manca il ripiego CSS che mostra il titolo se il JavaScript non arriva')
+  else if (secondi > 0.8 + 1e-9) problemi.push(`il ripiego mostra il titolo dopo ${secondi} s: §5 vuole al massimo 0,8 s`)
   return problemi.length
     ? { ok: false, nota: problemi.join('; ') }
-    : { ok: true, nota: 'nascosto prima del primo disegno solo da 1024 px; senza JavaScript compare da solo dopo 1,6 s' }
+    : { ok: true, nota: `nascosto prima del primo disegno solo da 1024 px; se il JavaScript tarda, il CSS lo mostra entro ${secondi} s` }
 })
 
 controllo('hero senza immagini in lazy loading (LCP, §9)', () => {

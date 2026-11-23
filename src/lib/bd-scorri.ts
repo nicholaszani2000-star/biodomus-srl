@@ -14,9 +14,25 @@ function movimentoRidotto(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches
 }
 
+const visibile = (el: Element) => el.getClientRects().length > 0
+
+/**
+ * Dove va il focus dopo lo scroll (§6: il primo campo). Il bersaglio dichiarato (data-bd-focus, nel modulo la risposta 1)
+ * se è visibile; se il modulo è già a un passaggio successivo, il primo campo del passaggio aperto (in un gruppo di radio
+ * quello scelto); altrimenti la sezione stessa. Il tabindex="-1" si aggiunge solo a ciò che non prende il focus da solo:
+ * su un campo lo toglierebbe dal tasto Tab.
+ */
 function mettiFocus(sezione: HTMLElement): void {
-  const destinazione = sezione.querySelector<HTMLElement>('[data-bd-focus]') ?? sezione
-  if (!destinazione.hasAttribute('tabindex')) destinazione.setAttribute('tabindex', '-1')
+  const dichiarato = Array.from(sezione.querySelectorAll<HTMLElement>('[data-bd-focus]')).find(visibile)
+  const campi = Array.from(sezione.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('input, select, textarea')).filter(
+    (el) => el.type !== 'hidden' && el.tabIndex >= 0 && !el.disabled && visibile(el),
+  )
+  const scelto = (el: HTMLElement) => el instanceof HTMLInputElement && el.type === 'radio' && el.checked
+  const primoCampo = campi.find(
+    (el) => !(el instanceof HTMLInputElement && el.type === 'radio') || scelto(el) || !campi.some((altro) => altro.name === el.name && scelto(altro)),
+  )
+  const destinazione = dichiarato ?? primoCampo ?? sezione
+  if (destinazione.tabIndex < 0 && !destinazione.hasAttribute('tabindex')) destinazione.setAttribute('tabindex', '-1')
   destinazione.focus({ preventScroll: true })
 }
 

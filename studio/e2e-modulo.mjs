@@ -286,6 +286,20 @@ for (const angolo of ['famiglia', 'terreno', 'investo']) {
   await pagina.getByRole('button', { name: 'Avanti' }).click()
   await attendi(300)
   const passoPrima = await passoVisibile(pagina)
+
+  // CTA dell'header con il modulo già al passo 2: niente reset, focus sul primo campo del passaggio aperto
+  await pagina.locator('header').getByRole('link', { name: 'Richiedi un preventivo' }).click()
+  await pagina
+    .waitForFunction(() => !!document.activeElement?.closest('.bd-m-passo') && document.activeElement.getClientRects().length > 0, null, { timeout: 4000 })
+    .catch(() => {})
+  const dalHeader = await statoModulo()
+  const tabRadio = await pagina.evaluate(() => document.getElementById('bd-m-profilo-casa')?.getAttribute('tabindex'))
+  esito(
+    passoPrima === 2 && dalHeader.passo === 2 && /^bd-m-/.test(dalHeader.focus ?? '') && tabRadio === null,
+    'CTA con il modulo al passo 2: focus sul passaggio aperto',
+    `passo ${dalHeader.passo}, focus #${dalHeader.focus}; risposta 1 ${tabRadio === null ? 'ancora raggiungibile con Tab' : `con tabindex ${tabRadio}`}`,
+  )
+
   const terreno = await card('Parti dal terreno', 'casa')
   await foto(pagina, 'card-terreno.png')
   esito(

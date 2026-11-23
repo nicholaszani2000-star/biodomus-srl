@@ -111,10 +111,10 @@ html[data-angolo='investo'] .bd-v-investo {
 }
 
 /* Titolo dell'hero da 1024 px: nascosto prima del primo disegno (classe dallo script nel head), poi rivelato per righe.
-   Ripiego: se il JavaScript non arriva, compare da solo dopo 1,6 s. */
+   Ripiego: se il JavaScript non arriva in tempo, compare da solo e a 0,8 s è leggibile (§5: niente blocca la lettura di più). */
 .bd-rivela [data-bd-rivela] {
   opacity: 0;
-  animation: bd-mostra 0.2s ease 1.6s forwards;
+  animation: bd-mostra 0.2s ease 0.6s forwards;
 }
 
 @keyframes bd-mostra {
@@ -702,7 +702,7 @@ html[data-angolo='investo'] .bd-v-investo {
       color 0.2s ease;
   }
 
-  .bd-header.bd-tema-scuro {
+  .bd-js .bd-header--scuro {
     color-scheme: dark;
   }
 
@@ -716,11 +716,11 @@ html[data-angolo='investo'] .bd-v-investo {
   }
 
   .bd-logo-doppio > .bd-logo--negativo,
-  .bd-tema-scuro .bd-logo-doppio > .bd-logo--positivo {
+  .bd-js .bd-header--scuro .bd-logo-doppio > .bd-logo--positivo {
     opacity: 0;
   }
 
-  .bd-tema-scuro .bd-logo-doppio > .bd-logo--negativo {
+  .bd-js .bd-header--scuro .bd-logo-doppio > .bd-logo--negativo {
     opacity: 1;
   }
 
@@ -821,6 +821,12 @@ html[data-angolo='investo'] .bd-v-investo {
     height: auto;
     margin-inline: auto;
     overflow: visible;
+  }
+
+  /* Con JavaScript la parete parte staccata e bd-motion la ricompone scorrendo; senza resta composta, con le quote.
+     Con la riduzione del movimento la ricompone il CSS dentro l'SVG. */
+  .bd-js [data-bd-parete] svg {
+    --bd-esplodi: 1;
   }
 
   @media (min-width: 640px) {

@@ -39,7 +39,8 @@ ${extra}</style>`
 // ---------------------------------------------------------------- la sezione della parete
 // Parete in prospettiva cavaliera (§5, stile «Misto»): quattro blocchi con faccia in sezione, faccia superiore e fianco.
 // Lo stacco tra gli strati lo governa una sola variabile CSS, --bd-esplodi (1 = staccati, 0 = parete ricomposta):
-// senza JavaScript la parete resta staccata, con la riduzione del movimento è già composta, con GSAP si ricompone mentre scorri.
+// senza la variabile (niente JavaScript) la parete è composta con le quote; con JavaScript il CSS della pagina la mette a 1
+// (.bd-js) e GSAP la riporta a 0 mentre scorri; con la riduzione del movimento è già composta.
 // Le classi e gli id hanno il prefisso «bds»: chi la mette inline più volte lo sostituisce (BdParete), così gli stili non si scontrano.
 // Gli strati sono gruppi con classe bd-strato e data-strato (niente id: la stessa parete può comparire due volte nella pagina).
 function sezione() {
@@ -97,9 +98,9 @@ ${linea(bordi[0], yq, bordi[bordi.length - 1], yq, `${p}-q`)}${bordi.map((xi) =>
 .${p}-punto{fill:var(--bd-testo-2,#595E62)}
 .${p}-tondino{fill:var(--bd-tondino,#B4542D);stroke:var(--bd-testo,#1F2326);stroke-width:.8}
 .${p}-q{fill:none;stroke:var(--bd-dettaglio,#A87B4F);stroke-width:1.4;stroke-linecap:round}
-.${p} .bd-strato{transform:translateX(calc(var(--bd-esplodi,1) * var(--bd-stacco,0px)))}
+.${p} .bd-strato{transform:translateX(calc(var(--bd-esplodi,0) * var(--bd-stacco,0px)))}
 .${p} .bd-strato-1{--bd-stacco:${stacchi[0]}px}.${p} .bd-strato-2{--bd-stacco:${stacchi[1]}px}.${p} .bd-strato-3{--bd-stacco:${stacchi[2]}px}.${p} .bd-strato-4{--bd-stacco:${stacchi[3]}px}
-.${p}-quote{opacity:calc(1 - var(--bd-esplodi,1))}
+.${p}-quote{opacity:calc(1 - var(--bd-esplodi,0))}
 .bd-tema-scuro .${p}-luce{filter:url(#${p}-alone)}
 @media (prefers-reduced-motion:reduce){.${p} .bd-strato{transform:none}.${p}-quote{opacity:1}}
 </style>

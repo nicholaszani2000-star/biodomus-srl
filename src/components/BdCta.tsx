@@ -24,9 +24,9 @@ export default function BdCta({
   alClic,
 }: BdCtaProps) {
   const vaiA = (evento: MouseEvent<HTMLAnchorElement>) => {
-    alClic?.()
     if (!href.startsWith('#') || evento.metaKey || evento.ctrlKey || evento.shiftKey) return
     evento.preventDefault()
+    alClic?.()
     scorriA(href.slice(1))
   }
 

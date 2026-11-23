@@ -272,6 +272,22 @@ for (const vista of VISTE) {
         `all'apertura ${apertura.barra ? 'visibile' : 'nascosta'}, a 900 px ${a900.barra ? 'visibile' : 'nascosta'}, su «Per chi è» ${dopoHero.barra ? 'visibile' : 'nascosta'}, sul modulo ${sulModulo.barra ? 'visibile' : 'nascosta'}${mobile ? '' : ' (da 768 px non c\'è)'}`,
       )
       await scorriA(() => window.scrollTo(0, 0), 900)
+
+      // Salti istantanei (scroll programmato, ancore): l'header cambia tema anche senza passare per le posizioni intermedie
+      await scorriA(() => window.scrollTo(0, document.documentElement.scrollHeight), 500)
+      const inFondo = await leggiHeader()
+      await scorriA(() => window.scrollTo(0, 0), 500)
+      const inCima = await leggiHeader()
+      const conAncora = await browser.newPage({ viewport: { width: vista.width, height: vista.height } })
+      await conAncora.goto(`${BASE}/?a=famiglia#preventivo`, { waitUntil: 'networkidle' })
+      await conAncora.waitForTimeout(500)
+      const temaAncora = await conAncora.evaluate(() => document.querySelector('.bd-header').dataset.bdTema)
+      await conAncora.close()
+      esito(
+        inFondo.tema === 'chiaro' && inCima.tema === 'scuro' && temaAncora === 'chiaro',
+        `header con i salti di scroll ${vista.width}px`,
+        `salto in fondo: ${inFondo.tema}; salto in cima: ${inCima.tema}; pagina aperta su #preventivo: ${temaAncora}`,
+      )
     }
 
     // §5: una sola CTA primaria per schermata, al caricamento e scorrendo tutta la pagina.
@@ -301,6 +317,37 @@ for (const vista of VISTE) {
     if (angolo === 'famiglia') await pagina.screenshot({ path: join(USCITA, `pagina-intera-${vista.width}.png`), fullPage: true })
     await pagina.close()
   }
+}
+
+// Senza JavaScript (§3.8): header chiaro con il logo positivo, parete composta con le quote, titolo visibile, barra nascosta.
+{
+  const contesto = await browser.newContext({ viewport: { width: 390, height: 844 }, javaScriptEnabled: false })
+  const pagina = await contesto.newPage()
+  await pagina.goto(`${BASE}/`, { waitUntil: 'networkidle' })
+  const stato = await pagina.evaluate(() => {
+    const header = document.querySelector('.bd-header')
+    const positivo = header.querySelector('.bd-logo--positivo')
+    const svg = document.querySelector('#inizio [data-bd-parete] svg')
+    const strati = [...svg.querySelectorAll('.bd-strato')].map((s) => getComputedStyle(s).transform)
+    return {
+      js: document.documentElement.classList.contains('bd-js'),
+      fondoHeader: getComputedStyle(header).backgroundColor,
+      logoPositivo: positivo ? Number(getComputedStyle(positivo).opacity) : 0,
+      composta: strati.length === 4 && strati.every((t) => t === 'none' || t === 'matrix(1, 0, 0, 1, 0, 0)'),
+      quote: Number(getComputedStyle(svg.querySelector('[class*="-quote"]')).opacity),
+      titolo: Number(getComputedStyle(document.querySelector('h1')).opacity),
+      barra: getComputedStyle(document.querySelector('.bd-barra-mobile')).visibility,
+    }
+  })
+  await pagina.locator('#inizio .bd-hero__visuale').screenshot({ path: join(USCITA, 'senza-js-parete-390.png') })
+  await pagina.screenshot({ path: join(USCITA, 'senza-js-390.png') })
+  const ok = !stato.js && stato.fondoHeader === 'rgb(237, 236, 232)' && stato.logoPositivo === 1 && stato.composta && stato.quote === 1 && stato.titolo === 1 && stato.barra === 'hidden'
+  esito(
+    ok,
+    'senza JavaScript 390px',
+    `header ${stato.fondoHeader} con logo positivo ${stato.logoPositivo === 1 ? 'visibile' : 'nascosto'}, parete ${stato.composta ? 'composta' : 'staccata'} con quote a ${stato.quote}, titolo ${stato.titolo}, barra ${stato.barra}`,
+  )
+  await contesto.close()
 }
 
 // Riduzione del movimento: niente Lenis, parete già composta con le quote, titolo subito visibile, nessun errore.
