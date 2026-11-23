@@ -30,40 +30,120 @@ function salva(nome, svg) {
 const stile = (p, extra = '') => `<style>
 .${p}l{fill:none;stroke:var(--bd-testo,#1F2326);stroke-width:1.5;stroke-linejoin:round}
 .${p}f{stroke:var(--bd-testo-2,#595E62);stroke-width:.8;fill:none}
-.${p}q{fill:none;stroke:var(--bd-legno,#A87B4F);stroke-width:1.25;stroke-linecap:round}
+.${p}q{fill:none;stroke:var(--bd-dettaglio,#A87B4F);stroke-width:1.25;stroke-linecap:round}
 .${p}r{fill:var(--bd-ruggine,#B4542D);stroke:var(--bd-testo,#1F2326);stroke-width:1}
 .${p}c{fill:var(--bd-carta,#F8F7F5)}
 .${p}d{fill:var(--bd-testo-2,#595E62)}
 ${extra}</style>`
 
-// ---------------------------------------------------------------- la sezione della parete
+// ---------------------------------------------------------------- la parete in prospettiva cavaliera
+// Step 4 (CLAUDE.md §5, «la sezione»): quattro blocchi, da fuori a dentro isolante esterno, calcestruzzo armato,
+// isolante interno, intonaco. Per ogni strato: faccia in sezione con il retino da tavola tecnica, faccia superiore
+// e fianco (profondità a 45°, ridotta a 3/4). Disegnata composta: chi la anima (bd-motion) stacca i blocchi
+// spostando i gruppi .bd-strato-1…4 lungo x e disegna le quote (pathLength="1").
+// Niente id nei gruppi: il disegno va inline anche due volte nella stessa pagina (BdHero e BdSistema).
 function sezione() {
-  const p = 'bds'
-  const y0 = 24
-  const y1 = 228
-  // Strati da fuori a dentro (§5): isolante esterno, calcestruzzo armato, isolante interno, intonaco
-  const x = [64, 118, 238, 292, 304]
-  const h = y1 - y0
-  const tondini = [52, 98, 144, 190]
-  const tick = (cx, cy) => linea(cx - 5, cy + 5, cx + 5, cy - 5, `${p}q`)
-  const yq1 = 256
-  const yq2 = 280
+  const p = 'bdw'
+  const spessori = [58, 104, 46, 14]
+  const H = 260
+  const profondita = 150
+  const dx = profondita * 0.75 * Math.SQRT1_2
+  const dy = dx
+  const X0 = 100
+  const Y0 = 128
+  const Y1 = Y0 + H
+  const xs = spessori.reduce((acc, t) => [...acc, acc[acc.length - 1] + t], [X0])
+  const W = 470
+  const altezza = 440
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 368 300" width="368" height="300" role="img" aria-labelledby="${p}t">
-<title id="${p}t">Sezione della parete: isolante esterno, calcestruzzo armato, isolante interno, intonaco</title>
-${stile(p)}
-<defs>
-<pattern id="${p}-punti" width="8" height="8" patternUnits="userSpaceOnUse"><circle cx="4" cy="4" r="1.1" class="${p}d" opacity=".55"/></pattern>
-<pattern id="${p}-45" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V8" class="${p}f" opacity=".7"/></pattern>
-</defs>
-<g id="bd-strato-1"><rect x="${x[0]}" y="${y0}" width="${x[1] - x[0]}" height="${h}" class="${p}c"/><rect x="${x[0]}" y="${y0}" width="${x[1] - x[0]}" height="${h}" fill="url(#${p}-punti)"/><rect x="${x[0]}" y="${y0}" width="${x[1] - x[0]}" height="${h}" class="${p}l"/></g>
-<g id="bd-strato-2"><rect x="${x[1]}" y="${y0}" width="${x[2] - x[1]}" height="${h}" class="${p}c"/><rect x="${x[1]}" y="${y0}" width="${x[2] - x[1]}" height="${h}" fill="url(#${p}-45)"/><rect x="${x[1]}" y="${y0}" width="${x[2] - x[1]}" height="${h}" class="${p}l"/>${tondini.map((y) => `<circle cx="140" cy="${y}" r="5" class="${p}r"/><circle cx="216" cy="${y}" r="5" class="${p}r"/>`).join('')}</g>
-<g id="bd-strato-3"><rect x="${x[2]}" y="${y0}" width="${x[3] - x[2]}" height="${h}" class="${p}c"/><rect x="${x[2]}" y="${y0}" width="${x[3] - x[2]}" height="${h}" fill="url(#${p}-punti)"/><rect x="${x[2]}" y="${y0}" width="${x[3] - x[2]}" height="${h}" class="${p}l"/></g>
-<g id="bd-strato-4"><rect x="${x[3]}" y="${y0}" width="${x[4] - x[3]}" height="${h}" class="${p}c"/><rect x="${x[3]}" y="${y0}" width="${x[4] - x[3]}" height="${h}" class="${p}l"/></g>
-<g id="bd-quote">
-${x.map((xi) => linea(xi, y1 + 6, xi, yq2 + 6, `${p}q`)).join('')}
-${linea(x[0], yq1, x[4], yq1, `${p}q`)}${x.map((xi) => tick(xi, yq1)).join('')}
-${linea(x[0], yq2, x[4], yq2, `${p}q`)}${tick(x[0], yq2)}${tick(x[4], yq2)}
+  // retini, disegnati come tracciati (niente <pattern> con id)
+  function zigzag(x, w, y0, h) {
+    const passo = 9
+    const pts = []
+    for (let i = 0, y = y0 + 4; y <= y0 + h - 4; i++, y += passo) pts.push([i % 2 ? x + w - 4 : x + 4, y])
+    return `<path class="${p}f" d="M${pts.map(([a, b]) => `${n(a)} ${n(b)}`).join('L')}"/>`
+  }
+  function diagonali(x0, x1, y0, y1, passo = 11) {
+    let d = ''
+    for (let c = x0 + y0 + passo / 2; c < x1 + y1; c += passo) {
+      const xa = Math.max(x0, c - y1)
+      const xb = Math.min(x1, c - y0)
+      if (xb - xa > 1) d += `M${n(xa)} ${n(c - xa)}L${n(xb)} ${n(c - xb)}`
+    }
+    return `<path class="${p}f" d="${d}"/>`
+  }
+  function punti(x, w, y0, h, passo = 6) {
+    let d = ''
+    for (let y = y0 + passo / 2; y < y0 + h; y += passo) {
+      for (let xx = x + passo / 2 - 1; xx < x + w - 1; xx += passo) d += `M${n(xx)} ${n(y)}h.01`
+    }
+    return `<path class="${p}d" d="${d}"/>`
+  }
+
+  function strato(i) {
+    const xa = xs[i]
+    const xb = xs[i + 1]
+    const fronte = [[xa, Y0], [xb, Y0], [xb, Y1], [xa, Y1]]
+    const sopra = [[xa, Y0], [xb, Y0], [xb + dx, Y0 - dy], [xa + dx, Y0 - dy]]
+    const fianco = [[xb, Y0], [xb + dx, Y0 - dy], [xb + dx, Y1 - dy], [xb, Y1]]
+    const retino = [
+      () => zigzag(xa, xb - xa, Y0, H),
+      () => diagonali(xa, xb, Y0, Y1),
+      () => zigzag(xa, xb - xa, Y0, H),
+      () => punti(xa, xb - xa, Y0, H),
+    ][i]()
+
+    let armatura = ''
+    if (i === 1) {
+      const barre = [xa + 20, xb - 20]
+      const alto = 40
+      let ferri = ''
+      for (const xb0 of barre) {
+        ferri += `M${n(xb0)} ${n(Y1 - 8)}V${n(Y0 - alto)}`
+        for (const z of [0.45, 0.9]) ferri += `M${n(xb0 + z * dx)} ${n(Y0 - z * dy)}v${-alto}`
+      }
+      let tondini = ''
+      for (let y = Y0 + 22; y < Y1 - 10; y += 43) {
+        tondini += `<circle class="${p}r" cx="${n(barre[0] + 7)}" cy="${n(y)}" r="4.2"/><circle class="${p}r" cx="${n(barre[1] - 7)}" cy="${n(y)}" r="4.2"/>`
+      }
+      armatura = `<g class="${p}g"><path class="${p}b" d="${ferri}"/>${tondini}</g>`
+    }
+
+    return `<g class="bd-strato bd-strato-${i + 1}" data-strato="${i + 1}">
+<path class="${p}s" d="${pathPoligono(fianco)}"/><path class="${p}t" d="${pathPoligono(sopra)}"/><path class="${p}c" d="${pathPoligono(fronte)}"/>
+${retino}
+<path class="${p}l" d="${pathPoligono(fianco)}${pathPoligono(sopra)}${pathPoligono(fronte)}"/>
+${armatura}
+</g>`
+  }
+
+  // quote: spessori sotto, altezza a sinistra; ogni quota è un tracciato con pathLength="1" per disegnarla
+  const yq = Y1 + 26
+  const xq = X0 - 30
+  const tick = (cx, cy) => `M${n(cx - 5)} ${n(cy + 5)}L${n(cx + 5)} ${n(cy - 5)}`
+  const quotaSotto =
+    xs.map((x) => `M${n(x)} ${n(Y1 + 8)}V${n(yq + 8)}`).join('') + `M${n(X0)} ${n(yq)}H${n(xs[4])}` + xs.map((x) => tick(x, yq)).join('')
+  const quotaLato = `M${n(X0 - 8)} ${n(Y0)}H${n(xq - 8)}M${n(X0 - 8)} ${n(Y1)}H${n(xq - 8)}M${n(xq)} ${n(Y0)}V${n(Y1)}${tick(xq, Y0)}${tick(xq, Y1)}`
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${altezza}" width="${W}" height="${altezza}" role="img" aria-labelledby="${p}t">
+<title id="${p}t">Parete in prospettiva: isolante esterno, calcestruzzo armato, isolante interno, intonaco</title>
+<style>
+.${p}l{fill:none;stroke:var(--bd-testo,#1F2326);stroke-width:1.4;stroke-linejoin:round}
+.${p}f{fill:none;stroke:var(--bd-testo-2,#595E62);stroke-width:.8;stroke-linejoin:round;opacity:.8}
+.${p}d{fill:none;stroke:var(--bd-testo-2,#595E62);stroke-width:1.8;stroke-linecap:round;opacity:.8}
+.${p}c{fill:var(--bd-carta,#F8F7F5)}
+.${p}t{fill:#E2E1DC;fill:color-mix(in srgb,var(--bd-linea,#D3D1CC) 45%,var(--bd-fondo,#EDECE8))}
+.${p}s{fill:#D7D5D0;fill:color-mix(in srgb,var(--bd-linea,#D3D1CC) 85%,var(--bd-fondo,#EDECE8))}
+.${p}q{fill:none;stroke:var(--bd-dettaglio,#A87B4F);stroke-width:1.25;stroke-linecap:round}
+.${p}b{fill:none;stroke:var(--bd-dettaglio,#A87B4F);stroke-width:2.2;stroke-linecap:round}
+.${p}r{fill:var(--bd-dettaglio,#A87B4F)}
+.${p}o{flood-color:var(--bd-dettaglio,#A87B4F);flood-opacity:.55}
+</style>
+<defs><filter id="${p}-alone" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow class="${p}o" dx="0" dy="0" stdDeviation="1.6"/></filter></defs>
+${[0, 1, 2, 3].map(strato).join('\n')}
+<g class="bd-quote ${p}g">
+<path class="${p}q bd-quota-linea" pathLength="1" d="${quotaSotto}"/>
+<path class="${p}q bd-quota-linea" pathLength="1" d="${quotaLato}"/>
 </g>
 </svg>`
 }
@@ -282,6 +362,22 @@ const icone = {
   'bd-icona-firma.svg': icona(
     'Firma del contratto',
     '<path d="M6 2.75h8.5l4 4v14.5H6Z"/><path d="M14.5 2.75v4h4"/><path d="M8.5 9.5h6M8.5 12.25h4"/><path d="M8.5 17.25c1-1.75 1.75-1.75 2.25-.5s1.25 1.25 2-.25 1.5-1 2.25.25"/>',
+  ),
+  // --- icone di «Per chi è» (step 4) ---
+  // casa con la porta: vuoi costruire casa
+  'bd-icona-casa.svg': icona(
+    'Casa',
+    '<path d="M3 11.25 12 4l9 7.25"/><path d="M5.5 9.5V20h13V9.5"/><path d="M10 20v-5.25h4V20"/><path d="M15.5 6.4V4.5h2v3.5"/>',
+  ),
+  // lotto in prospettiva con il picchetto: hai già il terreno
+  'bd-icona-terreno.svg': icona(
+    'Terreno',
+    '<path d="M2.5 16.5 9 13.25l12.5 3.25-6.5 3.75Z"/><path d="M12.5 16.75V5"/><path d="M12.5 5.25h5.5l-1.75 2.25 1.75 2.25h-5.5"/><path d="M5.75 14.6l.9.25M17 16.95l.9.25" stroke-dasharray="1 2"/>',
+  ),
+  // due villette affiancate: vuoi investire
+  'bd-icona-villette.svg': icona(
+    'Villette',
+    '<path d="M2 12.5 6.75 8.5l4.75 4"/><path d="M3.5 11.25V19.5h6.5v-8.25"/><path d="M12.5 10.5 17.25 6.5 22 10.5"/><path d="M14 9.25V19.5h6.5V9.25"/><path d="M1.5 19.5h21"/><path d="M5.75 19.5v-3h2v3M16.25 19.5v-3h2v3"/>',
   ),
   // chiave di casa
   'bd-icona-chiave.svg': icona(

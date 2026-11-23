@@ -14,6 +14,7 @@
   --color-accento: var(--bd-accento);
   --color-su-accento: var(--bd-su-accento);
   --color-legno: var(--bd-legno);
+  --color-dettaglio: var(--bd-dettaglio);
   --color-ruggine: var(--bd-ruggine);
   --color-ok: var(--bd-ok);
   --font-titoli: var(--bd-font-titoli);

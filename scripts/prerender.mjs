@@ -37,7 +37,8 @@ const testa = [
   `<meta property="og:image:height" content="630" />`,
   `<meta property="og:image:alt" content="${attr(immagineAlt)}" />`,
   `<meta name="twitter:card" content="summary_large_image" />`,
-  `<meta name="theme-color" content="${stile === 'grafite' ? '#1a1c1e' : '#edece8'}" />`,
+  // Colore della barra del browser: quello del primo schermo (scuro con «Misto» e «Grafite»)
+  `<meta name="theme-color" content="${stile === 'cemento' ? '#edece8' : '#1a1c1e'}" />`,
   `<link rel="preload" href="/assets/${fontTitoli}" as="font" type="font/woff2" crossorigin />`,
 ].join('\n    ')
 

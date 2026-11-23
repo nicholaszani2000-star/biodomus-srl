@@ -193,10 +193,16 @@ controllo('nessuna risorsa esterna caricata da HTML o CSS', () => {
   return esterne.length ? { ok: false, nota: `risorse esterne: ${esterne.join(', ')}` } : { ok: true, nota: 'solo percorsi del sito' }
 })
 
-controllo('tre varianti dell\'angolo nel titolo (§7)', () => {
+controllo('tre varianti dell\'angolo nel titolo e nel sottotitolo (§7)', () => {
   const h1 = (HTML.match(/<h1[\s\S]*?<\/h1>/) ?? [''])[0]
-  const mancanti = ['famiglia', 'terreno', 'investo'].filter((a) => !h1.includes(`bd-v-${a}`))
-  return mancanti.length ? { ok: false, nota: `mancano nel h1: ${mancanti.join(', ')}` } : { ok: true, nota: 'famiglia, terreno e investo nel h1' }
+  const sotto = (HTML.match(/<p class="bd-hero__sotto[^"]*">[\s\S]*?<\/p>/) ?? [''])[0]
+  const problemi = []
+  for (const [dove, html] of [['h1', h1], ['sottotitolo', sotto]]) {
+    const mancanti = ['famiglia', 'terreno', 'investo'].filter((a) => (html.match(new RegExp(`bd-v-${a}\\b`, 'g')) ?? []).length !== 1)
+    if (mancanti.length) problemi.push(`${dove}: manca o è doppia ${mancanti.join(', ')}`)
+  }
+  if (!/<section id="inizio"[^>]*>[\s\S]*?<h1 id="inizio-titolo"/.test(HTML)) problemi.push('il h1 non è nell\'hero #inizio')
+  return problemi.length ? { ok: false, nota: problemi.join('; ') } : { ok: true, nota: 'famiglia, terreno e investo una volta ciascuna nel h1 e nel sottotitolo dell\'hero' }
 })
 
 controllo('script dell\'angolo nel head prima del CSS', () => {
@@ -266,7 +272,15 @@ const nomeDato = (chiave) => (DATI_TS.match(new RegExp(`\\b${chiave}:\\s*'([^']+
 
 controllo('verde del logo solo dentro il logo e le favicon (§2)', () => {
   const verdi = /#(4F8F17|8DC21E)\b/i
-  const ammessi = new Set(['src/assets/svg/bd-logo.svg', 'src/assets/svg/bd-logo-orizzontale.svg', 'public/favicon.svg'])
+  const ammessi = new Set([
+    'src/assets/svg/bd-logo.svg',
+    'src/assets/svg/bd-logo-orizzontale.svg',
+    'src/assets/svg/bd-logo-negativo.svg',
+    'src/assets/svg/bd-logo-orizzontale-negativo.svg',
+    'public/favicon.svg',
+  ])
+  // Dallo step 4 il lime esce dal logo solo come --bd-dettaglio della palette scura (bd-tokens.css e CSS compilato)
+  const senzaDettaglio = (f, testo) => (f === 'src/styles/bd-tokens.css' || /^dist\/assets\/.*\.css$/.test(f) ? testo.replace(/--bd-dettaglio:\s*#8dc21e/gi, '') : testo)
   const testo = (n) => /\.(css|ts|tsx|json|svg|html|webmanifest)$/.test(n)
   const daControllare = [
     ...fileSotto('src', testo),
@@ -274,10 +288,10 @@ controllo('verde del logo solo dentro il logo e le favicon (§2)', () => {
     'index.html',
     ...ASSETS.filter((f) => f.endsWith('.css')).map((f) => `dist/assets/${f}`),
   ].filter((f) => !ammessi.has(f) && !/^dist\/assets\/bd-logo/.test(f))
-  const trovati = daControllare.filter((f) => verdi.test(leggi(f)))
+  const trovati = daControllare.filter((f) => verdi.test(senzaDettaglio(f, leggi(f))))
   return trovati.length
     ? { ok: false, nota: `il verde del logo è usato fuori dal logo in: ${trovati.join(', ')}` }
-    : { ok: true, nota: `${daControllare.length} file di stile e componenti senza il verde del logo` }
+    : { ok: true, nota: `${daControllare.length} file senza il verde del logo; il lime solo come --bd-dettaglio della palette scura` }
 })
 
 controllo('illustrazioni AI del kit fuori da src/ e dist/ (§2)', () => {
@@ -530,6 +544,88 @@ controllo('npm test passa', () => {
     const fail = ((err.stdout ?? '').match(/^# fail (\d+)/m) ?? [])[1]
     return { ok: false, nota: `${fail ?? 'alcuni'} test falliti: npm test per i dettagli` }
   }
+})
+
+// ---------- STEP 4 ----------
+
+const sezioneHtml = (id) => {
+  const inizio = HTML.indexOf(`<section id="${id}"`)
+  if (inizio < 0) return ''
+  const fine = HTML.indexOf('</section>', inizio)
+  return HTML.slice(inizio, fine + '</section>'.length)
+}
+const HERO = sezioneHtml('inizio')
+const voceClaude = (chiave) => (leggi('CLAUDE.md').match(new RegExp(`^- ${chiave}(?: \\([^)]*\\))?: (.+)$`, 'm')) ?? [])[1]?.trim() ?? ''
+
+controllo('STILE di dati.ts uguale a §2 di CLAUDE.md', () => {
+  const daBrief = voceClaude('STILE').split(/[\s(]/)[0].toLowerCase()
+  const daDati = (DATI_TS.match(/^\s*STILE:\s*'([a-z]+)',\s*(\/\/.*)?$/m) ?? [])[1]
+  const ok = !!daBrief && daBrief === daDati
+  return { ok, nota: `CLAUDE.md «${daBrief || '?'}» · dati.ts «${daDati ?? '?'}»` }
+})
+
+controllo('nessuna immagine dell\'hero ha loading="lazy" (§9)', () => {
+  if (!HERO) return { ok: false, nota: 'hero #inizio non trovato' }
+  const pigre = (HERO.match(/<img\b[^>]*>/g) ?? []).filter((tag) => /loading="lazy"/.test(tag))
+  const conPriorita = (HERO.match(/<img\b[^>]*>/g) ?? []).filter((tag) => /fetchpriority="high"/i.test(tag)).length
+  return pigre.length
+    ? { ok: false, nota: `${pigre.length} immagini dell'hero con loading="lazy"` }
+    : { ok: true, nota: `nessuna immagine pigra nell'hero (${conPriorita ? 'foto con fetchpriority="high"' : 'nessuna foto autorizzata: la visuale è la parete SVG inline'})` }
+})
+
+controllo('tutte le CTA portano a #preventivo o #come-funziona e gli id esistono (§6)', () => {
+  const cta = HTML.match(/<a\b[^>]*class="[^"]*\bbd-cta\b[^"]*"[^>]*>/g) ?? []
+  const destinazioni = cta.map((tag) => attributo(tag, 'href') ?? '')
+  const sbagliate = destinazioni.filter((d) => d !== '#preventivo' && d !== '#come-funziona')
+  const mancanti = [...new Set(destinazioni)].filter((d) => !HTML.includes(`id="${d.slice(1)}"`))
+  if (!cta.length) return { ok: false, nota: 'nessuna CTA nell\'HTML' }
+  if (sbagliate.length) return { ok: false, nota: `CTA verso: ${[...new Set(sbagliate)].join(', ')}` }
+  if (mancanti.length) return { ok: false, nota: `id mancanti: ${mancanti.join(', ')}` }
+  const conteggio = (d) => destinazioni.filter((x) => x === d).length
+  return { ok: true, nota: `${cta.length} CTA: ${conteggio('#preventivo')} verso #preventivo, ${conteggio('#come-funziona')} verso #come-funziona; gli id esistono` }
+})
+
+controllo('nessun fatto dell\'hero con dati vuoti o non autorizzati (§2, §8)', () => {
+  if (!HERO) return { ok: false, nota: 'hero #inizio non trovato' }
+  const testo = testoVisibile(HERO)
+  const problemi = []
+  if (/\b(null|undefined|NaN)\b|DA COMPILARE|\{[A-Z_]+\}/.test(testo)) problemi.push('segnaposto o valore vuoto nel testo')
+  const fatti = (HERO.match(/<ul class="bd-hero__fatti"[\s\S]*?<\/ul>/) ?? [''])[0]
+  const voci = (fatti.match(/<li>/g) ?? []).length
+  if (/<li>(?:(?!<\/li>)[\s\S])*<span>\s*<\/span>/.test(fatti)) problemi.push('un fatto è vuoto')
+  const p1Ok = autorizzato('P1_OK')
+  if (!p1Ok && /Classe energetica/i.test(testo)) problemi.push('classe energetica senza P1_OK «sì»')
+  if (/TEMPI:\s*null/.test(DATI_TS) && /Consegna:/.test(testo)) problemi.push('consegna senza TEMPI')
+  if (/GARANZIA:\s*null/.test(DATI_TS) && /garanzia/i.test(testo)) problemi.push('garanzia senza GARANZIA')
+  return problemi.length
+    ? { ok: false, nota: problemi.join('; ') }
+    : { ok: true, nota: `${voci} fatti brevi, tutti con dati presenti${p1Ok ? '' : '; niente classe energetica (P1_OK «no»)'}` }
+})
+
+controllo('STILE «Misto»: hero scuro, sezioni dopo l\'hero chiare (§5)', () => {
+  const stile = (DATI_TS.match(/^\s*STILE:\s*'([a-z]+)',\s*(\/\/.*)?$/m) ?? [])[1]
+  const sezioni = [...HTML.matchAll(/<section\b[^>]*>/g)].map((m) => m[0])
+  const scura = (tag) => /class="[^"]*\bbd-tema-scuro\b/.test(tag)
+  if (!sezioni.length) return { ok: false, nota: 'nessuna sezione' }
+  const hero = sezioni.find((tag) => /id="inizio"/.test(tag))
+  const dopo = sezioni.filter((tag) => tag !== hero)
+  if (stile === 'cemento') return { ok: !sezioni.some(scura), nota: 'STILE «Cemento»: nessuna sezione scura' }
+  if (!hero || !scura(hero)) return { ok: false, nota: `STILE «${stile}»: l'hero non ha .bd-tema-scuro` }
+  if (stile === 'misto' && dopo.some(scura)) return { ok: false, nota: 'una sezione dopo l\'hero ha .bd-tema-scuro' }
+  if (/<html[^>]*data-stile="grafite"/.test(HTML) && stile !== 'grafite') return { ok: false, nota: 'html con data-stile="grafite" ma STILE non è «Grafite»' }
+  return { ok: true, nota: `STILE «${stile}»: hero con .bd-tema-scuro, ${dopo.length} sezioni dopo l'hero chiare` }
+})
+
+controllo('nessuna regola CSS usa --bd-dettaglio come colore del testo (§5)', () => {
+  const re = /(^|[;{\s])color\s*:\s*var\(\s*--(bd|color)-dettaglio\b/i
+  const daControllare = [
+    ...fileSotto('src', (n) => /\.(css|svg|tsx)$/.test(n)),
+    ...ASSETS.filter((f) => f.endsWith('.css')).map((f) => `dist/assets/${f}`),
+  ]
+  const trovati = daControllare.filter((f) => re.test(leggi(f)) || (f.endsWith('.tsx') && /\btext-dettaglio\b/.test(leggi(f))))
+  return trovati.length
+    ? { ok: false, nota: `--bd-dettaglio come colore del testo in: ${trovati.join(', ')}` }
+    : { ok: true, nota: `${daControllare.length} file: --bd-dettaglio solo su tratti, riempimenti e fondi dei dettagli grafici` }
 })
 
 // ---------- esito ----------

@@ -53,7 +53,8 @@ export interface DatiProgetto {
   CLASSE: string | null
   BUDGET_MIN: number
   REALIZZAZIONI: readonly Realizzazione[]
-  STILE: 'cemento' | 'grafite'
+  /** cemento: tutta chiara · grafite: tutta scura · misto: hero (e header sopra l'hero) scuri, il resto chiaro */
+  STILE: 'cemento' | 'grafite' | 'misto'
   COLORE_ACCENTO: string
   SUPABASE_URL: string | null
   BREVO_MITTENTE: string | null
@@ -133,7 +134,7 @@ export const dati = {
   BUDGET_MIN: 250_000,
   REALIZZAZIONI: leggiRealizzazioni(REALIZZAZIONI_TESTO),
 
-  STILE: 'cemento',
+  STILE: 'misto',
   COLORE_ACCENTO: '#383E42',
 
   SUPABASE_URL: null, // arriva allo step 8

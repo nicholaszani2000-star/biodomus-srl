@@ -3,6 +3,7 @@ import { emailPubblica, fasceBudget } from '../content/dati.ts'
 import { riempi, tt } from '../content/bd-testi.ts'
 import { leggiAngolo, type Angolo } from '../lib/bd-angolo.ts'
 import { leggiConsenso } from '../lib/bd-consenso.ts'
+import { allaPreselezione, urlHaAngolo } from '../lib/bd-preselezione.ts'
 import {
   CAMPI_PER_PASSO,
   CAMPO_HONEYPOT,
@@ -92,14 +93,12 @@ interface SceltaProps {
   errori: Errori
   onScegli: (valore: string) => void
   suggerimento?: string
-  /** il radio scelto riceve il focus quando una CTA porta al modulo (bd-scorri) */
-  focusIniziale?: boolean
   /** risposte brevi: due colonne già a 390 px */
   brevi?: boolean
 }
 
 /** Gruppo di scelte a card grandi: radio veri dentro la label, area di tocco di almeno 56 px. */
-function Scelta({ campo, domanda, opzioni, scelto, errori, onScegli, suggerimento, focusIniziale = false, brevi = false }: SceltaProps) {
+function Scelta({ campo, domanda, opzioni, scelto, errori, onScegli, suggerimento, brevi = false }: SceltaProps) {
   const errore = errori[campo]
   const descrittoDa = [suggerimento ? idSuggerimento(campo) : null, errore ? idErrore(campo) : null].filter(Boolean).join(' ') || undefined
   return (
@@ -122,7 +121,6 @@ function Scelta({ campo, domanda, opzioni, scelto, errori, onScegli, suggeriment
               onChange={() => onScegli(o.valore)}
               required
               aria-invalid={errore ? true : undefined}
-              data-bd-focus={focusIniziale && scelto === o.valore ? '' : undefined}
             />
             <span>{o.etichetta}</span>
           </label>
@@ -163,10 +161,13 @@ function Campo({ campo, facoltativo = false, suggerimento, errori, children }: C
   )
 }
 
-/** Titolo del passaggio: riceve il focus quando il passaggio cambia. «Passo N di 3» solo con JavaScript. */
-function PassoTitolo({ passo, idratato }: { passo: Passo; idratato: boolean }) {
+/**
+ * Titolo del passaggio: riceve il focus quando il passaggio cambia e quando una CTA porta al modulo
+ * (data-bd-focus, letto da bd-scorri: solo il passaggio visibile). «Passo N di 3» solo con JavaScript.
+ */
+function PassoTitolo({ passo, idratato, attivo }: { passo: Passo; idratato: boolean; attivo: boolean }) {
   return (
-    <h3 id={`bd-m-titolo-${passo}`} className="bd-m-titolo" tabIndex={-1}>
+    <h3 id={`bd-m-titolo-${passo}`} className="bd-m-titolo" tabIndex={-1} data-bd-focus={attivo ? '' : undefined}>
       {idratato ? <span className="bd-m-contatore">{riempi(tt('modulo.avanzamento'), { passo })}</span> : null}
       <span>{tt(`modulo.passo${passo}.titolo`)}</span>
     </h3>
@@ -189,9 +190,11 @@ export default function BdModulo() {
   const [errori, setErrori] = useState<Errori>({})
   const [scelte, setScelte] = useState<Partial<Record<CampoScelta, string>>>({})
   const [testo, setTesto] = useState<Partial<Record<CampoTesto, string>>>({})
+  // Angolo scelto da una card di «Per chi è» quando l'URL non ne porta uno (§6.3)
+  const [angoloDaCard, setAngoloDaCard] = useState<Angolo | null>(null)
 
   // Preselezione dall'angolo: solo dopo l'hydration (prima vale famiglia), finché la persona non sceglie.
-  const angolo: Angolo = idratato ? leggiAngolo() : 'famiglia'
+  const angolo: Angolo = angoloDaCard ?? (idratato ? leggiAngolo() : 'famiglia')
   const prescelte = PRESCELTE[angolo]
   const profilo = scelte.profilo ?? prescelte.profilo
   const terreno = scelte.terreno ?? prescelte.terreno ?? ''
@@ -201,6 +204,18 @@ export default function BdModulo() {
     // Con JavaScript la validazione la fa il modulo, con i messaggi di §8 al posto di quelli del browser.
     if (formRef.current) formRef.current.noValidate = true
   }, [])
+
+  // Card di «Per chi è»: risposte del passo 1 già scelte, si torna al passo 1 (i campi scritti restano).
+  useEffect(
+    () =>
+      allaPreselezione((scelta) => {
+        setScelte((s) => ({ ...s, profilo: scelta.profilo, ...(scelta.terreno ? { terreno: scelta.terreno } : {}) }))
+        setErrori({})
+        setPasso(1)
+        if (!urlHaAngolo()) setAngoloDaCard(scelta.angolo)
+      }),
+    [],
+  )
 
   // Focus dopo il cambio di passaggio, dopo un errore o sul messaggio finale.
   useEffect(() => {
@@ -343,7 +358,7 @@ export default function BdModulo() {
 
             {/* Passo 1 · Il progetto */}
             <div className="bd-m-passo" role="group" aria-labelledby="bd-m-titolo-1" hidden={nascosto(1)}>
-              <PassoTitolo passo={1} idratato={idratato} />
+              <PassoTitolo passo={1} idratato={idratato} attivo={passo === 1} />
               <Scelta
                 campo="profilo"
                 domanda={tt('modulo.passo1.domandaProfilo')}
@@ -351,7 +366,6 @@ export default function BdModulo() {
                 scelto={profilo}
                 errori={errori}
                 onScegli={scegli('profilo')}
-                focusIniziale
               />
               <Scelta
                 campo="terreno"
@@ -365,7 +379,7 @@ export default function BdModulo() {
 
             {/* Passo 2 · Dove e quando */}
             <div className="bd-m-passo" role="group" aria-labelledby="bd-m-titolo-2" hidden={nascosto(2)}>
-              <PassoTitolo passo={2} idratato={idratato} />
+              <PassoTitolo passo={2} idratato={idratato} attivo={idratato && passo === 2} />
               <Campo campo="comune" suggerimento={tt('modulo.passo2.comuneSuggerimento')} errori={errori}>
                 {(descrittoDa, invalido) => (
                   <input
@@ -405,7 +419,7 @@ export default function BdModulo() {
 
             {/* Passo 3 · I tuoi contatti */}
             <div className="bd-m-passo" role="group" aria-labelledby="bd-m-titolo-3" hidden={nascosto(3)}>
-              <PassoTitolo passo={3} idratato={idratato} />
+              <PassoTitolo passo={3} idratato={idratato} attivo={idratato && passo === 3} />
               <Campo campo="nome" errori={errori}>
                 {(descrittoDa, invalido) => (
                   <input

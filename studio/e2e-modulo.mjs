@@ -133,7 +133,7 @@ for (const angolo of ['famiglia', 'terreno', 'investo']) {
     `${nome}: preselezione dall'angolo`,
     `profilo ${scelte.profilo}, terreno ${scelte.terreno ?? '—'}`,
   )
-  esito(scelte.focus === `bd-m-profilo-${attese.profilo}`, `${nome}: CTA dell'hero porta al modulo`, `focus su #${scelte.focus}`)
+  esito(scelte.focus === 'bd-m-titolo-1', `${nome}: CTA dell'hero porta al modulo`, `focus su #${scelte.focus}`)
   await foto(pagina, `${angolo}-1-progetto.png`)
 
   // Passo 1: senza «Hai già il terreno?» l'Avanti mostra l'errore; poi si sceglie
@@ -210,6 +210,42 @@ for (const angolo of ['famiglia', 'terreno', 'investo']) {
   const urlPulito = !/nome|email|telefono|comune|@/.test(new URL(successo.url).search + new URL(successo.url).hash) && inviati.every((i) => !i.url.includes('?'))
   esito(urlPulito && inviati.length === 1, `${nome}: un solo POST, nessun dato negli URL`, `${inviati.length} POST su /api/lead, URL finale ${new URL(successo.url).search}${new URL(successo.url).hash}`)
   esito(errori.length === 0, `${nome}: console`, errori.length ? errori.join(' | ') : 'nessun errore')
+  await contesto.close()
+}
+
+// ---------- card «Hai già il terreno» senza ?a=: preselezione e angolo dalla card (step 4) ----------
+{
+  const { contesto, pagina, errori, inviati } = await nuovaPagina()
+  await pagina.goto(`${BASE}/`, { waitUntil: 'networkidle' })
+  const aperta = Date.now()
+  await pagina.locator('#per-chi').scrollIntoViewIfNeeded()
+  await attendi(1200)
+  await pagina.locator('#per-chi .bd-card').nth(1).locator('.bd-cta').click()
+  await pagina.waitForFunction(() => document.activeElement?.id === 'bd-m-titolo-1', null, { timeout: 4000 }).catch(() => {})
+  const scelte = await pagina.evaluate(() => ({
+    profilo: document.querySelector('input[name="profilo"]:checked')?.value ?? null,
+    terreno: document.querySelector('input[name="terreno"]:checked')?.value ?? null,
+    focus: document.activeElement?.id ?? null,
+  }))
+  esito(
+    scelte.profilo === 'casa' && scelte.terreno === 'si' && scelte.focus === 'bd-m-titolo-1',
+    'card «Hai già il terreno»: preselezione e focus sul passo 1',
+    `profilo ${scelte.profilo}, terreno ${scelte.terreno ?? '—'}, focus su #${scelte.focus}`,
+  )
+  await pagina.getByRole('button', { name: 'Avanti' }).click()
+  await pagina.locator('#bd-m-comune').fill('Cislago')
+  await pagina.locator('label[for="bd-m-budget-fascia-1"]').click()
+  await pagina.locator('label[for="bd-m-tempistica-6-12"]').click()
+  await pagina.getByRole('button', { name: 'Avanti' }).click()
+  await pagina.locator('#bd-m-nome').fill('Sara Rossi')
+  await pagina.locator('#bd-m-email').fill('sara.rossi@esempio.it')
+  await attendi(Math.max(0, 3000 - (Date.now() - aperta)) + 200)
+  await pagina.getByRole('button', { name: 'Invia la richiesta' }).click()
+  await pagina.locator('#bd-m-successo').waitFor({ timeout: 5000 })
+  const corpo = JSON.parse(inviati[0]?.corpo || '{}')
+  const riga = righe().find((r) => r.event_id === corpo.event_id)
+  esito(riga?.angolo === 'terreno' && riga?.terreno === 'si', 'card «Hai già il terreno»: angolo terreno nella riga', riga ? `angolo ${riga.angolo}, terreno ${riga.terreno}` : 'riga non trovata')
+  esito(errori.length === 0, 'card: console', errori.length ? errori.join(' | ') : 'nessun errore')
   await contesto.close()
 }
 

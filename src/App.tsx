@@ -1,16 +1,17 @@
 import { useEffect } from 'react'
 import BdBarraMobile from './components/BdBarraMobile.tsx'
-import BdCta from './components/BdCta.tsx'
 import BdFooter from './components/BdFooter.tsx'
 import BdHeader from './components/BdHeader.tsx'
 import BdQuota from './components/BdQuota.tsx'
 import BdSezione from './components/BdSezione.tsx'
 import { tt } from './content/bd-testi.ts'
+import BdHero from './sections/BdHero.tsx'
 import BdModulo from './sections/BdModulo.tsx'
-import { ANGOLI } from './lib/bd-angolo.ts'
+import BdPerChi from './sections/BdPerChi.tsx'
 import { salvaUtm } from './lib/bd-utm.ts'
 
-// Impalcatura dello step 1 più il modulo (step 3). Le altre sezioni di §6 arrivano dallo step 4 allo step 6.
+// Sezioni nell'ordine di §6. Dallo step 4: hero, «Per chi è», modulo e barra mobile.
+// «Come funziona» qui è solo l'ancora (titolo e intro) per le CTA secondarie: la sezione vera arriva allo step 5.
 export default function App() {
   useEffect(() => {
     // Dopo l'hydration: parametri della campagna e movimento (caricato a parte, fuori dal primo bundle).
@@ -25,33 +26,21 @@ export default function App() {
       </a>
       <BdHeader />
       <main id="contenuto" tabIndex={-1}>
-        <BdSezione id="inizio" titoloId="inizio-titolo" ingresso={false} classe="pt-16 pb-24 sm:pt-24 lg:pt-32">
-          <div className="grid max-w-4xl gap-6">
-            <p className="bd-occhiello m-0">{tt('hero.occhiello')}</p>
-            <h1 id="inizio-titolo" className="m-0">
-              {ANGOLI.map((angolo) => (
-                <span key={angolo} className={`bd-v bd-v-${angolo}`}>
-                  {tt(`hero.angoli.${angolo}.titolo`)}
-                </span>
-              ))}
-            </h1>
-            <p className="bd-misura m-0 text-lg text-testo-2 sm:text-xl">
-              {ANGOLI.map((angolo) => (
-                <span key={angolo} className={`bd-v bd-v-${angolo}`}>
-                  {tt(`hero.angoli.${angolo}.sottotitolo`)}
-                </span>
-              ))}
-            </p>
-            <div className="grid gap-3">
-              <div>
-                <BdCta>{tt('hero.ctaPrimaria')}</BdCta>
-              </div>
-              <p className="bd-piccolo m-0">{tt('hero.sottoCta')}</p>
-            </div>
+        <BdHero />
+        <BdPerChi />
+
+        <BdQuota numero="01" />
+
+        <BdSezione id="come-funziona" titoloId="come-funziona-titolo">
+          <div className="bd-misura grid gap-4">
+            <h2 id="come-funziona-titolo" className="m-0" data-bd-focus="" tabIndex={-1}>
+              {tt('comeFunziona.titolo')}
+            </h2>
+            <p className="m-0 text-testo-2">{tt('comeFunziona.intro')}</p>
           </div>
         </BdSezione>
 
-        <BdQuota numero="01" />
+        <BdQuota numero="02" />
 
         <BdModulo />
       </main>

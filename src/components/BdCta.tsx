@@ -9,6 +9,10 @@ interface BdCtaProps {
   compatta?: boolean
   classe?: string
   freccia?: boolean
+  /** effetto Magnet leggero (§5): solo desktop con puntatore fine, lo attiva bd-motion */
+  magnete?: boolean
+  /** prima dello scroll (per esempio la preselezione del modulo dalle card di «Per chi è») */
+  alClic?: () => void
 }
 
 /** CTA di §5: primaria a pillola piena, secondaria con bordo. Senza JavaScript resta un'ancora vera. */
@@ -19,17 +23,20 @@ export default function BdCta({
   compatta = false,
   classe = '',
   freccia = true,
+  magnete = false,
+  alClic,
 }: BdCtaProps) {
   const vaiA = (evento: MouseEvent<HTMLAnchorElement>) => {
     if (!href.startsWith('#') || evento.metaKey || evento.ctrlKey || evento.shiftKey) return
     evento.preventDefault()
+    alClic?.()
     scorriA(href.slice(1))
   }
 
   const classi = ['bd-cta', `bd-cta--${variante}`, compatta ? 'bd-cta--compatta' : '', classe].filter(Boolean).join(' ')
 
   return (
-    <a className={classi} href={href} onClick={vaiA}>
+    <a className={classi} href={href} onClick={vaiA} data-bd-magnete={magnete ? '' : undefined}>
       <span>{children}</span>
       {freccia ? (
         <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true" focusable="false">

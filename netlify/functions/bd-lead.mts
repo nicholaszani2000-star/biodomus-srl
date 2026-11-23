@@ -2,7 +2,8 @@
 //
 // Verificato sulla documentazione ufficiale (step 3):
 // - Netlify Functions: default export (req: Request, context: Context) => Response, config.path (@netlify/functions 6.1.1);
-//   funzioni sincrone fino a 30 s, quindi le chiamate esterne partono in parallelo, ognuna con 8 s di timeout.
+//   funzioni sincrone fino a 60 s (documentazione di novembre 2026); le chiamate esterne partono comunque in parallelo,
+//   ognuna con 8 s di timeout, così la risposta arriva in pochi secondi e un servizio lento non blocca gli altri.
 // - Brevo: POST https://api.brevo.com/v3/smtp/email, header api-key, campi sender, to, replyTo, subject,
 //   htmlContent, textContent (SDK ufficiale getbrevo/brevo-node).
 // - Supabase: POST {SUPABASE_URL}/rest/v1/bd_leads con Prefer: return=minimal (PostgREST). Le chiavi segrete

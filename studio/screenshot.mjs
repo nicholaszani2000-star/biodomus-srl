@@ -2,6 +2,8 @@
 // Se l'anteprima non è già avviata, la avvia da solo e la chiude alla fine.
 // Browser, in ordine: Chromium di Playwright (PLAYWRIGHT_BROWSERS_PATH), Chromium o Chrome di sistema; senza browser salta.
 // Controlla: errori di console, scroll orizzontale a 390 px, variante giusta del titolo per angolo.
+// Dallo step 4: titolo e CTA primaria sopra la piega a 390 × 844, logo negativo sopra l'hero e positivo dopo,
+// contrasto della CTA primaria dell'hero, barra mobile (nascosta al caricamento, visibile dopo 900 px), CLS ≤ 0,05.
 // Screenshot in studio/report/screenshot/ (escluso da git), riepilogo in studio/report/screenshot/riepilogo.json.
 
 import { chromium } from 'playwright'
@@ -79,13 +81,96 @@ const esito = (ok, nome, nota) => {
 for (const vista of VISTE) {
   for (const angolo of ANGOLI) {
     const pagina = await browser.newPage({ viewport: { width: vista.width, height: vista.height } })
+    // CLS durante il caricamento (layout-shift senza input recente), registrato prima di ogni script della pagina
+    await pagina.addInitScript(() => {
+      window.__bdCls = 0
+      try {
+        new PerformanceObserver((lista) => {
+          for (const voce of lista.getEntries()) if (!voce.hadRecentInput) window.__bdCls += voce.value
+        }).observe({ type: 'layout-shift', buffered: true })
+      } catch {
+        // browser senza Layout Instability API
+      }
+    })
     const errori = []
     pagina.on('console', (m) => {
       if (m.type() === 'error') errori.push(m.text())
     })
     pagina.on('pageerror', (e) => errori.push(e.message))
     await pagina.goto(`${BASE}/?a=${angolo}`, { waitUntil: 'networkidle' })
-    await pagina.waitForTimeout(400)
+    await pagina.waitForTimeout(1500)
+
+    const etichettaVista = `${angolo} ${vista.width}px`
+    const cls = await pagina.evaluate(() => window.__bdCls ?? 0)
+    esito(cls <= 0.05, `CLS al caricamento ${etichettaVista}`, `CLS ${cls.toFixed(3)} (massimo 0,05)`)
+
+    // Primo schermo: titolo e CTA primaria interamente sopra la piega; contrasto della CTA primaria
+    const primo = await pagina.evaluate(() => {
+      const h1 = document.querySelector('#inizio h1')
+      const cta = document.querySelector('#inizio .bd-cta--primaria')
+      if (!h1 || !cta) return null
+      const lum = (rgb) => {
+        const [r, g, b] = rgb.match(/\d+(\.\d+)?/g).slice(0, 3).map(Number).map((v) => v / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4))
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b
+      }
+      const stile = getComputedStyle(cta)
+      const [a, b] = [lum(stile.color), lum(stile.backgroundColor)].sort((x, y) => y - x)
+      return {
+        fondoTitolo: Math.round(h1.getBoundingClientRect().bottom),
+        fondoCta: Math.round(cta.getBoundingClientRect().bottom),
+        contrasto: (a + 0.05) / (b + 0.05),
+        colori: `${stile.color} su ${stile.backgroundColor}`,
+      }
+    })
+    if (vista.width === 390) {
+      esito(
+        !!primo && primo.fondoTitolo <= vista.height && primo.fondoCta <= vista.height,
+        `titolo e CTA sopra la piega ${etichettaVista}`,
+        primo ? `titolo fino a ${primo.fondoTitolo} px, CTA fino a ${primo.fondoCta} px (piega a ${vista.height})` : 'titolo o CTA non trovati',
+      )
+    }
+    if (angolo === 'famiglia') {
+      esito(!!primo && primo.contrasto >= 4.5, `contrasto della CTA primaria dell'hero ${vista.width}px`, primo ? `${primo.contrasto.toFixed(1)}:1 (${primo.colori})` : 'CTA non trovata')
+
+      // Header: logo negativo sopra l'hero, positivo quando l'hero è uscito
+      const loghi = async () =>
+        pagina.evaluate(() => {
+          const op = (sel) => Number(getComputedStyle(document.querySelector(sel)).opacity)
+          return { negativo: op('.bd-header .bd-logo--negativo'), positivo: op('.bd-header .bd-logo--positivo') }
+        })
+      const sopra = await loghi()
+      await pagina.evaluate(() => {
+        const hero = document.getElementById('inizio')
+        window.scrollTo(0, hero.offsetTop + hero.offsetHeight + 40)
+      })
+      await pagina.waitForTimeout(900)
+      const dopo = await loghi()
+      await pagina.evaluate(() => window.scrollTo(0, 0))
+      await pagina.waitForTimeout(600)
+      esito(
+        sopra.negativo === 1 && sopra.positivo === 0 && dopo.positivo === 1 && dopo.negativo === 0,
+        `logo dell'header: negativo sopra l'hero, positivo dopo ${vista.width}px`,
+        `al caricamento negativo ${sopra.negativo}/positivo ${sopra.positivo}; dopo l'hero negativo ${dopo.negativo}/positivo ${dopo.positivo}`,
+      )
+    }
+
+    // Barra mobile: nascosta al caricamento, visibile dopo 900 px di scroll (solo sotto 768 px)
+    if (vista.width === 390) {
+      const barra = () =>
+        pagina.evaluate(() => {
+          const el = document.querySelector('.bd-barra-mobile')
+          if (!el) return null
+          const r = el.getBoundingClientRect()
+          return getComputedStyle(el).visibility === 'visible' && r.top < window.innerHeight - 10
+        })
+      const alCaricamento = await barra()
+      await pagina.evaluate(() => window.scrollTo(0, 900))
+      await pagina.waitForTimeout(900)
+      const dopo900 = await barra()
+      await pagina.evaluate(() => window.scrollTo(0, 0))
+      await pagina.waitForTimeout(600)
+      esito(alCaricamento === false && dopo900 === true, `barra mobile ${etichettaVista}`, `al caricamento ${alCaricamento ? 'visibile' : 'nascosta'}, dopo 900 px ${dopo900 ? 'visibile' : 'nascosta'}`)
+    }
 
     const stato = await pagina.evaluate(() => {
       const visibile = (el) => !!el && getComputedStyle(el).display !== 'none'
@@ -144,12 +229,14 @@ for (const vista of VISTE) {
       const altezza = document.documentElement.scrollHeight
       for (let y = 0; y < altezza; y += Math.round(window.innerHeight * 0.75)) {
         window.scrollTo(0, y)
-        await new Promise((r) => setTimeout(r, 120))
+        // 300 ms: la barra mobile entra ed esce in 200 ms
+        await new Promise((r) => setTimeout(r, 300))
         const n = visibiliNelloSchermo()
         if (n > 1) problemi.push(`${n} a ${Math.round(window.scrollY)} px`)
       }
       window.scrollTo(0, 0)
-      await new Promise((r) => setTimeout(r, 120))
+      // l'header torna scuro in 200 ms: si fotografa a transizione finita
+      await new Promise((r) => setTimeout(r, 500))
       return problemi
     })
     esito(affollate.length === 0, `una CTA primaria per schermata ${etichetta}`, affollate.length ? affollate.join(', ') : 'mai più di una')

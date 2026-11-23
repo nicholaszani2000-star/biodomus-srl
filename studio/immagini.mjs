@@ -2,7 +2,8 @@
 //
 // Legge studio/originali/ e scrive:
 //   src/assets/img/          foto autorizzate in AVIF e WebP, 480 · 768 · 1200 · 1600 px, senza metadati
-//   src/assets/svg/          bd-logo.svg e bd-logo-orizzontale.svg dal kit (mai payoff né 3D)
+//   src/assets/svg/          bd-logo.svg e bd-logo-orizzontale.svg dal kit (mai payoff né 3D),
+//                            più i negativi per il primo schermo scuro (STILE «Misto» o «Grafite»)
 //   src/assets/partner/      loghi dei partner con autorizzazione «sì»
 //   public/                  favicon, icone, site.webmanifest, og-image.jpg
 //   src/content/immagini.json  manifesto: file, larghezze, width/height, alt, credito, dove, autorizzazione
@@ -182,11 +183,14 @@ async function main() {
     report.partner.push(nomeFile)
   }
 
-  // 3. Logo: dal kit, solo positivo senza payoff (§2). Mai le versioni con payoff né quelle 3D.
+  // 3. Logo: dal kit, positivo e negativo senza payoff (§2). Mai le versioni con payoff né quelle 3D.
+  //    Il negativo serve sullo scuro: header sopra l'hero con STILE «Misto» o «Grafite».
   const kitSvg = join(KIT, 'logo', 'svg')
   const logoSito = [
     ['biodomus-logo-positivo.svg', 'bd-logo.svg', 'impilato'],
     ['biodomus-logo-orizzontale-positivo.svg', 'bd-logo-orizzontale.svg', 'orizzontale'],
+    ['biodomus-logo-negativo.svg', 'bd-logo-negativo.svg', 'impilatoNegativo'],
+    ['biodomus-logo-orizzontale-negativo.svg', 'bd-logo-orizzontale-negativo.svg', 'orizzontaleNegativo'],
   ]
   const logo = {}
   if (existsSync(kitSvg)) {
@@ -255,8 +259,8 @@ async function main() {
     {
       id: 'sezione',
       file: 'src/assets/svg/bd-sezione.svg',
-      alt: "Disegno in sezione della parete: strato isolante esterno, calcestruzzo armato con i tondini d'acciaio, strato isolante interno e intonaco.",
-      dove: 'BdSistema, disegno grande con gli strati bd-strato-1…4 che si aprono al tocco; BdHero, la sezione animata',
+      alt: "Disegno della parete in prospettiva: strato isolante esterno, calcestruzzo armato con i tondini d'acciaio, strato isolante interno e intonaco.",
+      dove: 'BdHero, la parete animata (strati staccati che si ricompongono scorrendo); BdSistema, disegno grande con gli strati bd-strato-1…4 che si aprono al tocco',
       dicitura: 'Illustrazione schematica, non in scala.',
     },
     {

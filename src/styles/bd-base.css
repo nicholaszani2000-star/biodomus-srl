@@ -107,7 +107,7 @@ html:not([data-angolo]) .bd-v-famiglia,
 html[data-angolo='famiglia'] .bd-v-famiglia,
 html[data-angolo='terreno'] .bd-v-terreno,
 html[data-angolo='investo'] .bd-v-investo {
-  display: inline;
+  display: var(--bd-v-display, inline); /* nel titolo dell'hero block: SplitText divide la variante per righe */
 }
 
 /* ---------- Componenti condivisi ---------- */
@@ -143,7 +143,8 @@ html[data-angolo='investo'] .bd-v-investo {
   }
 
   .bd-wrap {
-    width: min(100% - 2 * var(--bd-gutter), 1200px);
+    /* viewport-fit=cover: in orizzontale il margine non scende sotto la tacca dell'iPhone */
+    width: min(100% - 2 * max(var(--bd-gutter), env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px)), 1200px);
     margin-inline: auto;
   }
 
@@ -236,7 +237,6 @@ html[data-angolo='investo'] .bd-v-investo {
     display: flex;
     align-items: center;
     height: 24px;
-    color: var(--bd-legno);
   }
 
   .bd-quota svg {
@@ -247,7 +247,7 @@ html[data-angolo='investo'] .bd-v-investo {
 
   .bd-quota path {
     fill: none;
-    stroke: currentColor;
+    stroke: var(--bd-dettaglio); /* dettaglio grafico: mai come colore del testo */
     stroke-width: 1.25;
     vector-effect: non-scaling-stroke;
   }
@@ -364,7 +364,7 @@ html[data-angolo='investo'] .bd-v-investo {
   }
 
   .bd-m-tacca--fatta {
-    background: var(--bd-legno);
+    background: var(--bd-dettaglio);
   }
 
   .bd-m-passo {
@@ -654,11 +654,364 @@ html[data-angolo='investo'] .bd-v-investo {
   }
 }
 
+/* ---------- Tema scuro per sezione (§5, STILE «Misto»): hero e header sopra l'hero ---------- */
+
+@layer components {
+  /* I token scuri li dà bd-tokens.css; qui fondo con la griglia e colore del testo, risolti dentro il contenitore. */
+  .bd-tema-scuro {
+    background-color: var(--bd-fondo);
+    background-image:
+      linear-gradient(var(--bd-griglia) 1px, transparent 1px),
+      linear-gradient(90deg, var(--bd-griglia) 1px, transparent 1px);
+    background-size: 32px 32px;
+    color: var(--bd-testo);
+  }
+
+  .bd-header {
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      color 0.2s ease;
+  }
+
+  /* I due loghi nella stessa scatola: si scambiano in dissolvenza, nessuno spostamento del layout */
+  .bd-logo-scambio {
+    display: grid;
+  }
+
+  .bd-logo-scambio > .bd-logo {
+    grid-area: 1 / 1;
+    transition: opacity 0.2s ease;
+  }
+
+  .bd-logo-scambio > .bd-logo--negativo,
+  .bd-js .bd-header--su-hero .bd-logo-scambio > .bd-logo--positivo,
+  html[data-stile='grafite'] .bd-logo-scambio > .bd-logo--positivo {
+    opacity: 0;
+  }
+
+  .bd-js .bd-header--su-hero .bd-logo-scambio > .bd-logo--negativo,
+  html[data-stile='grafite'] .bd-logo-scambio > .bd-logo--negativo {
+    opacity: 1;
+  }
+}
+
+/* ---------- Hero (§6.2) ---------- */
+
+@layer components {
+  .bd-hero {
+    position: relative;
+    padding-block: 32px 72px;
+  }
+
+  .bd-hero__griglia {
+    display: grid;
+    gap: 48px;
+  }
+
+  .bd-hero__testo {
+    display: grid;
+    gap: 20px;
+    align-content: start;
+  }
+
+  .bd-hero__titolo {
+    --bd-v-display: block;
+    max-width: 16ch;
+  }
+
+  .bd-hero__sotto {
+    max-width: 34rem;
+    font-size: 1.125rem;
+    line-height: 1.55;
+    color: var(--bd-testo-2);
+  }
+
+  .bd-hero__azioni {
+    display: grid;
+    gap: 12px;
+    margin-top: 4px;
+  }
+
+  .bd-hero__fatti {
+    display: grid;
+    gap: 10px;
+    margin: 4px 0 0;
+    padding: 20px 0 0;
+    border-top: 1px solid var(--bd-linea);
+    list-style: none;
+    font-size: 0.9375rem;
+    line-height: 1.45;
+    color: var(--bd-testo-2);
+  }
+
+  .bd-hero__fatti li {
+    display: flex;
+    gap: 12px;
+    align-items: baseline;
+  }
+
+  .bd-hero__quota {
+    flex: none;
+    stroke: var(--bd-dettaglio);
+    transform: translateY(1px);
+  }
+
+  .bd-hero__visuale {
+    position: relative;
+  }
+
+  .bd-hero__fine {
+    position: absolute;
+    inset-inline: 0;
+    bottom: var(--bd-header-h);
+    height: 1px;
+    pointer-events: none;
+  }
+
+  @media (min-width: 640px) {
+    .bd-hero__azioni {
+      display: flex;
+      flex-wrap: wrap;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .bd-hero {
+      display: grid;
+      align-items: center;
+      min-height: min(calc(100svh - var(--bd-header-h)), 920px);
+      padding-block: 64px 96px;
+    }
+
+    .bd-hero__griglia {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      gap: 56px;
+      align-items: center;
+    }
+
+    .bd-hero__testo {
+      gap: 24px;
+    }
+
+    .bd-hero__sotto {
+      font-size: 1.25rem;
+    }
+  }
+
+  /* Con una foto autorizzata: foto a destra su desktop e sotto il testo su mobile, parete piccola in sovrimpressione */
+  .bd-hero__foto {
+    margin: 0;
+    display: grid;
+    gap: 8px;
+  }
+
+  .bd-hero__foto img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: var(--bd-raggio-card);
+  }
+
+  .bd-parete--piccola {
+    position: absolute;
+    right: 12px;
+    bottom: 40px;
+    width: min(42%, 220px);
+    padding: 8px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--bd-fondo) 88%, transparent);
+  }
+}
+
+/* ---------- La parete (§5, «la sezione») ---------- */
+
+@layer components {
+  .bd-svg {
+    display: block;
+    line-height: 0;
+  }
+
+  .bd-parete {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+  }
+
+  .bd-parete__svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  .bd-parete__nota {
+    font-size: 0.8125rem;
+    color: var(--bd-testo-2);
+  }
+
+  .bd-parete--hero {
+    max-width: 520px;
+    margin-inline: auto;
+  }
+
+  /* Alone leggero su tondini e quote, solo sullo scuro (filtro SVG feDropShadow del disegno) */
+  .bd-tema-scuro .bd-parete .bdwg {
+    filter: url(#bdw-alone);
+  }
+}
+
+/* Con JavaScript la parete dell'hero parte con gli strati nascosti: bd-motion li fa entrare staccati (≤ 1,2 s)
+   e li ricompone scorrendo. Ripiego: se il movimento non parte entro 2,5 s, compaiono composti e con le quote. */
+@media (prefers-reduced-motion: no-preference) {
+  .bd-js .bd-parete--hero .bd-strato {
+    opacity: 0;
+    animation: bd-mostra 0.3s ease 2.5s forwards;
+  }
+
+  .bd-js .bd-parete--hero .bd-quota-linea {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: bd-disegna 0.4s ease 2.5s forwards;
+  }
+}
+
+/* Da 1024 px il titolo dell'hero entra per righe (SplitText): resta nascosto al massimo 0,8 s. */
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  .bd-js .bd-hero__titolo {
+    opacity: 0;
+    animation: bd-mostra 0.2s ease 0.8s forwards;
+  }
+}
+
+@keyframes bd-mostra {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes bd-disegna {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ---------- Per chi è (§6.3) ---------- */
+
+@layer components {
+  .bd-per-chi .bd-wrap {
+    display: grid;
+    gap: 40px;
+  }
+
+  .bd-titolo-sezione {
+    max-width: 20ch;
+  }
+
+  .bd-per-chi__card {
+    display: grid;
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .bd-card {
+    display: grid;
+    grid-template-rows: auto auto 1fr auto;
+    gap: 14px;
+    padding: 28px 24px;
+    border: 1px solid var(--bd-linea);
+    border-radius: var(--bd-raggio-card);
+    background: var(--bd-carta);
+    transform-origin: center;
+  }
+
+  .bd-card__icona {
+    width: 44px;
+    height: 44px;
+    stroke: var(--bd-dettaglio);
+  }
+
+  .bd-card__titolo {
+    margin-top: 8px;
+  }
+
+  .bd-card__testo {
+    color: var(--bd-testo-2);
+  }
+
+  .bd-card__cta {
+    justify-self: start;
+    margin-top: 8px;
+  }
+
+  @media (min-width: 1024px) {
+    .bd-per-chi .bd-wrap {
+      gap: 56px;
+    }
+
+    .bd-per-chi__card {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 24px;
+    }
+
+    .bd-card {
+      padding: 36px 32px;
+    }
+  }
+}
+
+/* ---------- Barra mobile (§6) ---------- */
+
+@layer components {
+  .bd-barra-mobile {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 40;
+    box-sizing: border-box;
+    min-height: calc(64px + env(safe-area-inset-bottom, 0px));
+    padding: 4px max(16px, env(safe-area-inset-left, 0px)) calc(4px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--bd-linea);
+    background: color-mix(in srgb, var(--bd-fondo) 95%, transparent);
+    backdrop-filter: blur(12px);
+    transform: translateY(100%);
+    visibility: hidden;
+    transition:
+      transform 0.2s ease,
+      visibility 0s linear 0.2s;
+  }
+
+  .bd-barra-mobile[data-visibile] {
+    transform: none;
+    visibility: visible;
+    transition:
+      transform 0.2s ease,
+      visibility 0s;
+  }
+
+  @media (min-width: 768px) {
+    .bd-barra-mobile {
+      display: none;
+    }
+  }
+
+  /* Sotto 768 px il footer lascia spazio alla barra, che non copre mai l'ultima riga */
+  @media (max-width: 767.98px) {
+    .bd-footer {
+      padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+    }
+  }
+}
+
 /* ---------- Riduzione del movimento ---------- */
 
 @media (prefers-reduced-motion: reduce) {
   .bd-cta,
-  .bd-cta svg {
+  .bd-cta svg,
+  .bd-barra-mobile,
+  .bd-barra-mobile[data-visibile] {
     transition: none;
   }
 

@@ -2,9 +2,10 @@
 <html lang="it">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- Angolo della campagna (CLAUDE.md §7): prima del CSS, così non c'è sfarfallio. -->
-    <script>(function(){var d=document.documentElement;try{var a=new URLSearchParams(window.location.search).get('a');d.dataset.angolo=(a==='terreno'||a==='investo')?a:'famiglia';}catch(e){d.dataset.angolo='famiglia';}})();</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- Angolo della campagna (CLAUDE.md §7): prima del CSS, così non c'è sfarfallio.
+         bd-js dice al CSS che JavaScript c'è: header scuro sopra l'hero, parete pronta per l'animazione. -->
+    <script>(function(){var d=document.documentElement;d.classList.add('bd-js');try{var a=new URLSearchParams(window.location.search).get('a');d.dataset.angolo=(a==='terreno'||a==='investo')?a:'famiglia';}catch(e){d.dataset.angolo='famiglia';}})();</script>
     <title>Biodomus</title>
     <!--bd-head-->
     <!-- Favicon e icone dal kit del logo (studio/originali/biodomus-asset/LEGGIMI.md) -->
