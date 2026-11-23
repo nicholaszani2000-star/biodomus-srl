@@ -264,20 +264,41 @@ const DATI_TS = leggi('src/content/dati.ts')
 const autorizzato = (chiave) => new RegExp(`\\b${chiave}:\\s*true`).test(DATI_TS)
 const nomeDato = (chiave) => (DATI_TS.match(new RegExp(`\\b${chiave}:\\s*'([^']+)'`)) ?? [])[1]
 
-controllo('verde del logo solo dentro il logo e le favicon (§2)', () => {
-  const verdi = /#(4F8F17|8DC21E)\b/i
-  const ammessi = new Set(['src/assets/svg/bd-logo.svg', 'src/assets/svg/bd-logo-orizzontale.svg', 'public/favicon.svg'])
+// §2: il verde del positivo (#4F8F17) resta nel logo; il lime (#8DC21E) esce dal logo solo come colore dei dettagli
+// grafici delle sezioni scure, cioè come valore dei token --bd-dettaglio e --bd-tondino del tema scuro. Mai su testi né pulsanti.
+controllo('verde del logo: il positivo solo nel logo, il lime solo nei dettagli delle sezioni scure (§2, §5)', () => {
+  const VERDE = /#4F8F17\b/i
+  const LIME = /#8DC21E\b/i
+  const TOKEN_LIME = /--bd-(dettaglio|tondino)\s*:\s*#8DC21E\b/gi
+  const loghi = new Set([
+    'src/assets/svg/bd-logo.svg',
+    'src/assets/svg/bd-logo-orizzontale.svg',
+    'src/assets/svg/bd-logo-negativo.svg',
+    'src/assets/svg/bd-logo-orizzontale-negativo.svg',
+    'public/favicon.svg',
+  ])
   const testo = (n) => /\.(css|ts|tsx|json|svg|html|webmanifest)$/.test(n)
   const daControllare = [
     ...fileSotto('src', testo),
     ...fileSotto('public', testo),
     'index.html',
     ...ASSETS.filter((f) => f.endsWith('.css')).map((f) => `dist/assets/${f}`),
-  ].filter((f) => !ammessi.has(f) && !/^dist\/assets\/bd-logo/.test(f))
-  const trovati = daControllare.filter((f) => verdi.test(leggi(f)))
-  return trovati.length
-    ? { ok: false, nota: `il verde del logo è usato fuori dal logo in: ${trovati.join(', ')}` }
-    : { ok: true, nota: `${daControllare.length} file di stile e componenti senza il verde del logo` }
+  ].filter((f) => !loghi.has(f) && !/^dist\/assets\/bd-logo/.test(f))
+  const problemi = []
+  for (const f of daControllare) {
+    const contenuto = leggi(f)
+    if (VERDE.test(contenuto)) problemi.push(`${f}: verde del logo positivo`)
+    if (LIME.test(contenuto.replace(TOKEN_LIME, ''))) problemi.push(`${f}: lime fuori dai token dei dettagli`)
+  }
+  const token = leggi('src/styles/bd-tokens.css')
+  const chiaro = (token.match(/:root\s*\{[\s\S]*?\}/) ?? [''])[0]
+  const scuro = (token.match(/\.bd-tema-scuro\s*\{[\s\S]*?\}/) ?? [''])[0]
+  if (LIME.test(chiaro)) problemi.push('bd-tokens.css: lime nella palette chiara')
+  if (!/--bd-dettaglio:\s*#8DC21E/i.test(scuro)) problemi.push('bd-tokens.css: nel tema scuro --bd-dettaglio non è il lime del logo')
+  if (/--bd-(accento|testo|testo-2)\s*:\s*#8DC21E/i.test(token)) problemi.push('bd-tokens.css: lime usato per testi o pulsanti')
+  return problemi.length
+    ? { ok: false, nota: problemi.join('; ') }
+    : { ok: true, nota: `${daControllare.length} file: verde #4F8F17 solo nel logo, lime solo in --bd-dettaglio e --bd-tondino del tema scuro` }
 })
 
 controllo('illustrazioni AI del kit fuori da src/ e dist/ (§2)', () => {
@@ -394,16 +415,36 @@ await controlloAsync('favicon, icone, manifest e og-image con le misure giuste',
   return problemi.length ? { ok: false, nota: problemi.join('; ') } : { ok: true, nota: 'favicon 32 e SVG, icona iPhone 180, icone 192 e 512, manifest, og-image 1200 × 630 e link nel <head>' }
 })
 
-controllo('logo nel sito: positivo senza payoff, con width e height (§2)', () => {
+// Nome del file del logo senza l'hash di Vite: /assets/bd-logo-negativo-Clkcxrzm.svg → bd-logo-negativo.svg
+// (React scrive «srcSet»: gli attributi HTML non distinguono maiuscole e minuscole)
+const fileLogo = (tag) => ((tag.match(/(?:src|srcset)="[^"]*\/(bd-logo[^"/]*?)-[A-Za-z0-9_-]{8}\.svg"/i) ?? [])[1] ?? '?') + '.svg'
+
+controllo('logo nel sito: senza payoff, con width e height; con «Misto» negativo e positivo nell\'header (§2)', () => {
   const problemi = []
-  for (const f of ['src/assets/svg/bd-logo.svg', 'src/assets/svg/bd-logo-orizzontale.svg']) {
+  // Non nomeDato: in dati.ts l'interfaccia scrive «STILE: 'cemento' | …» prima del valore
+  const stile = (DATI_TS.match(/\bSTILE:\s*'([^']+)',/) ?? [])[1]
+  const file = ['bd-logo', 'bd-logo-orizzontale', 'bd-logo-negativo', 'bd-logo-orizzontale-negativo'].map((n) => `src/assets/svg/${n}.svg`)
+  for (const f of file) {
     if (!esiste(f)) problemi.push(`manca ${f}`)
     else if (/COSTRUZIONI|payoff/i.test(leggi(f))) problemi.push(`${f} contiene il payoff`)
   }
   const loghi = HTML.match(/<(img|source)[^>]*bd-logo[^>]*>/g) ?? []
-  if (loghi.length < 3) problemi.push(`nell'HTML ${loghi.length} riferimenti al logo invece di 3 (header impilato, header orizzontale, footer)`)
   for (const tag of loghi) if (!/\bwidth="\d+"/.test(tag) || !/\bheight="\d+"/.test(tag)) problemi.push(`logo senza width o height: ${tag.slice(0, 80)}`)
-  return problemi.length ? { ok: false, nota: problemi.join('; ') } : { ok: true, nota: 'header impilato 44 px e orizzontale 34 px, footer 48 px, tutti con width e height' }
+  const header = (HTML.match(/<header[\s\S]*?<\/header>/) ?? [''])[0]
+  const nellHeader = new Set((header.match(/<(img|source)[^>]*bd-logo[^>]*>/g) ?? []).map(fileLogo))
+  const attesi = stile === 'misto'
+    ? ['bd-logo.svg', 'bd-logo-orizzontale.svg', 'bd-logo-negativo.svg', 'bd-logo-orizzontale-negativo.svg']
+    : stile === 'grafite'
+      ? ['bd-logo-negativo.svg', 'bd-logo-orizzontale-negativo.svg']
+      : ['bd-logo.svg', 'bd-logo-orizzontale.svg']
+  const mancanti = attesi.filter((f) => !nellHeader.has(f))
+  if (mancanti.length) problemi.push(`nell'header mancano ${mancanti.join(', ')}`)
+  const footer = (HTML.match(/<footer[\s\S]*?<\/footer>/) ?? [''])[0]
+  const nelFooter = (footer.match(/<img[^>]*bd-logo[^>]*>/g) ?? []).map(fileLogo)
+  if (nelFooter.join() !== 'bd-logo.svg') problemi.push(`nel footer: ${nelFooter.join(', ') || 'nessun logo'} invece del positivo impilato`)
+  return problemi.length
+    ? { ok: false, nota: problemi.join('; ') }
+    : { ok: true, nota: `${loghi.length} riferimenti con width e height · header: ${[...nellHeader].join(', ')} · footer: positivo impilato` }
 })
 
 // ---------- STEP 3 ----------
@@ -530,6 +571,163 @@ controllo('npm test passa', () => {
     const fail = ((err.stdout ?? '').match(/^# fail (\d+)/m) ?? [])[1]
     return { ok: false, nota: `${fail ?? 'alcuni'} test falliti: npm test per i dettagli` }
   }
+})
+
+// ---------- STEP 4 ----------
+
+const STILE = (DATI_TS.match(/\bSTILE:\s*'([^']+)',/) ?? [])[1]
+const TESTI = JSON.parse(leggi('src/content/testi.json'))
+const sezioneHtml = (id) => (HTML.match(new RegExp(`<section id="${id}"[\\s\\S]*?</section>`)) ?? [''])[0]
+const HERO = sezioneHtml('inizio')
+const PER_CHI = sezioneHtml('per-chi')
+const PREVENTIVO = sezioneHtml('preventivo')
+const BARRA = (HTML.match(/<div[^>]*class="[^"]*bd-barra-mobile[\s\S]*?<\/div>/) ?? [''])[0]
+const CSS_SITO = ASSETS.filter((f) => f.endsWith('.css')).map((f) => leggi(`dist/assets/${f}`)).join('\n')
+const classi = (tag) => ((tag.match(/\sclass="([^"]*)"/) ?? [])[1] ?? '').split(/\s+/)
+const ctaIn = (html) =>
+  (html.match(/<a[^>]*class="[^"]*\bbd-cta\b[^"]*"[^>]*>/g) ?? []).map((tag) => ({
+    primaria: classi(tag).includes('bd-cta--primaria'),
+    href: attributo(tag, 'href'),
+  }))
+
+controllo('hero e header scuri al caricamento con STILE «Misto», il resto chiaro (§5, §6.1)', () => {
+  if (STILE !== 'misto') return { ok: true, nota: `STILE «${STILE}»: controllo non applicabile` }
+  const problemi = []
+  if (!classi((HERO.match(/^<section[^>]*>/) ?? [''])[0]).includes('bd-tema-scuro')) problemi.push('l\'hero non ha bd-tema-scuro')
+  if (!classi((HTML.match(/<header[^>]*>/) ?? [''])[0]).includes('bd-tema-scuro')) problemi.push('l\'header prerenderizzato è chiaro: al caricamento cambierebbe colore')
+  if (!/<meta name="theme-color" content="#1a1c1e"/i.test(HTML)) problemi.push('theme-color diverso dal fondo scuro')
+  const scure = (HTML.match(/<section[^>]*class="[^"]*\bbd-tema-scuro\b/g) ?? []).length
+  if (scure !== 1) problemi.push(`${scure} sezioni scure invece della sola hero`)
+  return problemi.length
+    ? { ok: false, nota: problemi.join('; ') }
+    : { ok: true, nota: 'hero con bd-tema-scuro, header scuro già nel prerender, theme-color #1a1c1e, le altre sezioni chiare' }
+})
+
+controllo('hero: occhiello con la zona, una sola CTA primaria, «Come funziona» secondaria, chi risponde (§6.2, §8)', () => {
+  if (!HERO) return { ok: false, nota: 'section#inizio non trovata' }
+  const problemi = []
+  const cta = ctaIn(HERO)
+  const primarie = cta.filter((c) => c.primaria)
+  if (primarie.length !== 1 || primarie[0].href !== '#preventivo') problemi.push(`${primarie.length} CTA primarie (attesa 1 verso #preventivo)`)
+  if (!cta.some((c) => !c.primaria && c.href === '#come-funziona')) problemi.push('manca la secondaria «Come funziona» verso #come-funziona')
+  const testo = testoVisibile(HERO)
+  const zona = nomeDato('ZONA')
+  const referente = nomeDato('REFERENTE')
+  if (!zona || !testo.includes(`Costruzione di case in ${zona}`)) problemi.push('occhiello senza la zona')
+  if (!referente || !testo.includes(`Ti risponde ${referente}`)) problemi.push('manca «Ti risponde …» sotto la CTA')
+  return problemi.length
+    ? { ok: false, nota: problemi.join('; ') }
+    : { ok: true, nota: `occhiello «Costruzione di case in ${zona}», 1 primaria verso #preventivo, «Come funziona» secondaria, «Ti risponde ${referente}…»` }
+})
+
+controllo('fatti dell\'hero solo con i dati presenti; classe solo con P1_OK (§6.2, §8)', () => {
+  const lista = (HERO.match(/<ul class="bd-hero__fatti"[\s\S]*?<\/ul>/) ?? [''])[0]
+  const voci = (lista.match(/<li>[\s\S]*?<\/li>/g) ?? []).map(testoVisibile)
+  const tempi = nomeDato('TEMPI')
+  const sistema = nomeDato('SISTEMA_BREVE')
+  const attese = [tempi ? `Consegna: ${tempi}` : null, sistema ?? null].filter(Boolean)
+  const problemi = attese.filter((a) => !voci.includes(a)).map((a) => `manca «${a}»`)
+  const conClasse = voci.some((v) => /classe energetica/i.test(v))
+  if (conClasse && !autorizzato('P1_OK')) problemi.push('classe energetica nei fatti senza l\'autorizzazione di P1')
+  if (voci.some((v) => /garanzi/i.test(v)) && !nomeDato('GARANZIA')) problemi.push('garanzia citata con GARANZIA vuota')
+  if (voci.length !== attese.length + (conClasse ? 1 : 0)) problemi.push(`${voci.length} fatti invece di ${attese.length}`)
+  return problemi.length ? { ok: false, nota: problemi.join('; ') } : { ok: true, nota: `${voci.length} fatti: ${voci.join(' · ')}` }
+})
+
+controllo('la sezione nell\'hero: SVG inline con quattro strati, titolo accessibile e dicitura «Illustrazione» (§5, §10.9)', () => {
+  const svg = (HERO.match(/data-bd-parete=""[^>]*>\s*(<svg[\s\S]*?<\/svg>)/) ?? [])[1] ?? ''
+  if (!svg) return { ok: false, nota: 'nell\'hero manca la parete (data-bd-parete con l\'SVG inline)' }
+  const problemi = []
+  const strati = (svg.match(/data-strato="/g) ?? []).length
+  if (strati !== 4) problemi.push(`${strati} strati invece di 4`)
+  const titolo = attributo((svg.match(/^<svg[^>]*>/) ?? [''])[0], 'aria-labelledby')
+  if (!titolo || !new RegExp(`<title id="${titolo}">[^<]{20,}</title>`).test(svg)) problemi.push('titolo accessibile assente')
+  if (!svg.includes('--bd-esplodi')) problemi.push('gli strati non dipendono da --bd-esplodi')
+  if (!/prefers-reduced-motion:\s*reduce/.test(svg)) problemi.push('nessuna regola per la riduzione del movimento')
+  const didascalia = testoVisibile((HERO.match(/<figcaption[\s\S]*?<\/figcaption>/) ?? [''])[0])
+  if (!/Illustrazione/.test(didascalia)) problemi.push('didascalia senza «Illustrazione»')
+  return problemi.length
+    ? { ok: false, nota: problemi.join('; ') }
+    : { ok: true, nota: `4 strati, titolo #${titolo}, --bd-esplodi per lo scroll, composta con la riduzione del movimento, «${didascalia}»` }
+})
+
+controllo('id unici nell\'HTML (ancore, etichette e retini SVG senza doppioni)', () => {
+  const ids = [...HTML.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1])
+  const doppi = [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))]
+  return doppi.length ? { ok: false, nota: `id ripetuti: ${doppi.join(', ')}` } : { ok: true, nota: `${ids.length} id, nessuno ripetuto` }
+})
+
+controllo('Per chi è: tre card, ognuna con una CTA secondaria verso il modulo (§6.3, §5)', () => {
+  if (!PER_CHI) return { ok: false, nota: 'section#per-chi non trovata' }
+  const problemi = []
+  const card = (PER_CHI.match(/<li class="bd-card"/g) ?? []).length
+  if (card !== 3) problemi.push(`${card} card invece di 3`)
+  const cta = ctaIn(PER_CHI)
+  if (cta.length !== 3 || cta.some((c) => c.primaria || c.href !== '#preventivo')) problemi.push('le CTA delle card devono essere 3, secondarie, verso #preventivo')
+  const testo = testoVisibile(PER_CHI)
+  const mancanti = TESTI.perChi.card.map((c) => c.titolo).filter((t) => !testo.includes(t))
+  if (mancanti.length) problemi.push(`titoli mancanti: ${mancanti.join(', ')}`)
+  return problemi.length ? { ok: false, nota: problemi.join('; ') } : { ok: true, nota: `3 card (${TESTI.perChi.card.map((c) => c.titolo).join(', ')}), CTA secondarie verso #preventivo` }
+})
+
+// Gli step 5 e 6 aggiungono qui gli id delle loro sezioni, nell'ordine di §6.
+const ORDINE_SEZIONI = ['inizio', 'per-chi', 'come-funziona', 'preventivo']
+
+controllo('sezioni nell\'ordine di §6', () => {
+  const posizioni = ORDINE_SEZIONI.map((id) => ({ id, pos: HTML.indexOf(` id="${id}"`) }))
+  const mancanti = posizioni.filter((p) => p.pos < 0).map((p) => p.id)
+  if (mancanti.length) return { ok: false, nota: `mancano: ${mancanti.join(', ')}` }
+  const fuori = posizioni.filter((p, i) => i > 0 && p.pos < posizioni[i - 1].pos).map((p) => p.id)
+  return fuori.length ? { ok: false, nota: `fuori ordine: ${fuori.join(', ')}` } : { ok: true, nota: ORDINE_SEZIONI.join(' → ') }
+})
+
+controllo('barra mobile: CTA primaria verso il modulo, nascosta finché non serve (§6, §5)', () => {
+  if (!BARRA) return { ok: false, nota: 'barra mobile non trovata nell\'HTML' }
+  const problemi = []
+  const tag = (BARRA.match(/^<div[^>]*>/) ?? [''])[0]
+  const cta = ctaIn(BARRA)
+  if (cta.length !== 1 || !cta[0].primaria || cta[0].href !== '#preventivo') problemi.push('serve una sola CTA primaria verso #preventivo')
+  if (!classi(tag).includes('md:hidden')) problemi.push('non è nascosta da 768 px in su')
+  if (classi(tag).includes('bd-barra-mobile--vista')) problemi.push('visibile già nel prerender')
+  if (!/\sinert=""/.test(tag)) problemi.push('nel prerender non è inert')
+  if (!/\.bd-barra-mobile\{[^}]*visibility:hidden/.test(CSS_SITO)) problemi.push('il CSS non la nasconde finché il JavaScript non la mostra')
+  return problemi.length
+    ? { ok: false, nota: problemi.join('; ') }
+    : { ok: true, nota: 'solo sotto 768 px, nascosta e inert nel prerender, una CTA primaria verso #preventivo' }
+})
+
+controllo('telefono e WhatsApp mai nell\'hero, nella barra mobile o accanto al modulo (§2)', () => {
+  const trovati = [['hero', HERO], ['barra mobile', BARRA], ['modulo', PREVENTIVO]]
+    .filter(([, html]) => /href="(tel:|https:\/\/wa\.me\/)/.test(html))
+    .map(([nome]) => nome)
+  return trovati.length
+    ? { ok: false, nota: `link a telefono o WhatsApp in: ${trovati.join(', ')}` }
+    : { ok: true, nota: 'nessun tel: né wa.me in hero, barra mobile e modulo: restano a chiusura e footer' }
+})
+
+controllo('titolo dell\'hero rivelato per righe solo da 1024 px, con ripiego (§5, §3.8)', () => {
+  const problemi = []
+  const testa = HTML.slice(0, HTML.indexOf('</head>'))
+  const script = (testa.match(/<script>[\s\S]*?<\/script>/) ?? [''])[0]
+  if (!script.includes('bd-rivela') || !script.includes('min-width: 1024px') || !script.includes('prefers-reduced-motion: no-preference')) {
+    problemi.push('lo script nel head non limita bd-rivela a 1024 px senza riduzione del movimento')
+  }
+  if (!/<h1[^>]*data-bd-rivela=""/.test(HERO)) problemi.push('il h1 non ha data-bd-rivela')
+  if (!/@keyframes bd-mostra/.test(CSS_SITO) || !/\.bd-rivela \[data-bd-rivela\]\{[^}]*bd-mostra/.test(CSS_SITO)) {
+    problemi.push('manca il ripiego CSS che mostra il titolo se il JavaScript non arriva')
+  }
+  return problemi.length
+    ? { ok: false, nota: problemi.join('; ') }
+    : { ok: true, nota: 'nascosto prima del primo disegno solo da 1024 px; senza JavaScript compare da solo dopo 1,6 s' }
+})
+
+controllo('ingressi senza visibility hidden: tutto raggiungibile con il tasto Tab (§5, §9)', () => {
+  // Solo il codice: i commenti spiegano proprio perché autoAlpha non si usa
+  const motion = leggi('src/lib/bd-motion.ts').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
+  const usi = (motion.match(/autoAlpha|visibility\s*:\s*['"]?hidden/g) ?? []).length
+  return usi
+    ? { ok: false, nota: `bd-motion.ts usa autoAlpha o visibility hidden (${usi} volte): le sezioni non ancora entrate escono dal Tab` }
+    : { ok: true, nota: 'ingressi con opacity: le sezioni non ancora animate restano focalizzabili e trovabili con la ricerca' }
 })
 
 // ---------- esito ----------

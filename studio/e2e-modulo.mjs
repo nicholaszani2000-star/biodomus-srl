@@ -3,6 +3,7 @@
 // errore su «Avanti» con un campo vuoto, tre passaggi, attesa di 3 secondi, invio, messaggio di successo
 // e riga in studio/report/lead-mock.jsonl. Poi un invio con honeypot pieno (non deve comparire nel file)
 // e un invio senza JavaScript (form classico → 303 → /grazie.html).
+// Step 4: le card di «Per chi è» portano al modulo con la risposta 1 (e il terreno) già scelti e tornano al passo 1.
 // Screenshot di ogni passaggio e del successo in studio/report/e2e/ (escluso da git). Avvio: npm run e2e.
 
 import { chromium } from 'playwright'
@@ -241,6 +242,70 @@ for (const angolo of ['famiglia', 'terreno', 'investo']) {
     `honeypot inviato «${corpo.sito_web}», righe ${prima} → ${dopo.length}`,
   )
   esito(errori.length === 0, 'honeypot: console', errori.length ? errori.join(' | ') : 'nessun errore')
+  await contesto.close()
+}
+
+// ---------- step 4: le card di «Per chi è» preselezionano il modulo ----------
+{
+  const { contesto, pagina, errori } = await nuovaPagina()
+  await pagina.goto(`${BASE}/?a=famiglia`, { waitUntil: 'networkidle' })
+  const statoModulo = () =>
+    pagina.evaluate(() => ({
+      passo: [...document.querySelectorAll('.bd-m-passo')].findIndex((p) => !p.hidden) + 1,
+      profilo: document.querySelector('input[name="profilo"]:checked')?.value ?? null,
+      terreno: document.querySelector('input[name="terreno"]:checked')?.value ?? null,
+      angolo: document.querySelector('input[name="angolo"]')?.value ?? null,
+      focus: document.activeElement?.id ?? null,
+    }))
+  const card = async (testo, profilo) => {
+    await pagina.locator('#per-chi').getByRole('link', { name: testo }).click()
+    await pagina
+      .waitForFunction((id) => document.activeElement?.id === id, `bd-m-profilo-${profilo}`, { timeout: 4000 })
+      .catch(() => {})
+    return statoModulo()
+  }
+
+  // Tastiera: dall'ultima card il tasto Tab entra nel modulo anche se la sezione non è ancora entrata scorrendo
+  await pagina.locator('#per-chi').getByRole('link', { name: 'Parliamo del progetto' }).focus()
+  await pagina.keyboard.press('Tab')
+  const dopoTab = await pagina.evaluate(() => ({
+    id: document.activeElement?.id ?? document.activeElement?.tagName,
+    nelModulo: !!document.activeElement?.closest('#preventivo'),
+  }))
+  esito(dopoTab.nelModulo, 'tastiera: Tab dall\'ultima card al modulo', `focus su #${dopoTab.id}`)
+
+  const casa = await card('Parti dal tuo progetto', 'casa')
+  esito(
+    casa.passo === 1 && casa.profilo === 'casa' && casa.terreno === null && casa.focus === 'bd-m-profilo-casa',
+    'card «Vuoi costruire casa»: modulo con la risposta 1 scelta',
+    `passo ${casa.passo}, profilo ${casa.profilo}, terreno ${casa.terreno ?? '—'}, focus #${casa.focus}`,
+  )
+
+  // Dal passo 2 una card riporta al passo 1 con le nuove risposte
+  await pagina.locator('label[for="bd-m-terreno-cerco"]').click()
+  await pagina.getByRole('button', { name: 'Avanti' }).click()
+  await attendi(300)
+  const passoPrima = await passoVisibile(pagina)
+  const terreno = await card('Parti dal terreno', 'casa')
+  await foto(pagina, 'card-terreno.png')
+  esito(
+    passoPrima === 2 && terreno.passo === 1 && terreno.profilo === 'casa' && terreno.terreno === 'si' && terreno.focus === 'bd-m-profilo-casa',
+    'card «Hai già il terreno»: dal passo 2 torna al passo 1 con «Sì»',
+    `passo ${passoPrima} → ${terreno.passo}, profilo ${terreno.profilo}, terreno ${terreno.terreno ?? '—'}, focus #${terreno.focus}`,
+  )
+
+  const investo = await card('Parliamo del progetto', 'investimento')
+  esito(
+    investo.passo === 1 && investo.profilo === 'investimento' && investo.focus === 'bd-m-profilo-investimento',
+    'card «Vuoi investire»: modulo con «Un investimento»',
+    `profilo ${investo.profilo}, terreno ${investo.terreno ?? '—'} (resta la risposta già data), focus #${investo.focus}`,
+  )
+  // L'angolo dice quale titolo ha visto la persona (§7): le card non lo cambiano
+  esito(
+    [casa, terreno, investo].every((s) => s.angolo === 'famiglia') && errori.length === 0,
+    'card: angolo della campagna invariato, console pulita',
+    `angolo ${investo.angolo}${errori.length ? `, errori: ${errori.join(' | ')}` : ', nessun errore'}`,
+  )
   await contesto.close()
 }
 

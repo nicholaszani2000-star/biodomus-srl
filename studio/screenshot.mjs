@@ -1,7 +1,9 @@
 // Screenshot dell'anteprima (CLAUDE.md §13): 390 × 844 e 1440 × 900 per ogni angolo (?a=famiglia, terreno, investo).
 // Se l'anteprima non è già avviata, la avvia da solo e la chiude alla fine.
 // Browser, in ordine: Chromium di Playwright (PLAYWRIGHT_BROWSERS_PATH), Chromium o Chrome di sistema; senza browser salta.
-// Controlla: errori di console, scroll orizzontale a 390 px, variante giusta del titolo per angolo.
+// Controlla: errori di console, scroll orizzontale a 390 px, variante giusta del titolo per angolo, primo schermo,
+// logo e tema dell'header, la parete che si ricompone scorrendo, la barra mobile, una sola CTA primaria per schermata,
+// la riduzione del movimento a 390 e 1440 px.
 // Screenshot in studio/report/screenshot/ (escluso da git), riepilogo in studio/report/screenshot/riepilogo.json.
 
 import { chromium } from 'playwright'
@@ -85,15 +87,24 @@ for (const vista of VISTE) {
     })
     pagina.on('pageerror', (e) => errori.push(e.message))
     await pagina.goto(`${BASE}/?a=${angolo}`, { waitUntil: 'networkidle' })
-    await pagina.waitForTimeout(400)
+    // Da 1024 px il titolo si rivela per righe (bd-rivela): si aspetta la fine prima della foto del primo schermo
+    await pagina.waitForFunction(() => !document.documentElement.classList.contains('bd-rivela'), null, { timeout: 4000 }).catch(() => {})
+    await pagina.waitForTimeout(1000)
+    // Primo schermo com'è all'apertura, prima di scorrere
+    await pagina.screenshot({ path: join(USCITA, `${angolo}-${vista.width}.png`) })
 
     const stato = await pagina.evaluate(() => {
       const visibile = (el) => !!el && getComputedStyle(el).display !== 'none'
       const varianti = [...document.querySelectorAll('h1 .bd-v')].filter(visibile).map((el) => el.className)
+      const titolo = document.querySelector('h1')
+      const cta = document.querySelector('#inizio .bd-cta--primaria')
       return {
         larghezza: document.documentElement.scrollWidth,
         varianti,
         h1: document.querySelectorAll('h1').length,
+        titoloFine: titolo ? Math.round(titolo.getBoundingClientRect().bottom) : null,
+        titoloOpacita: titolo ? Number(getComputedStyle(titolo).opacity) : 0,
+        ctaFine: cta ? Math.round(cta.getBoundingClientRect().bottom) : null,
       }
     })
 
@@ -107,27 +118,98 @@ for (const vista of VISTE) {
     if (vista.width === 390) {
       esito(stato.larghezza <= 390, `scroll orizzontale ${etichetta}`, `larghezza documento ${stato.larghezza} px`)
     }
+    // §6.2: in un solo schermo chi sei, per chi, cosa fare — titolo e CTA primaria visibili senza scorrere
+    esito(
+      stato.ctaFine !== null && stato.ctaFine <= vista.height && stato.titoloOpacita === 1,
+      `primo schermo ${etichetta}`,
+      `titolo fino a ${stato.titoloFine} px (opacità ${stato.titoloOpacita}), CTA primaria fino a ${stato.ctaFine} px su ${vista.height}`,
+    )
 
-    // Step 2: nell'header il logo impilato alto 44 px fino a 1023 px, l'orizzontale alto 34 px da 1024 px.
-    if (angolo === 'famiglia') {
-      const logo = await pagina.evaluate(() => {
-        const img = document.querySelector('.bd-logo--header img')
+    // Step 2 e 4: nell'header il logo impilato alto 44 px fino a 1023 px, l'orizzontale alto 34 px da 1024 px;
+    // con STILE «Misto» negativo sopra l'hero (header scuro), positivo dopo (header chiaro).
+    const leggiHeader = () =>
+      pagina.evaluate(() => {
+        const header = document.querySelector('.bd-header')
+        const loghi = [...header.querySelectorAll('.bd-logo--header')]
+        const visibile = loghi.find((l) => Number(getComputedStyle(l).opacity) > 0.5) ?? loghi[0]
+        const img = visibile?.querySelector('img')
         const footer = document.querySelector('img.bd-logo--footer')
-        if (!img) return null
         return {
-          file: img.currentSrc.split('/').pop(),
-          altezza: Math.round(img.getBoundingClientRect().height),
-          caricato: img.complete && img.naturalWidth > 0,
+          tema: header.dataset.bdTema ?? 'unico',
+          file: img ? img.currentSrc.split('/').pop() : '?',
+          altezza: img ? Math.round(img.getBoundingClientRect().height) : 0,
+          caricato: !!img && img.complete && img.naturalWidth > 0,
           altezzaFooter: footer ? Math.round(footer.getBoundingClientRect().height) : 0,
         }
       })
-      const atteso = vista.width >= 1024 ? { file: /^bd-logo-orizzontale-/, altezza: 34 } : { file: /^bd-logo-(?!orizzontale)/, altezza: 44 }
-      const ok = !!logo && logo.caricato && atteso.file.test(logo.file) && logo.altezza === atteso.altezza && logo.altezzaFooter === 48
+    const logoAtteso = (tema) =>
+      new RegExp(`^bd-logo-${vista.width >= 1024 ? 'orizzontale-' : ''}${tema === 'scuro' ? 'negativo-' : ''}[A-Za-z0-9_-]{8}\\.svg$`)
+    const altezzaLogo = vista.width >= 1024 ? 34 : 44
+
+    if (angolo === 'famiglia') {
+      const logo = await leggiHeader()
+      const ok = logo.caricato && logoAtteso(logo.tema).test(logo.file) && logo.altezza === altezzaLogo && logo.altezzaFooter === 48
       esito(
-        ok,
+        ok && logo.tema !== 'chiaro',
         `logo nell'header e nel footer ${vista.width}px`,
-        logo ? `${logo.file} alto ${logo.altezza} px${logo.caricato ? '' : ' (non caricato)'}, footer ${logo.altezzaFooter} px` : 'logo non trovato',
+        `header ${logo.tema}: ${logo.file} alto ${logo.altezza} px${logo.caricato ? '' : ' (non caricato)'}, footer ${logo.altezzaFooter} px`,
       )
+
+      // Step 4: giro della pagina. Parete esplosa all'apertura e ricomposta scorrendo; header chiaro dopo l'hero;
+      // su mobile la barra compare dopo l'hero e sparisce sul modulo.
+      const leggiStato = () =>
+        pagina.evaluate(() => {
+          const svg = document.querySelector('#inizio [data-bd-parete] svg')
+          const barra = document.querySelector('.bd-barra-mobile')
+          const esplodi = parseFloat(svg ? getComputedStyle(svg).getPropertyValue('--bd-esplodi') : '')
+          const stileBarra = barra ? getComputedStyle(barra) : null
+          return {
+            esplodi: Number.isNaN(esplodi) ? 1 : Math.round(esplodi * 100) / 100,
+            barra: !!stileBarra && stileBarra.display !== 'none' && stileBarra.visibility === 'visible',
+          }
+        })
+      const scorriA = async (calcola, ms) => {
+        await pagina.evaluate(calcola)
+        await pagina.waitForTimeout(ms)
+      }
+      const mobile = vista.width < 768
+
+      const apertura = await leggiStato()
+      await scorriA(() => {
+        const parete = document.querySelector('#inizio [data-bd-parete]')
+        const r = parete.getBoundingClientRect()
+        window.scrollTo(0, Math.max(320, window.scrollY + r.top + r.height / 2 - window.innerHeight * 0.25))
+      }, 1300)
+      const ricomposta = await leggiStato()
+      await pagina.screenshot({ path: join(USCITA, `parete-composta-${vista.width}.png`) })
+      esito(
+        apertura.esplodi >= 0.95 && ricomposta.esplodi <= 0.05,
+        `parete che si ricompone scorrendo ${vista.width}px`,
+        `--bd-esplodi ${apertura.esplodi} all'apertura, ${ricomposta.esplodi} con il disegno al 25% dello schermo`,
+      )
+
+      await scorriA(() => {
+        const header = document.querySelector('.bd-header')
+        window.scrollTo(0, window.scrollY + document.getElementById('per-chi').getBoundingClientRect().top - header.offsetHeight)
+      }, 600)
+      const dopoHero = { ...(await leggiStato()), ...(await leggiHeader()) }
+      await pagina.screenshot({ path: join(USCITA, `dopo-hero-${vista.width}.png`) })
+      esito(
+        dopoHero.tema === 'chiaro' && logoAtteso('chiaro').test(dopoHero.file) && dopoHero.altezza === altezzaLogo,
+        `header chiaro dopo l'hero ${vista.width}px`,
+        `header ${dopoHero.tema}, logo ${dopoHero.file} alto ${dopoHero.altezza} px`,
+      )
+
+      await scorriA(() => {
+        window.scrollTo(0, window.scrollY + document.getElementById('preventivo').getBoundingClientRect().top - 120)
+      }, 600)
+      const sulModulo = await leggiStato()
+      esito(
+        mobile ? !apertura.barra && dopoHero.barra && !sulModulo.barra : !apertura.barra && !dopoHero.barra && !sulModulo.barra,
+        `barra mobile ${vista.width}px`,
+        `all'apertura ${apertura.barra ? 'visibile' : 'nascosta'}, dopo l'hero ${dopoHero.barra ? 'visibile' : 'nascosta'}, sul modulo ${sulModulo.barra ? 'visibile' : 'nascosta'}${mobile ? '' : ' (da 768 px non c\'è)'}`,
+      )
+      await scorriA(() => window.scrollTo(0, 0), 900)
     }
 
     // §5: una sola CTA primaria per schermata, al caricamento e scorrendo tutta la pagina.
@@ -154,21 +236,39 @@ for (const vista of VISTE) {
     })
     esito(affollate.length === 0, `una CTA primaria per schermata ${etichetta}`, affollate.length ? affollate.join(', ') : 'mai più di una')
 
-    await pagina.screenshot({ path: join(USCITA, `${angolo}-${vista.width}.png`) })
     if (angolo === 'famiglia') await pagina.screenshot({ path: join(USCITA, `pagina-intera-${vista.width}.png`), fullPage: true })
     await pagina.close()
   }
 }
 
-// Riduzione del movimento: la pagina resta leggibile e senza errori.
-{
-  const contesto = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' })
+// Riduzione del movimento: niente Lenis, parete già composta con le quote, titolo subito visibile, nessun errore.
+for (const vista of VISTE) {
+  const contesto = await browser.newContext({ viewport: { width: vista.width, height: vista.height }, reducedMotion: 'reduce' })
   const pagina = await contesto.newPage()
   const errori = []
   pagina.on('pageerror', (e) => errori.push(e.message))
   await pagina.goto(`${BASE}/`, { waitUntil: 'networkidle' })
-  const lenis = await pagina.evaluate(() => document.documentElement.classList.contains('lenis'))
-  esito(!lenis && errori.length === 0, 'riduzione del movimento', lenis ? 'Lenis attivo anche con reduce' : 'niente Lenis, nessun errore')
+  await pagina.waitForTimeout(300)
+  const stato = await pagina.evaluate(() => {
+    const svg = document.querySelector('#inizio [data-bd-parete] svg')
+    const strati = [...(svg?.querySelectorAll('.bd-strato') ?? [])].map((s) => getComputedStyle(s).transform)
+    // Il gruppo delle quote ha le classi «<prefisso>-quote <prefisso>-luce»
+    const quote = svg?.querySelector('[class*="-quote"]')
+    return {
+      lenis: document.documentElement.classList.contains('lenis'),
+      rivela: document.documentElement.classList.contains('bd-rivela'),
+      titolo: Number(getComputedStyle(document.querySelector('h1')).opacity),
+      composta: strati.length === 4 && strati.every((t) => t === 'none'),
+      quote: quote ? Number(getComputedStyle(quote).opacity) : 0,
+    }
+  })
+  await pagina.screenshot({ path: join(USCITA, `movimento-ridotto-${vista.width}.png`) })
+  const ok = !stato.lenis && !stato.rivela && stato.titolo === 1 && stato.composta && stato.quote === 1 && errori.length === 0
+  esito(
+    ok,
+    `riduzione del movimento ${vista.width}px`,
+    `${stato.lenis ? 'Lenis attivo' : 'niente Lenis'}, titolo opacità ${stato.titolo}, parete ${stato.composta ? 'già composta' : 'esplosa'}, quote opacità ${stato.quote}${errori.length ? `, errori: ${errori.join(' | ')}` : ''}`,
+  )
   await contesto.close()
 }
 

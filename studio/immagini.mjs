@@ -2,7 +2,7 @@
 //
 // Legge studio/originali/ e scrive:
 //   src/assets/img/          foto autorizzate in AVIF e WebP, 480 · 768 · 1200 · 1600 px, senza metadati
-//   src/assets/svg/          bd-logo.svg e bd-logo-orizzontale.svg dal kit (mai payoff né 3D)
+//   src/assets/svg/          bd-logo*.svg dal kit, positivi e negativi (mai payoff né 3D)
 //   src/assets/partner/      loghi dei partner con autorizzazione «sì»
 //   public/                  favicon, icone, site.webmanifest, og-image.jpg
 //   src/content/immagini.json  manifesto: file, larghezze, width/height, alt, credito, dove, autorizzazione
@@ -182,11 +182,14 @@ async function main() {
     report.partner.push(nomeFile)
   }
 
-  // 3. Logo: dal kit, solo positivo senza payoff (§2). Mai le versioni con payoff né quelle 3D.
+  // 3. Logo: dal kit, senza payoff (§2). Mai le versioni con payoff né quelle 3D.
+  //    Positivo per i fondi chiari; negativo per l'header sopra l'hero scuro (STILE «Misto», §5).
   const kitSvg = join(KIT, 'logo', 'svg')
   const logoSito = [
     ['biodomus-logo-positivo.svg', 'bd-logo.svg', 'impilato'],
     ['biodomus-logo-orizzontale-positivo.svg', 'bd-logo-orizzontale.svg', 'orizzontale'],
+    ['biodomus-logo-negativo.svg', 'bd-logo-negativo.svg', 'impilatoNegativo'],
+    ['biodomus-logo-orizzontale-negativo.svg', 'bd-logo-orizzontale-negativo.svg', 'orizzontaleNegativo'],
   ]
   const logo = {}
   if (existsSync(kitSvg)) {

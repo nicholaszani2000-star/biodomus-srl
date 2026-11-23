@@ -37,34 +37,80 @@ const stile = (p, extra = '') => `<style>
 ${extra}</style>`
 
 // ---------------------------------------------------------------- la sezione della parete
+// Parete in prospettiva cavaliera (§5, stile «Misto»): quattro blocchi con faccia in sezione, faccia superiore e fianco.
+// Lo stacco tra gli strati lo governa una sola variabile CSS, --bd-esplodi (1 = staccati, 0 = parete ricomposta):
+// senza JavaScript la parete resta staccata, con la riduzione del movimento è già composta, con GSAP si ricompone mentre scorri.
+// Le classi e gli id hanno il prefisso «bds»: chi la mette inline più volte lo sostituisce (BdParete), così gli stili non si scontrano.
+// Gli strati sono gruppi con classe bd-strato e data-strato (niente id: la stessa parete può comparire due volte nella pagina).
 function sezione() {
   const p = 'bds'
-  const y0 = 24
-  const y1 = 228
-  // Strati da fuori a dentro (§5): isolante esterno, calcestruzzo armato, isolante interno, intonaco
-  const x = [64, 118, 238, 292, 304]
-  const h = y1 - y0
-  const tondini = [52, 98, 144, 190]
-  const tick = (cx, cy) => linea(cx - 5, cy + 5, cx + 5, cy - 5, `${p}q`)
-  const yq1 = 256
-  const yq2 = 280
+  const spessori = [30, 72, 30, 9] // isolante esterno, calcestruzzo armato, isolante interno, intonaco (non in scala)
+  const stacchi = [-36, -12, 12, 36] // spostamento di ogni strato quando la parete è staccata
+  const H = 176
+  const [dx, dy] = [64, -40] // profondità della prospettiva cavaliera
+  const x0 = 48
+  const yTop = 52
+  const yBot = yTop + H
+  const bordi = spessori.reduce((acc, t) => [...acc, acc[acc.length - 1] + t], [x0])
+  const retini = ['eps', 'cls', 'eps', 'int']
+  const facciaSopra = (x, t) => pathPoligono([[x, yTop], [x + t, yTop], [x + t + dx, yTop + dy], [x + dx, yTop + dy]])
+  const fianco = (x, t) => pathPoligono([[x + t, yTop], [x + t + dx, yTop + dy], [x + t + dx, yBot + dy], [x + t, yBot]])
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 368 300" width="368" height="300" role="img" aria-labelledby="${p}t">
-<title id="${p}t">Sezione della parete: isolante esterno, calcestruzzo armato, isolante interno, intonaco</title>
-${stile(p)}
+  const strati = spessori
+    .map((t, i) => {
+      const x = bordi[i]
+      const tondini =
+        retini[i] === 'cls'
+          ? `<g class="${p}-luce">${[0.28, 0.72]
+              .map((fx) =>
+                [0, 1, 2, 3, 4].map((r) => `<circle cx="${n(x + t * fx)}" cy="${n(yTop + 22 + r * 33)}" r="3.6" class="${p}-tondino"/>`).join(''),
+              )
+              .join('')}</g>`
+          : ''
+      return `<g class="bd-strato bd-strato-${i + 1}" data-strato="${i + 1}">
+<path d="${facciaSopra(x, t)}" class="${p}-pieno"/><path d="${facciaSopra(x, t)}" class="${p}-ombra1"/>
+<path d="${fianco(x, t)}" class="${p}-pieno"/><path d="${fianco(x, t)}" class="${p}-ombra2"/>
+<rect x="${n(x)}" y="${yTop}" width="${t}" height="${H}" class="${p}-pieno"/>
+<rect x="${n(x)}" y="${yTop}" width="${t}" height="${H}" fill="url(#${p}-${retini[i]})"/>
+${tondini}
+<path d="${facciaSopra(x, t)}" class="${p}-l"/><path d="${fianco(x, t)}" class="${p}-l"/>
+<rect x="${n(x)}" y="${yTop}" width="${t}" height="${H}" class="${p}-l"/>
+</g>`
+    })
+    .join('')
+
+  const yq = yBot + 24
+  const tick = (cx, cy) => linea(cx - 4, cy + 4, cx + 4, cy - 4, `${p}-q`)
+  const quote = `<g class="${p}-quote ${p}-luce">
+${bordi.map((xi) => linea(xi, yBot + 8, xi, yq + 8, `${p}-q`)).join('')}
+${linea(bordi[0], yq, bordi[bordi.length - 1], yq, `${p}-q`)}${bordi.map((xi) => tick(xi, yq)).join('')}
+</g>`
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 301 272" width="301" height="272" role="img" aria-labelledby="${p}t" class="${p}">
+<title id="${p}t">Parete in prospettiva: isolante esterno, calcestruzzo armato, isolante interno, intonaco</title>
+<style>
+.${p}-l{fill:none;stroke:var(--bd-testo,#1F2326);stroke-width:1.3;stroke-linejoin:round}
+.${p}-pieno{fill:var(--bd-carta,#F8F7F5)}
+.${p}-ombra1{fill:var(--bd-testo,#1F2326);fill-opacity:.07}
+.${p}-ombra2{fill:var(--bd-testo,#1F2326);fill-opacity:.15}
+.${p}-retino{fill:none;stroke:var(--bd-testo-2,#595E62);stroke-width:.9}
+.${p}-punto{fill:var(--bd-testo-2,#595E62)}
+.${p}-tondino{fill:var(--bd-tondino,#B4542D);stroke:var(--bd-testo,#1F2326);stroke-width:.8}
+.${p}-q{fill:none;stroke:var(--bd-dettaglio,#A87B4F);stroke-width:1.4;stroke-linecap:round}
+.${p} .bd-strato{transform:translateX(calc(var(--bd-esplodi,1) * var(--bd-stacco,0px)))}
+.${p} .bd-strato-1{--bd-stacco:${stacchi[0]}px}.${p} .bd-strato-2{--bd-stacco:${stacchi[1]}px}.${p} .bd-strato-3{--bd-stacco:${stacchi[2]}px}.${p} .bd-strato-4{--bd-stacco:${stacchi[3]}px}
+.${p}-quote{opacity:calc(1 - var(--bd-esplodi,1))}
+.bd-tema-scuro .${p}-luce{filter:url(#${p}-alone)}
+@media (prefers-reduced-motion:reduce){.${p} .bd-strato{transform:none}.${p}-quote{opacity:1}}
+</style>
 <defs>
-<pattern id="${p}-punti" width="8" height="8" patternUnits="userSpaceOnUse"><circle cx="4" cy="4" r="1.1" class="${p}d" opacity=".55"/></pattern>
-<pattern id="${p}-45" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V8" class="${p}f" opacity=".7"/></pattern>
+<pattern id="${p}-eps" width="12" height="12" patternUnits="userSpaceOnUse"><path d="M0 6Q3 0 6 6T12 6" class="${p}-retino" opacity=".6"/></pattern>
+<pattern id="${p}-cls" width="14" height="14" patternUnits="userSpaceOnUse"><circle cx="3" cy="4" r=".9" class="${p}-punto" opacity=".6"/><path d="M9 8.5l2.4 3.9H6.6Z" class="${p}-retino" opacity=".55"/><circle cx="11.5" cy="2.5" r=".6" class="${p}-punto" opacity=".55"/></pattern>
+<pattern id="${p}-int" width="4" height="4" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r=".55" class="${p}-punto" opacity=".7"/></pattern>
+<filter id="${p}-alone" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
 </defs>
-<g id="bd-strato-1"><rect x="${x[0]}" y="${y0}" width="${x[1] - x[0]}" height="${h}" class="${p}c"/><rect x="${x[0]}" y="${y0}" width="${x[1] - x[0]}" height="${h}" fill="url(#${p}-punti)"/><rect x="${x[0]}" y="${y0}" width="${x[1] - x[0]}" height="${h}" class="${p}l"/></g>
-<g id="bd-strato-2"><rect x="${x[1]}" y="${y0}" width="${x[2] - x[1]}" height="${h}" class="${p}c"/><rect x="${x[1]}" y="${y0}" width="${x[2] - x[1]}" height="${h}" fill="url(#${p}-45)"/><rect x="${x[1]}" y="${y0}" width="${x[2] - x[1]}" height="${h}" class="${p}l"/>${tondini.map((y) => `<circle cx="140" cy="${y}" r="5" class="${p}r"/><circle cx="216" cy="${y}" r="5" class="${p}r"/>`).join('')}</g>
-<g id="bd-strato-3"><rect x="${x[2]}" y="${y0}" width="${x[3] - x[2]}" height="${h}" class="${p}c"/><rect x="${x[2]}" y="${y0}" width="${x[3] - x[2]}" height="${h}" fill="url(#${p}-punti)"/><rect x="${x[2]}" y="${y0}" width="${x[3] - x[2]}" height="${h}" class="${p}l"/></g>
-<g id="bd-strato-4"><rect x="${x[3]}" y="${y0}" width="${x[4] - x[3]}" height="${h}" class="${p}c"/><rect x="${x[3]}" y="${y0}" width="${x[4] - x[3]}" height="${h}" class="${p}l"/></g>
-<g id="bd-quote">
-${x.map((xi) => linea(xi, y1 + 6, xi, yq2 + 6, `${p}q`)).join('')}
-${linea(x[0], yq1, x[4], yq1, `${p}q`)}${x.map((xi) => tick(xi, yq1)).join('')}
-${linea(x[0], yq2, x[4], yq2, `${p}q`)}${tick(x[0], yq2)}${tick(x[4], yq2)}
-</g>
+${strati}
+${quote}
 </svg>`
 }
 

@@ -35,7 +35,12 @@
       "tempi": "Consegna: {TEMPI}",
       "classe": "Classe energetica {CLASSE} nelle ultime realizzazioni",
       "sistema": "{SISTEMA_BREVE}"
-    }
+    },
+    "parete": {
+      "titolo": "Parete in prospettiva: isolante esterno, calcestruzzo armato, isolante interno, intonaco",
+      "nota": "Illustrazione schematica, non in scala."
+    },
+    "fattiTitolo": "In breve"
   },
   "perChi": {
     "titolo": "Per chi è {BRAND}",

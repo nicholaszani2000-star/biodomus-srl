@@ -107,7 +107,20 @@ html:not([data-angolo]) .bd-v-famiglia,
 html[data-angolo='famiglia'] .bd-v-famiglia,
 html[data-angolo='terreno'] .bd-v-terreno,
 html[data-angolo='investo'] .bd-v-investo {
-  display: inline;
+  display: block;
+}
+
+/* Titolo dell'hero da 1024 px: nascosto prima del primo disegno (classe dallo script nel head), poi rivelato per righe.
+   Ripiego: se il JavaScript non arriva, compare da solo dopo 1,6 s. */
+.bd-rivela [data-bd-rivela] {
+  opacity: 0;
+  animation: bd-mostra 0.2s ease 1.6s forwards;
+}
+
+@keyframes bd-mostra {
+  to {
+    opacity: 1;
+  }
 }
 
 /* ---------- Componenti condivisi ---------- */
@@ -236,7 +249,7 @@ html[data-angolo='investo'] .bd-v-investo {
     display: flex;
     align-items: center;
     height: 24px;
-    color: var(--bd-legno);
+    color: var(--bd-dettaglio);
   }
 
   .bd-quota svg {
@@ -364,7 +377,7 @@ html[data-angolo='investo'] .bd-v-investo {
   }
 
   .bd-m-tacca--fatta {
-    background: var(--bd-legno);
+    background: var(--bd-dettaglio);
   }
 
   .bd-m-passo {
@@ -664,5 +677,268 @@ html[data-angolo='investo'] .bd-v-investo {
 
   .bd-cta:hover svg {
     transform: none;
+  }
+}
+
+/* ---------- Step 4: tema scuro per sezione, header, hero, «Per chi è», barra mobile ---------- */
+
+@layer components {
+  /* Una sezione con .bd-tema-scuro prende i token scuri (bd-tokens.css) e qui il suo fondo con la griglia. */
+  section.bd-tema-scuro {
+    background-color: var(--bd-fondo);
+    background-image:
+      linear-gradient(var(--bd-griglia) 1px, transparent 1px),
+      linear-gradient(90deg, var(--bd-griglia) 1px, transparent 1px);
+    background-size: 32px 32px;
+    color: var(--bd-testo);
+    color-scheme: dark;
+  }
+
+  /* Header: colori e loghi passano tra scuro e chiaro in 200 ms, senza spostare nulla (§6.1). */
+  .bd-header {
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      color 0.2s ease;
+  }
+
+  .bd-header.bd-tema-scuro {
+    color-scheme: dark;
+  }
+
+  .bd-logo-doppio {
+    display: grid;
+  }
+
+  .bd-logo-doppio > .bd-logo {
+    grid-area: 1 / 1;
+    transition: opacity 0.2s ease;
+  }
+
+  .bd-logo-doppio > .bd-logo--negativo,
+  .bd-tema-scuro .bd-logo-doppio > .bd-logo--positivo {
+    opacity: 0;
+  }
+
+  .bd-tema-scuro .bd-logo-doppio > .bd-logo--negativo {
+    opacity: 1;
+  }
+
+  /* Linea di quota dopo una sezione scura: staccata dal bordo */
+  section.bd-tema-scuro + .bd-wrap {
+    margin-top: 40px;
+  }
+
+  /* Hero */
+  .bd-hero {
+    padding-block: 28px 56px;
+  }
+
+  .bd-hero__griglia {
+    display: grid;
+    gap: 36px;
+    align-items: center;
+  }
+
+  .bd-hero__testo {
+    display: grid;
+    gap: 20px;
+    justify-items: start;
+    min-width: 0;
+  }
+
+  .bd-occhiello--linea {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .bd-occhiello--linea::before {
+    content: '';
+    flex: none;
+    width: 24px;
+    height: 2px;
+    background: var(--bd-dettaglio);
+  }
+
+  .bd-hero__sottotitolo {
+    color: var(--bd-testo-2);
+    font-size: 1.0625rem;
+  }
+
+  .bd-hero__azioni {
+    display: grid;
+    gap: 12px;
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  .bd-hero__fatti {
+    display: grid;
+    gap: 10px;
+    margin: 4px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    line-height: 1.45;
+  }
+
+  .bd-hero__fatti li {
+    display: flex;
+    gap: 12px;
+    align-items: baseline;
+  }
+
+  .bd-hero__fatti li::before {
+    content: '';
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border: 2px solid var(--bd-dettaglio);
+    transform: translateY(-1px) rotate(45deg);
+  }
+
+  .bd-hero__visuale {
+    display: grid;
+    gap: 6px;
+    justify-items: center;
+    min-width: 0;
+  }
+
+  .bd-hero__visuale figcaption {
+    text-align: center;
+  }
+
+  .bd-parete {
+    width: 100%;
+  }
+
+  .bd-parete svg {
+    display: block;
+    width: 100%;
+    max-width: 520px;
+    height: auto;
+    margin-inline: auto;
+    overflow: visible;
+  }
+
+  @media (min-width: 640px) {
+    .bd-hero__azioni {
+      display: flex;
+      flex-wrap: wrap;
+      width: auto;
+    }
+
+    .bd-hero__sottotitolo {
+      font-size: 1.1875rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .bd-hero {
+      padding-block: 48px 112px;
+    }
+
+    .bd-hero__griglia {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      gap: 56px;
+    }
+
+    .bd-hero__testo {
+      gap: 24px;
+    }
+  }
+
+  /* «Per chi è» */
+  .bd-perchi__titolo {
+    margin: 0 0 40px;
+  }
+
+  .bd-card-griglia {
+    display: grid;
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .bd-card {
+    display: grid;
+    grid-template-rows: auto auto 1fr auto;
+    gap: 14px;
+    align-content: start;
+    padding: 28px 24px 24px;
+    border: 1px solid var(--bd-linea);
+    border-radius: var(--bd-raggio-card);
+    background: var(--bd-carta);
+  }
+
+  .bd-card .bd-cta {
+    justify-self: start;
+    margin-top: 6px;
+  }
+
+  .bd-card__icona {
+    display: inline-grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border: 1px solid var(--bd-linea);
+    border-radius: 14px;
+    background: var(--bd-fondo);
+    color: var(--bd-dettaglio);
+  }
+
+  .bd-card__icona svg {
+    width: 26px;
+    height: 26px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  @media (min-width: 768px) {
+    .bd-card-griglia {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 24px;
+    }
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .bd-card {
+      transition: box-shadow 0.3s ease;
+    }
+
+    .bd-card:hover {
+      box-shadow: 0 22px 44px -28px rgb(31 35 38 / 0.45);
+    }
+  }
+
+  /* Ancora provvisoria di «Come funziona» (step 5) */
+  .bd-ancora {
+    height: 0;
+  }
+
+  /* Barra mobile: si nasconde di colpo, compare dal basso in 200 ms */
+  .bd-barra-mobile {
+    visibility: hidden;
+    transform: translateY(110%);
+  }
+
+  .bd-barra-mobile--vista {
+    visibility: visible;
+    transform: none;
+    transition: transform 0.2s ease-out;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bd-header,
+  .bd-logo-doppio > .bd-logo,
+  .bd-barra-mobile--vista {
+    transition: none;
   }
 }

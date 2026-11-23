@@ -10,6 +10,16 @@
       "file": "src/assets/svg/bd-logo-orizzontale.svg",
       "width": 1971.1,
       "height": 262.1
+    },
+    "impilatoNegativo": {
+      "file": "src/assets/svg/bd-logo-negativo.svg",
+      "width": 1272,
+      "height": 494
+    },
+    "orizzontaleNegativo": {
+      "file": "src/assets/svg/bd-logo-orizzontale-negativo.svg",
+      "width": 1971.1,
+      "height": 262.1
     }
   },
   "immagini": [
@@ -21,10 +31,10 @@
         "svg"
       ],
       "larghezze": [
-        368
+        301
       ],
-      "width": 368,
-      "height": 300,
+      "width": 301,
+      "height": 272,
       "alt": "Disegno in sezione della parete: strato isolante esterno, calcestruzzo armato con i tondini d'acciaio, strato isolante interno e intonaco.",
       "credito": "Illustrazione",
       "dicitura": "Illustrazione schematica, non in scala.",

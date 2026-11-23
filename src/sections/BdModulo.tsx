@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent, type MouseEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type MouseEvent, type ReactNode } from 'react'
 import { emailPubblica, fasceBudget } from '../content/dati.ts'
 import { riempi, tt } from '../content/bd-testi.ts'
 import { leggiAngolo, type Angolo } from '../lib/bd-angolo.ts'
+import { useIdratato } from '../lib/bd-idratato.ts'
+import { EVENTO_PRESELEZIONE, type Preselezione } from '../lib/bd-preselezione.ts'
 import { leggiConsenso } from '../lib/bd-consenso.ts'
 import {
   CAMPI_PER_PASSO,
@@ -32,15 +34,6 @@ const PRESCELTE: Record<Angolo, { profilo: string; terreno?: string }> = {
   terreno: { profilo: 'casa', terreno: 'si' },
   investo: { profilo: 'investimento' },
 }
-
-// true solo dopo l'hydration: prima (e senza JavaScript) il modulo è un'unica pagina lunga.
-const nessunaIscrizione = () => () => {}
-const useIdratato = () =>
-  useSyncExternalStore(
-    nessunaIscrizione,
-    () => true,
-    () => false,
-  )
 
 const id = (campo: string, opzione?: string) => (opzione ? `bd-m-${campo}-${opzione}` : `bd-m-${campo}`)
 const idErrore = (campo: string) => `bd-m-errore-${campo}`
@@ -178,6 +171,7 @@ function PassoTitolo({ passo, idratato }: { passo: Passo; idratato: boolean }) {
  * Senza JavaScript: un vero form, tutti i campi in una pagina lunga, POST su /api/lead e poi /grazie.html.
  */
 export default function BdModulo() {
+  // true solo dopo l'hydration: prima (e senza JavaScript) il modulo è un'unica pagina lunga.
   const idratato = useIdratato()
   const formRef = useRef<HTMLFormElement>(null)
   const avviatoIl = useRef(0)
@@ -200,6 +194,18 @@ export default function BdModulo() {
     avviatoIl.current = Date.now()
     // Con JavaScript la validazione la fa il modulo, con i messaggi di §8 al posto di quelli del browser.
     if (formRef.current) formRef.current.noValidate = true
+  }, [])
+
+  // Card di «Per chi è» (§6.3): sceglie la risposta 1 (e «Sì» al terreno) e riporta al passaggio 1.
+  useEffect(() => {
+    const ascolta = (evento: Event) => {
+      const { profilo: nuovoProfilo, terreno: nuovoTerreno } = (evento as CustomEvent<Preselezione>).detail
+      setScelte((s) => ({ ...s, profilo: nuovoProfilo, ...(nuovoTerreno ? { terreno: nuovoTerreno } : {}) }))
+      setErrori((e) => ({ ...e, profilo: undefined, ...(nuovoTerreno ? { terreno: undefined } : {}) }))
+      setPasso(1)
+    }
+    window.addEventListener(EVENTO_PRESELEZIONE, ascolta)
+    return () => window.removeEventListener(EVENTO_PRESELEZIONE, ascolta)
   }, [])
 
   // Focus dopo il cambio di passaggio, dopo un errore o sul messaggio finale.

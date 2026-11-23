@@ -9,6 +9,8 @@ interface BdCtaProps {
   compatta?: boolean
   classe?: string
   freccia?: boolean
+  /** Prima dello scroll: per esempio la preselezione del modulo dalle card di «Per chi è» */
+  alClic?: () => void
 }
 
 /** CTA di §5: primaria a pillola piena, secondaria con bordo. Senza JavaScript resta un'ancora vera. */
@@ -19,8 +21,10 @@ export default function BdCta({
   compatta = false,
   classe = '',
   freccia = true,
+  alClic,
 }: BdCtaProps) {
   const vaiA = (evento: MouseEvent<HTMLAnchorElement>) => {
+    alClic?.()
     if (!href.startsWith('#') || evento.metaKey || evento.ctrlKey || evento.shiftKey) return
     evento.preventDefault()
     scorriA(href.slice(1))
