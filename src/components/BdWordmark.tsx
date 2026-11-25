@@ -8,6 +8,8 @@ import immagini from '../content/immagini.json'
 interface Props {
   /** header: impilato 44 px fino a 1023 px, orizzontale 34 px da 1024 px · footer: impilato 48 px */
   posizione?: 'header' | 'footer'
+  /** Wordmark tipografico con un altro nome (BdPartner, quando il logo del partner manca): niente logo di Biodomus */
+  testo?: string
 }
 
 // Misure intrinseche dal manifesto (viewBox degli SVG del kit): width e height sempre dichiarati, niente CLS.
@@ -32,9 +34,17 @@ function LogoHeader({ impilato, orizzontale, classe }: { impilato: string; orizz
  * Nell'header il link ha già l'aria-label con il nome, quindi qui l'immagine è decorativa (alt vuoto);
  * nel footer non è in un link e porta il nome nell'alt. Senza logo (LOGO vuoto in §2) resta il wordmark tipografico.
  */
-export default function BdWordmark({ posizione = 'header' }: Props) {
+export default function BdWordmark({ posizione = 'header', testo }: Props) {
   const logo: string | null = dati.LOGO
   const stile: string = dati.STILE
+
+  if (testo) {
+    return (
+      <span className="bd-wordmark">
+        <span>{testo}</span>
+      </span>
+    )
+  }
 
   if (!logo) {
     return (

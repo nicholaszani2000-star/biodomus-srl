@@ -6,7 +6,8 @@
   "comuni": {
     "saltaAlContenuto": "Vai al contenuto",
     "tornaInizio": "{BRAND}, torna all'inizio",
-    "illustrazione": "Illustrazione"
+    "illustrazione": "Illustrazione",
+    "nuovaScheda": "(si apre in una nuova scheda)"
   },
   "header": {
     "linkComeFunziona": "Come funziona",
@@ -166,10 +167,14 @@
     "classe": "classe {classe}",
     "realizzataDa": "Realizzata da {P1_NOME}",
     "nota": "Foto e dati forniti da {P1_NOME}.",
-    "cta": "Voglio una casa così"
+    "cta": "Voglio una casa così",
+    "regione": "Elenco delle case realizzate",
+    "indice": "{n} di {totale}",
+    "illustrazioneAlt": "Illustrazione: assonometria schematica di una casa, al posto della foto che non c'è"
   },
   "partner": {
     "titolo": "Le aziende con cui lavoriamo",
+    "titoloUno": "L'azienda con cui lavoriamo",
     "link": "Sito ufficiale"
   },
   "modulo": {
@@ -309,6 +314,7 @@
   "footer": {
     "contattiTelefonoWhatsapp": "Telefono e WhatsApp",
     "contattiTelefono": "Telefono",
+    "whatsapp": "Scrivi su WhatsApp",
     "legale": "{TITOLARE} · {FORMA} · Sede: {SEDE} · P.IVA {PIVA}",
     "rea": "REA {REA}",
     "capitale": "Capitale sociale {CAPITALE}",

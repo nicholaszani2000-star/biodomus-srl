@@ -27,7 +27,11 @@ function prendi(percorso: string): Nodo {
 /** Sostituisce i segnaposti maiuscoli. null se uno dei dati usati è vuoto. */
 export function risolvi(modello: string): string | null {
   let vuoto = false
-  const risultato = modello.replace(SEGNAPOSTO, (_intero, chiave: string) => {
+  // «Foto e dati forniti da {P1_NOME}.» con un nome che finisce in «S.r.l.»: un punto solo, non «S.r.l..»
+  const senzaPuntoDoppio = modello.replace(/\{([A-Z][A-Z0-9_]*)\}\./g, (intero, chiave: string) =>
+    valoreTesto(chiave)?.endsWith('.') ? `{${chiave}}` : intero,
+  )
+  const risultato = senzaPuntoDoppio.replace(SEGNAPOSTO, (_intero, chiave: string) => {
     const valore = valoreTesto(chiave)
     if (valore === null) {
       vuoto = true

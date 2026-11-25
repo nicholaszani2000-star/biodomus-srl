@@ -2,7 +2,10 @@ import { contatti, emailPubblica } from '../content/dati.ts'
 import { t, tt } from '../content/bd-testi.ts'
 import BdWordmark from './BdWordmark.tsx'
 
-/** Footer (§6.12 e §10.1): contatti, dati legali completi, nota sul ruolo, privacy e cookie. */
+/**
+ * Footer (§6.12 e §10.1): contatti, dati legali completi, nota sul ruolo, privacy e cookie.
+ * Telefono e WhatsApp come testo con link (tel: e wa.me), gli stessi di BdChiusura: gli unici due posti dove compaiono (§2).
+ */
 export default function BdFooter() {
   const canali = contatti()
   const email = emailPubblica()
@@ -21,6 +24,15 @@ export default function BdFooter() {
               {tt(canali.whatsapp ? 'footer.contattiTelefonoWhatsapp' : 'footer.contattiTelefono')}{' '}
               <a href={canali.tel}>{canali.telefono}</a>
               {' · '}
+              {canali.whatsapp ? (
+                <>
+                  <a href={canali.whatsapp} target="_blank" rel="noopener">
+                    {tt('footer.whatsapp')}
+                    <span className="bd-sr-only"> {tt('comuni.nuovaScheda')}</span>
+                  </a>
+                  {' · '}
+                </>
+              ) : null}
             </>
           ) : null}
           <a href={`mailto:${email}`}>{email}</a>

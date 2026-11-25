@@ -114,7 +114,12 @@ function preparaPareti(): void {
       return y
     }
     const inizio = () => Math.max(0, inPagina() - window.innerHeight * 0.9)
-    const fine = () => Math.max(inizio() + 240, inPagina() + contenitore.offsetHeight / 2 - window.innerHeight * 0.3)
+    // Mai oltre lo scroll massimo: la parete di «Chiusura» sta in fondo alla pagina e su uno schermo alto
+    // il suo centro non arriva al 30%: senza questo limite resterebbe staccata.
+    const fine = () => {
+      const ideale = Math.max(inizio() + 240, inPagina() + contenitore.offsetHeight / 2 - window.innerHeight * 0.3)
+      return Math.max(inizio() + 1, Math.min(ideale, ScrollTrigger.maxScroll(window)))
+    }
     gsap.fromTo(
       svg,
       { '--bd-esplodi': 1 },

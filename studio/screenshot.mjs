@@ -6,6 +6,9 @@
 // logo e tema dell'header, la parete che si ricompone scorrendo, la barra mobile, una sola CTA primaria per schermata,
 // la riduzione del movimento a 390 e 1440 px. Dallo step 5: «Com'è fatta la casa» con lo strato 2 aperto (screenshot),
 // il tocco sullo strato nel disegno, la leggibilità a 390 px (tratti ≥ 1 px, testi ≥ 14 px, niente scroll orizzontale).
+// Dallo step 6: la pagina intera a 390 e 1440 px (angolo famiglia), la FAQ con una domanda aperta (una per volta, anche da
+// tastiera; senza JavaScript <details>), «Chiusura» (parete ricomposta in fondo alla pagina, canali secondari più piccoli
+// della CTA ma con 44 px di tocco), il ritmo verticale delle sezioni e le quote numerate in fila.
 // Screenshot in studio/report/screenshot/ (escluso da git), riepilogo in studio/report/screenshot/riepilogo.json.
 
 import { chromium } from 'playwright'
@@ -505,6 +508,128 @@ for (const vista of VISTE) {
   await pagina.close()
 }
 
+// Step 6: ritmo verticale, quote in fila, FAQ con una domanda aperta e «Chiusura», a 390 e 1440 px.
+const NASCONDI_FISSI = '.bd-header,.bd-barra-mobile{visibility:hidden!important}'
+for (const vista of VISTE) {
+  const pagina = await browser.newPage({ viewport: { width: vista.width, height: vista.height } })
+  const errori = []
+  pagina.on('pageerror', (e) => errori.push(e.message))
+  pagina.on('console', (m) => {
+    if (m.type() === 'error') errori.push(m.text())
+  })
+  await pagina.goto(`${BASE}/`, { waitUntil: 'networkidle' })
+  await pagina.waitForTimeout(600)
+
+  // Ritmo verticale (§5): ogni sezione dopo l'hero ha 96 px sopra e sotto su mobile e 160 px su desktop. Unica eccezione,
+  // dichiarata nel CSS: il modulo, che segue l'illustrazione «villa al tramonto» e ha meno spazio sopra.
+  // Tra due sezioni una BdQuota con il numero della sezione che segue, in fila (01, 02, …).
+  const ritmo = await pagina.evaluate((atteso) => {
+    const sezioni = [...document.querySelectorAll('main > section')].filter((s) => s.id !== 'inizio')
+    const fuori = []
+    for (const s of sezioni) {
+      const stile = getComputedStyle(s)
+      const sopra = parseFloat(stile.paddingTop)
+      const sotto = parseFloat(stile.paddingBottom)
+      const dopoIllustrazione = s.previousElementSibling?.matches('.bd-illustrazione') ?? false
+      if (sotto !== atteso || (!dopoIllustrazione && sopra !== atteso)) fuori.push(`#${s.id} ${sopra}/${sotto}`)
+    }
+    const numeri = [...document.querySelectorAll('main .bd-quota__numero')].map((n) => n.textContent.trim())
+    const inFila = numeri.every((n, i) => n === String(i + 1).padStart(2, '0'))
+    // Ogni quota sta subito prima di una sezione
+    const quotePrimaDi = [...document.querySelectorAll('main .bd-quota')].map((q) => q.closest('.bd-wrap')?.nextElementSibling?.id ?? '?')
+    return { sezioni: sezioni.map((s) => s.id), fuori, numeri, inFila, quotePrimaDi }
+  }, vista.width < 1024 ? 96 : 160)
+  esito(
+    ritmo.fuori.length === 0 && ritmo.inFila && ritmo.quotePrimaDi.every((id) => id !== '?'),
+    `ritmo verticale e quote numerate ${vista.width}px`,
+    `${ritmo.sezioni.length} sezioni con ${vista.width < 1024 ? 96 : 160} px sopra e sotto${ritmo.fuori.length ? `; fuori misura: ${ritmo.fuori.join(', ')}` : ''}; quote ${ritmo.numeri.join(' ')} prima di ${ritmo.quotePrimaDi.join(', ')}`,
+  )
+
+  // FAQ: all'inizio tutte chiuse; un clic ne apre una, il clic su un'altra chiude la prima; da tastiera Invio e Spazio
+  await pagina.locator('#faq').scrollIntoViewIfNeeded()
+  await pagina.waitForTimeout(900)
+  const statoFaq = () =>
+    pagina.evaluate(() =>
+      [...document.querySelectorAll('#faq .bd-faq__domanda')].map((b) => {
+        const regione = document.getElementById(b.getAttribute('aria-controls') ?? '')
+        return {
+          tag: b.tagName,
+          espansa: b.getAttribute('aria-expanded'),
+          visibile: Boolean(regione && regione.getClientRects().length > 0),
+          regione: regione?.getAttribute('role') === 'region' && regione.getAttribute('aria-labelledby') === b.id,
+          altezza: b.getBoundingClientRect().height,
+        }
+      }),
+    )
+  const aperte = (stato) => stato.flatMap((v, i) => (v.espansa === 'true' ? [i + 1] : [])).join(',') || 'nessuna'
+  const coerenti = (stato) => stato.every((v) => (v.espansa === 'true') === v.visibile)
+  const iniziale = await statoFaq()
+  const domande = pagina.locator('#faq .bd-faq__domanda')
+  await domande.nth(0).click()
+  await pagina.waitForTimeout(250)
+  const dopoPrima = await statoFaq()
+  await domande.nth(4).click()
+  await pagina.waitForTimeout(250)
+  const dopoQuinta = await statoFaq()
+  await domande.nth(2).focus()
+  await pagina.keyboard.press('Enter')
+  await pagina.waitForTimeout(250)
+  const dopoInvio = await statoFaq()
+  await pagina.keyboard.press('Space')
+  await pagina.waitForTimeout(250)
+  const dopoSpazio = await statoFaq()
+  const tutteBottoni = iniziale.length > 0 && iniziale.every((v) => v.tag === 'BUTTON' && v.regione && v.altezza >= 44)
+  const passi = [aperte(iniziale), aperte(dopoPrima), aperte(dopoQuinta), aperte(dopoInvio), aperte(dopoSpazio)]
+  const tuttiCoerenti = [iniziale, dopoPrima, dopoQuinta, dopoInvio, dopoSpazio].every(coerenti)
+  esito(
+    tutteBottoni && tuttiCoerenti && passi.join(' → ') === 'nessuna → 1 → 5 → 3 → nessuna' && errori.length === 0,
+    `FAQ, una domanda aperta per volta ${vista.width}px`,
+    `${iniziale.length} domande (button con aria-expanded e aria-controls verso role="region", alte ${Math.min(...iniziale.map((v) => Math.round(v.altezza)))} px o più); clic 1, clic 5, Invio sulla 3, Spazio: ${passi.join(' → ')}${tuttiCoerenti ? '' : '; aria-expanded e riquadri visibili non coincidono'}${errori.length ? `; errori: ${errori.join(' | ')}` : ''}`,
+  )
+  // Screenshot con la domanda 5 aperta, la risposta più lunga («Quanto costa il servizio…»)
+  await domande.nth(4).click()
+  await pagina.waitForTimeout(400)
+  await pagina.locator('#faq').screenshot({ path: join(USCITA, `faq-aperta-${vista.width}.png`), style: NASCONDI_FISSI })
+
+  // «Chiusura»: si arriva in fondo come una persona, a colpi di rotella, e la parete piccola dev'essere ricomposta
+  for (let i = 0; i < 40; i++) {
+    await pagina.mouse.wheel(0, 800)
+    await pagina.waitForTimeout(40)
+  }
+  await pagina.waitForTimeout(1800)
+  const chiusura = await pagina.evaluate(() => {
+    const sezione = document.getElementById('chiusura')
+    const svg = sezione.querySelector('[data-bd-parete] svg')
+    const primaria = sezione.querySelector('.bd-cta:not(.bd-cta--secondaria)')
+    const secondarie = [...sezione.querySelectorAll('.bd-chiusura__pulsanti a')]
+    const misura = (el) => {
+      const r = el.getBoundingClientRect()
+      return { h: Math.round(r.height), w: Math.round(r.width), testo: parseFloat(getComputedStyle(el).fontSize) }
+    }
+    return {
+      inFondo: Math.abs(window.scrollY - (document.documentElement.scrollHeight - window.innerHeight)) < 2,
+      esplodi: Number(getComputedStyle(svg).getPropertyValue('--bd-esplodi') || 0),
+      scura: Boolean(sezione.closest('.bd-tema-scuro')),
+      dettaglio: getComputedStyle(sezione).getPropertyValue('--bd-dettaglio').trim().toLowerCase(),
+      primaria: primaria ? { ...misura(primaria), href: primaria.getAttribute('href') } : null,
+      secondarie: secondarie.map((a) => ({ ...misura(a), href: a.getAttribute('href'), target: a.getAttribute('target'), rel: a.getAttribute('rel') })),
+    }
+  })
+  const secondarieOk =
+    chiusura.primaria !== null &&
+    chiusura.secondarie.length >= 1 &&
+    chiusura.secondarie.every((a) => a.h >= 44 && a.w >= 44 && a.h < chiusura.primaria.h && a.testo <= chiusura.primaria.testo) &&
+    chiusura.secondarie.some((a) => a.href?.startsWith('tel:+39')) &&
+    chiusura.secondarie.filter((a) => a.href?.startsWith('https://wa.me/')).every((a) => a.target === '_blank' && (a.rel ?? '').includes('noopener'))
+  esito(
+    chiusura.inFondo && chiusura.esplodi === 0 && !chiusura.scura && chiusura.dettaglio === '#a87b4f' && secondarieOk,
+    `«Chiusura» in fondo alla pagina ${vista.width}px`,
+    `parete ${chiusura.esplodi === 0 ? 'ricomposta' : `staccata a ${chiusura.esplodi}`} in chiaro (dettagli ${chiusura.dettaglio}); CTA primaria ${chiusura.primaria?.h} px verso ${chiusura.primaria?.href}; secondarie ${chiusura.secondarie.map((a) => `${a.href} ${a.w}×${a.h} px`).join(', ')}`,
+  )
+  await pagina.locator('#chiusura').screenshot({ path: join(USCITA, `chiusura-${vista.width}.png`), style: NASCONDI_FISSI })
+  await pagina.close()
+}
+
 // Senza JavaScript (§3.8): header chiaro con il logo positivo, parete composta con le quote, titolo visibile, barra nascosta.
 {
   const contesto = await browser.newContext({ viewport: { width: 390, height: 844 }, javaScriptEnabled: false })
@@ -527,6 +652,25 @@ for (const vista of VISTE) {
   })
   await pagina.locator('#inizio .bd-hero__visuale').screenshot({ path: join(USCITA, 'senza-js-parete-390.png') })
   await pagina.screenshot({ path: join(USCITA, 'senza-js-390.png') })
+  // FAQ senza JavaScript: <details> e <summary>, si aprono col clic del browser e le risposte sono già nella pagina
+  const faqPrima = await pagina.evaluate(() => [...document.querySelectorAll('#faq details')].map((d) => d.open))
+  await pagina.locator('#faq summary').nth(1).click()
+  // La risposta entra con una dissolvenza di 200 ms e la freccia ruota: si scatta dopo
+  await pagina.waitForTimeout(400)
+  const faqDopo = await pagina.evaluate(() => {
+    const voci = [...document.querySelectorAll('#faq details')]
+    return {
+      aperte: voci.flatMap((d, i) => (d.open ? [i + 1] : [])),
+      risposta: voci[1]?.querySelector('.bd-faq__risposta')?.getClientRects().length > 0,
+      testi: voci.filter((d) => (d.querySelector('.bd-faq__risposta')?.textContent ?? '').trim().length > 20).length,
+    }
+  })
+  await pagina.locator('#faq').screenshot({ path: join(USCITA, 'senza-js-faq-390.png') })
+  esito(
+    faqPrima.length > 0 && faqPrima.every((o) => !o) && faqDopo.aperte.join(',') === '2' && faqDopo.risposta && faqDopo.testi === faqPrima.length,
+    'FAQ senza JavaScript 390px',
+    `${faqPrima.length} <details> chiusi, tutte le ${faqDopo.testi} risposte nella pagina; clic sulla domanda 2: aperta ${faqDopo.aperte.join(',') || 'nessuna'}, risposta ${faqDopo.risposta ? 'visibile' : 'nascosta'}`,
+  )
   const ok = !stato.js && stato.fondoHeader === 'rgb(237, 236, 232)' && stato.logoPositivo === 1 && stato.composta && stato.quote === 1 && stato.titolo === 1 && stato.barra === 'hidden'
   esito(
     ok,

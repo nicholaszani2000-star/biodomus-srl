@@ -2,7 +2,7 @@ import { useState, type MouseEvent } from 'react'
 import BdCta from '../components/BdCta.tsx'
 import BdParete from '../components/BdParete.tsx'
 import BdSezione from '../components/BdSezione.tsx'
-import { dati } from '../content/dati.ts'
+import { dati, realizzazioniVisibili } from '../content/dati.ts'
 import { t, tt } from '../content/bd-testi.ts'
 import testi from '../content/testi.json'
 import { useIdratato } from '../lib/bd-idratato.ts'
@@ -97,9 +97,12 @@ export default function BdSistema() {
               )
             })}
           </ul>
-          <div className="bd-sezione__cta">
-            <BdCta>{tt('sistema.cta')}</BdCta>
-          </div>
+          {/* §6: una CTA «dopo BdRealizzazioni o BdSistema». Con le realizzazioni visibili (P1_OK «sì») la porta lei. */}
+          {realizzazioniVisibili() ? null : (
+            <div className="bd-sezione__cta">
+              <BdCta>{tt('sistema.cta')}</BdCta>
+            </div>
+          )}
         </div>
       </div>
     </BdSezione>

@@ -263,8 +263,9 @@ function fileSotto(rel, filtro = () => true) {
 }
 const impronta = (rel) => createHash('sha1').update(readFileSync(join(ROOT, rel))).digest('hex')
 const DATI_TS = leggi('src/content/dati.ts')
-const autorizzato = (chiave) => new RegExp(`\\b${chiave}:\\s*true`).test(DATI_TS)
-const nomeDato = (chiave) => (DATI_TS.match(new RegExp(`\\b${chiave}:\\s*'([^']+)'`)) ?? [])[1]
+// Dallo step 6 le autorizzazioni dei partner sono «const P1_OK = false» e i loro dati «P1_NOME: P1_OK ? '…' : null»
+const autorizzato = (chiave) => new RegExp(`\\b${chiave}\\s*[:=]\\s*true\\b`).test(DATI_TS)
+const nomeDato = (chiave) => (DATI_TS.match(new RegExp(`\\b${chiave}:\\s*(?:P\\d_OK\\s*\\?\\s*)?'([^']+)'`)) ?? [])[1]
 
 // §2: il verde del positivo (#4F8F17) resta nel logo; il lime (#8DC21E) esce dal logo solo come colore dei dettagli
 // grafici delle sezioni scure, cioè come valore dei token --bd-dettaglio e --bd-tondino del tema scuro. Mai su testi né pulsanti.
@@ -666,8 +667,19 @@ controllo('Per chi è: tre card, ognuna con una CTA secondaria verso il modulo (
   return problemi.length ? { ok: false, nota: problemi.join('; ') } : { ok: true, nota: `3 card (${TESTI.perChi.card.map((c) => c.titolo).join(', ')}), CTA secondarie verso #preventivo` }
 })
 
-// Gli step 5 e 6 aggiungono qui gli id delle loro sezioni, nell'ordine di §6.
-const ORDINE_SEZIONI = ['inizio', 'per-chi', 'come-funziona', 'ruolo', 'sistema', 'preventivo']
+// Gli id delle sezioni nell'ordine di §6. Realizzazioni e Partner solo se compaiono (autorizzazioni di §2):
+// che compaiano quando devono lo verifica il controllo dello step 6.
+const ORDINE_SEZIONI = [
+  'inizio',
+  'per-chi',
+  'come-funziona',
+  'ruolo',
+  'sistema',
+  ...['realizzazioni', 'partner'].filter((id) => HTML.includes(`<section id="${id}"`)),
+  'preventivo',
+  'faq',
+  'chiusura',
+]
 
 controllo('sezioni nell\'ordine di §6', () => {
   const posizioni = ORDINE_SEZIONI.map((id) => ({ id, pos: HTML.indexOf(` id="${id}"`) }))
@@ -809,7 +821,7 @@ const SISTEMA = sezioneHtml('sistema')
 // tra apici o virgolette (anche sulla riga dopo la chiave), oppure null. undefined se la chiave non c'è.
 const DATI_OGGETTO = DATI_TS.slice(Math.max(0, DATI_TS.indexOf('export const dati')))
 const valoreDato = (chiave) => {
-  const m = DATI_OGGETTO.match(new RegExp(`\\b${chiave}:\\s*(?:null|(['"\`])((?:(?!\\1)[^\\n])*)\\1)\\s*,`))
+  const m = DATI_OGGETTO.match(new RegExp(`\\b${chiave}:\\s*(?:P\\d_OK\\s*\\?\\s*)?(?:null|(['"\`])((?:(?!\\1)[^\\n])*)\\1)\\s*[,:]`))
   return m ? (m[2] ?? null) : undefined
 }
 
@@ -932,6 +944,147 @@ controllo('parole vietate da §3.13 anche nelle sezioni nuove, nell\'HTML e in t
   return problemi.length
     ? { ok: false, nota: problemi.join('; ') }
     : { ok: true, nota: '#come-funziona, #ruolo e #sistema dentro il controllo di §3.13 e senza parole vietate, anche nel copy di testi.json' }
+})
+
+// ---------- STEP 6 ----------
+
+const FAQ = sezioneHtml('faq')
+const CHIUSURA = sezioneHtml('chiusura')
+const FOOTER = (HTML.match(/<footer[\s\S]*?<\/footer>/) ?? [''])[0]
+const REALIZZAZIONI_RIGHE = ((DATI_TS.match(/REALIZZAZIONI_TESTO = `([\s\S]*?)`/) ?? [])[1] ?? '').split('\n').filter((r) => r.trim()).length
+const nomeAutorizzati = [1, 2].filter((n) => autorizzato(`P${n}_OK`))
+
+// I testi di testi.json con i dati di §2, come li risolve bd-testi.ts: null se un dato è vuoto, maiuscola se il testo
+// comincia con un dato, un punto solo se il dato finisce con il punto («S.r.l.»).
+function risolviTesto(modello) {
+  let vuoto = false
+  const senzaPuntoDoppio = modello.replace(/\{([A-Z][A-Z0-9_]*)\}\./g, (intero, k) => (valoreDato(k)?.endsWith('.') ? `{${k}}` : intero))
+  const testo = senzaPuntoDoppio.replace(/\{([A-Z][A-Z0-9_]*)\}/g, (_, k) => {
+    const v = valoreDato(k)
+    if (v === null || v === undefined) vuoto = true
+    return v ?? ''
+  })
+  if (vuoto) return null
+  return modello.startsWith('{') ? testo.charAt(0).toUpperCase() + testo.slice(1) : testo
+}
+
+controllo('partner senza autorizzazione: né nome né sito né file in dist, nemmeno nel JavaScript (§2, §10.7)', () => {
+  const problemi = []
+  const testiDist = esiste('dist') ? fileSotto('dist', (n) => /\.(html|js|css|json|svg|txt|xml|webmanifest)$/.test(n)) : []
+  const impronteDist = new Set((esiste('dist') ? fileSotto('dist') : []).map(impronta))
+  const controllati = []
+  for (const n of [1, 2]) {
+    if (autorizzato(`P${n}_OK`)) continue
+    const nome = nomeDato(`P${n}_NOME`)
+    const parola = nome?.split(/\s+/)[0]
+    const dominio = (DATI_TS.match(new RegExp(`\\bP${n}_SITO:[^\\n]*?'https?://(?:www\\.)?([^/']+)`)) ?? [])[1]
+    controllati.push(`P${n} (${parola ?? '?'})`)
+    for (const f of testiDist) {
+      const testo = leggi(f)
+      if (parola && new RegExp(`\\b${parola}\\b`, 'i').test(testo)) problemi.push(`${f} contiene «${parola}»`)
+      if (dominio && testo.toLowerCase().includes(dominio.toLowerCase())) problemi.push(`${f} contiene ${dominio}`)
+    }
+    // Foto (P1, src/assets/img) e loghi (src/assets/partner): nessuna copia in dist, nemmeno con un nome diverso
+    const fileDelPartner = [
+      ...(n === 1 && esiste('src/assets/img') ? fileSotto('src/assets/img', (x) => !x.startsWith('.')) : []),
+      ...(esiste('src/assets/partner') ? fileSotto('src/assets/partner', (x) => parola && x.toLowerCase().includes(parola.toLowerCase())) : []),
+    ]
+    for (const f of fileDelPartner) if (impronteDist.has(impronta(f))) problemi.push(`${f} è arrivato in dist`)
+  }
+  if (!controllati.length) return { ok: true, nota: 'P1 e P2 autorizzati: nomi, loghi e foto ammessi' }
+  return problemi.length
+    ? { ok: false, nota: [...new Set(problemi)].join('; ') }
+    : { ok: true, nota: `${controllati.join(' e ')} non autorizzati: nome, dominio del sito, foto e loghi assenti da tutti i ${testiDist.length} file di testo di dist e da ogni asset` }
+})
+
+controllo('Realizzazioni e Partner solo con autorizzazione; CTA dopo Sistema se le realizzazioni non ci sono (§2, §6)', () => {
+  const problemi = []
+  const realizzazioni = sezioneHtml('realizzazioni')
+  const partner = sezioneHtml('partner')
+  const conRealizzazioni = autorizzato('P1_OK') && REALIZZAZIONI_RIGHE > 0
+  if (!conRealizzazioni && realizzazioni) problemi.push('#realizzazioni c\'è senza P1_OK «sì»')
+  if (conRealizzazioni && !realizzazioni) problemi.push('#realizzazioni manca con P1_OK «sì»')
+  const ctaSistema = ctaIn(SISTEMA).filter((c) => c.primaria).length
+  if (!conRealizzazioni && ctaSistema !== 1) problemi.push('senza realizzazioni la CTA deve stare dopo BdSistema')
+  if (conRealizzazioni) {
+    if (ctaSistema) problemi.push('con le realizzazioni la CTA si sposta da BdSistema a BdRealizzazioni')
+    if (ctaIn(realizzazioni).filter((c) => c.primaria && c.href === '#preventivo').length !== 1) problemi.push('#realizzazioni senza la CTA «Voglio una casa così»')
+    const card = (realizzazioni.match(/data-bd-realizzazione/g) ?? []).length
+    if (card !== REALIZZAZIONI_RIGHE) problemi.push(`${card} card invece di ${REALIZZAZIONI_RIGHE}`)
+    if (/data-bd-illustrazione/.test(realizzazioni)) problemi.push('data-bd-illustrazione in #realizzazioni (è solo per le illustrazioni AI)')
+  }
+  if (!nomeAutorizzati.length && partner) problemi.push('#partner c\'è senza partner autorizzati')
+  if (nomeAutorizzati.length) {
+    const voci = (partner.match(/<li class="bd-partner__voce"/g) ?? []).length
+    if (voci !== nomeAutorizzati.length) problemi.push(`${voci} partner in pagina invece di ${nomeAutorizzati.length}`)
+    if (nomeAutorizzati.length === 1 && testoVisibile(partner).includes(TESTI.partner.titolo)) problemi.push('titolo al plurale con un partner solo')
+  }
+  return problemi.length
+    ? { ok: false, nota: problemi.join('; ') }
+    : {
+        ok: true,
+        nota: `${conRealizzazioni ? `#realizzazioni con ${REALIZZAZIONI_RIGHE} card e la CTA` : 'P1_OK «no»: #realizzazioni assente, CTA dopo BdSistema'}; ${nomeAutorizzati.length ? `#partner con ${nomeAutorizzati.length} partner` : 'nessun partner autorizzato: #partner assente'}`,
+      }
+})
+
+controllo('link esterni con rel="noopener" (§6.8, §8)', () => {
+  const pagine = ['dist/index.html', 'dist/grazie.html'].filter(esiste)
+  const esterni = pagine.flatMap((f) => (leggi(f).match(/<a\b[^>]*href="(?:https?:)?\/\/[^"]*"[^>]*>/g) ?? []).map((tag) => ({ f, tag })))
+  const senza = esterni.filter(({ tag }) => !(attributo(tag, 'rel') ?? '').split(/\s+/).includes('noopener'))
+  return senza.length
+    ? { ok: false, nota: `senza rel="noopener": ${senza.map(({ tag }) => attributo(tag, 'href')).join(', ')}` }
+    : { ok: true, nota: `${esterni.length} link esterni, tutti con rel="noopener" (${[...new Set(esterni.map(({ tag }) => new URL(attributo(tag, 'href')).host))].join(', ')})` }
+})
+
+controllo('FAQ: le domande di §8 con tutte le risposte nell\'HTML prerenderizzato; senza COSTO_SERVIZIO niente domanda 5 (§6.10)', () => {
+  if (!FAQ) return { ok: false, nota: 'manca <section id="faq">' }
+  const problemi = []
+  const attese = TESTI.faq.voci.map((v) => ({ domanda: risolviTesto(v.domanda), risposta: risolviTesto(v.risposta) })).filter((v) => v.domanda && v.risposta)
+  const atteseNumero = valoreDato('COSTO_SERVIZIO') === null ? 7 : 8
+  if (attese.length !== atteseNumero) problemi.push(`${attese.length} domande da testi.json e dati.ts invece di ${atteseNumero}`)
+  const voci = (FAQ.match(/<details class="bd-faq__voce"/g) ?? []).length
+  if (voci !== attese.length) problemi.push(`${voci} voci <details> nel prerender invece di ${attese.length}`)
+  const testo = testoVisibile(FAQ)
+  const mancanti = attese.filter((v) => !testo.includes(v.domanda) || !testo.includes(v.risposta)).map((v) => v.domanda)
+  if (mancanti.length) problemi.push(`risposte non nell'HTML: ${mancanti.join(' · ')}`)
+  if (valoreDato('COSTO_SERVIZIO') === null && /Quanto costa il servizio/.test(testo)) problemi.push('domanda 5 presente con COSTO_SERVIZIO vuoto')
+  if (!/<summary class="bd-faq__domanda"/.test(FAQ)) problemi.push('senza JavaScript le domande non sono <summary>')
+  return problemi.length
+    ? { ok: false, nota: problemi.join('; ') }
+    : { ok: true, nota: `${attese.length} domande in <details> con le risposte nell'HTML (dopo l'hydration: button con aria-expanded e aria-controls, una aperta per volta)` }
+})
+
+controllo('CTA verso #preventivo tra 6 e 8, barra mobile esclusa (§6)', () => {
+  const senzaBarra = BARRA ? HTML.replace(BARRA, '') : HTML
+  const verso = ctaIn(senzaBarra).filter((c) => c.href === '#preventivo')
+  const dove = ['header', ...['inizio', 'per-chi', 'come-funziona', 'sistema', 'realizzazioni', 'chiusura'].filter((id) => ctaIn(sezioneHtml(id)).some((c) => c.href === '#preventivo'))]
+  const ok = verso.length >= 6 && verso.length <= 8
+  return { ok, nota: `${verso.length} CTA verso #preventivo (${verso.filter((c) => c.primaria).length} primarie): ${dove.join(', ')}` }
+})
+
+controllo('telefono e WhatsApp solo in BdChiusura e nel footer, con il numero di TELEFONO (§2, §8)', () => {
+  const telefono = valoreDato('TELEFONO')
+  const tutti = [...HTML.matchAll(/href="((?:tel:|https:\/\/wa\.me\/)[^"]*)"/g)].map((m) => m[1])
+  if (!telefono) return tutti.length ? { ok: false, nota: `TELEFONO vuoto ma ci sono ${tutti.length} link` } : { ok: true, nota: 'TELEFONO vuoto: nessun link tel: né wa.me' }
+  const problemi = []
+  const cifre = telefono.replace(/\D/g, '')
+  const internazionale = cifre.startsWith('39') ? cifre : `39${cifre}`
+  const nelleDue = [...`${CHIUSURA}${FOOTER}`.matchAll(/href="((?:tel:|https:\/\/wa\.me\/)[^"]*)"/g)].map((m) => m[1])
+  if (nelleDue.length !== tutti.length) problemi.push(`${tutti.length - nelleDue.length} link fuori da chiusura e footer`)
+  for (const href of tutti) {
+    if (href.startsWith('tel:') && href !== `tel:+${internazionale}`) problemi.push(`${href} invece di tel:+${internazionale}`)
+    if (href.startsWith('https://wa.me/') && href !== `https://wa.me/${internazionale}`) problemi.push(`${href} invece di https://wa.me/${internazionale}`)
+  }
+  const whatsapp = /WHATSAPP:\s*true/.test(DATI_OGGETTO)
+  const wa = tutti.filter((h) => h.includes('wa.me')).length
+  if (!whatsapp && wa) problemi.push('WHATSAPP «no» ma c\'è un link wa.me')
+  if (whatsapp && (!/wa\.me/.test(CHIUSURA) || !/wa\.me/.test(FOOTER))) problemi.push('WhatsApp manca in chiusura o nel footer')
+  if (!/tel:/.test(CHIUSURA) || !/tel:/.test(FOOTER)) problemi.push('«Chiama» manca in chiusura o nel footer')
+  const waTag = (`${CHIUSURA}${FOOTER}`.match(/<a\b[^>]*wa\.me[^>]*>/g) ?? []).filter((t) => attributo(t, 'target') !== '_blank')
+  if (waTag.length) problemi.push('link WhatsApp senza target="_blank"')
+  return problemi.length
+    ? { ok: false, nota: problemi.join('; ') }
+    : { ok: true, nota: `${tutti.length} link (tel:+${internazionale}${whatsapp ? `, https://wa.me/${internazionale}` : ''}), tutti in chiusura e footer` }
 })
 
 // ---------- esito ----------

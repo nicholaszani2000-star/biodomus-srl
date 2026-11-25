@@ -49,3 +49,11 @@ test('contatti generati da TELEFONO', () => {
   assert.equal(c.tel, 'tel:+393492391107')
   assert.equal(c.whatsapp, 'https://wa.me/393492391107')
 })
+
+test('niente punto doppio quando il dato finisce con il punto (step 6: «S.r.l.»)', () => {
+  // COSTO_SERVIZIO finisce con il punto: il punto del testo non si ripete
+  const costo = risolvi('{COSTO_SERVIZIO}.')
+  assert.ok(costo?.endsWith('definiti.') && !costo.endsWith('..'))
+  // un dato che non finisce con il punto lo tiene
+  assert.equal(risolvi('Zona: {ZONA}.'), `Zona: ${dati.ZONA}.`)
+})

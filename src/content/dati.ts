@@ -37,13 +37,13 @@ export interface DatiProgetto {
   PEC: string | null
   RUOLO_LEGALE: string
   COSTO_SERVIZIO: string | null
-  P1_NOME: string
-  P1_RUOLO: string
-  P1_SITO: string
+  P1_NOME: string | null
+  P1_RUOLO: string | null
+  P1_SITO: string | null
   P1_OK: boolean
-  P2_NOME: string
-  P2_RUOLO: string
-  P2_SITO: string
+  P2_NOME: string | null
+  P2_RUOLO: string | null
+  P2_SITO: string | null
   P2_OK: boolean
   RAPPORTO_PARTNER: 'da verificare' | 'sì, confermato per iscritto' | 'no, lavorano separatamente'
   SISTEMA: string
@@ -59,6 +59,12 @@ export interface DatiProgetto {
   BREVO_MITTENTE: string | null
   META_PIXEL: string | null
 }
+
+// Autorizzazioni scritte dei partner (§2: P1_OK, P2_OK, §10.7). Si cambiano qui, in un posto solo.
+// Senza autorizzazione nome, ruolo e sito del partner valgono null in «dati»: non compaiono nella pagina e,
+// siccome il build toglie il ramo che non si usa, non finiscono nemmeno nel JavaScript pubblicato (lo verifica controlli.mjs).
+const P1_OK = false
+const P2_OK = false
 
 // Una per riga: nome · comune · m² · anno · classe («–» = comune non indicato).
 const REALIZZAZIONI_TESTO = `Villa Smeraldo · – · 282 · 2025 · A4
@@ -115,14 +121,14 @@ export const dati = {
   COSTO_SERVIZIO:
     "Il primo incontro conoscitivo è gratuito e senza impegno. Il cliente non sostiene costi per il servizio di consulenza: l'eventuale compenso viene riconosciuto direttamente dall'azienda partner, secondo accordi preventivamente definiti.",
 
-  P1_NOME: 'Edilnoma Building S.r.l.',
-  P1_RUOLO: 'impresa di costruzioni: ville e complessi residenziali chiavi in mano',
-  P1_SITO: 'https://www.edilnoma.it',
-  P1_OK: false,
-  P2_NOME: 'Bioisotherm',
-  P2_RUOLO: 'produttore di sistemi costruttivi: casseri isolanti in EPS per pareti e solai in calcestruzzo armato',
-  P2_SITO: 'https://www.bioisotherm.it',
-  P2_OK: false,
+  P1_NOME: P1_OK ? 'Edilnoma Building S.r.l.' : null,
+  P1_RUOLO: P1_OK ? 'impresa di costruzioni: ville e complessi residenziali chiavi in mano' : null,
+  P1_SITO: P1_OK ? 'https://www.edilnoma.it' : null,
+  P1_OK: P1_OK,
+  P2_NOME: P2_OK ? 'Bioisotherm' : null,
+  P2_RUOLO: P2_OK ? 'produttore di sistemi costruttivi: casseri isolanti in EPS per pareti e solai in calcestruzzo armato' : null,
+  P2_SITO: P2_OK ? 'https://www.bioisotherm.it' : null,
+  P2_OK: P2_OK,
   RAPPORTO_PARTNER: 'da verificare',
 
   SISTEMA: 'pareti portanti in calcestruzzo armato gettato dentro casseri isolanti che restano nella parete',
@@ -176,6 +182,30 @@ export function contatti(): { telefono: string; tel: string; whatsapp: string | 
     tel: `tel:+${internazionale}`,
     whatsapp: dati.WHATSAPP ? `https://wa.me/${internazionale}` : null,
   }
+}
+
+/** BdRealizzazioni compare solo con l'autorizzazione scritta di P1 e almeno una realizzazione (§2, §6.7). */
+export function realizzazioniVisibili(): boolean {
+  const autorizzato: boolean = dati.P1_OK
+  return autorizzato && dati.REALIZZAZIONI.length > 0
+}
+
+export interface Partner {
+  numero: 1 | 2
+  nome: string
+  ruolo: string | null
+  sito: string | null
+}
+
+/** Partner con autorizzazione scritta «sì» (§2, §6.8). Senza autorizzazione il nome vale null e il partner non c'è. */
+export function partnerAutorizzati(): Partner[] {
+  const candidati: { numero: 1 | 2; ok: boolean; nome: string | null; ruolo: string | null; sito: string | null }[] = [
+    { numero: 1, ok: dati.P1_OK, nome: dati.P1_NOME, ruolo: dati.P1_RUOLO, sito: dati.P1_SITO },
+    { numero: 2, ok: dati.P2_OK, nome: dati.P2_NOME, ruolo: dati.P2_RUOLO, sito: dati.P2_SITO },
+  ]
+  return candidati
+    .filter((c): c is typeof c & { nome: string } => c.ok && c.nome !== null)
+    .map(({ numero, nome, ruolo, sito }) => ({ numero, nome, ruolo, sito }))
 }
 
 /** Email da mostrare in pagina: EMAIL_PUBBLICA, oppure EMAIL_LEAD se è vuota. */

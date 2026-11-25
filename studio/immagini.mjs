@@ -80,8 +80,9 @@ const slug = (testo) =>
 
 function leggiDati() {
   const testo = readFileSync(join(ROOT, 'src', 'content', 'dati.ts'), 'utf8')
-  const stringa = (chiave) => (testo.match(new RegExp(`\\b${chiave}:\\s*'([^']*)'`)) ?? [])[1] ?? null
-  const booleano = (chiave) => (testo.match(new RegExp(`\\b${chiave}:\\s*(true|false)`)) ?? [])[1] === 'true'
+  // I dati dei partner hanno la forma «P1_NOME: P1_OK ? '…' : null» e le autorizzazioni «const P1_OK = false» (step 6)
+  const stringa = (chiave) => (testo.match(new RegExp(`\\b${chiave}:\\s*(?:P\\d_OK\\s*\\?\\s*)?'([^']*)'`)) ?? [])[1] ?? null
+  const booleano = (chiave) => (testo.match(new RegExp(`\\b${chiave}\\s*[:=]\\s*(true|false)\\b`)) ?? [])[1] === 'true'
   return {
     BRAND: stringa('BRAND') ?? 'Biodomus',
     STILE: stringa('STILE') ?? 'Cemento',
