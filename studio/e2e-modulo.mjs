@@ -265,14 +265,26 @@ for (const angolo of ['famiglia', 'terreno', 'investo']) {
     return statoModulo()
   }
 
-  // Tastiera: dall'ultima card il tasto Tab entra nel modulo anche se la sezione non è ancora entrata scorrendo
+  // Tastiera: dall'ultima card il tasto Tab attraversa le sezioni dello step 5 (CTA di «Come funziona», pulsanti degli strati,
+  // CTA del sistema) e arriva al modulo, anche se le sezioni non sono ancora entrate scorrendo (ingressi con opacity, §5)
   await pagina.locator('#per-chi').getByRole('link', { name: 'Parliamo del progetto' }).focus()
-  await pagina.keyboard.press('Tab')
-  const dopoTab = await pagina.evaluate(() => ({
-    id: document.activeElement?.id ?? document.activeElement?.tagName,
-    nelModulo: !!document.activeElement?.closest('#preventivo'),
-  }))
-  esito(dopoTab.nelModulo, 'tastiera: Tab dall\'ultima card al modulo', `focus su #${dopoTab.id}`)
+  const percorso = []
+  for (let i = 0; i < 25; i++) {
+    await pagina.keyboard.press('Tab')
+    const dove = await pagina.evaluate(() => {
+      const el = document.activeElement
+      return { id: el?.id || el?.tagName || '', sezione: el?.closest('section')?.id ?? null }
+    })
+    percorso.push(dove)
+    if (dove.sezione === 'preventivo') break
+  }
+  const sezioniTab = [...new Set(percorso.map((p) => p.sezione).filter(Boolean))]
+  const pulsantiStrati = percorso.filter((p) => /^sistema-strato-\d$/.test(p.id)).length
+  esito(
+    percorso.at(-1)?.sezione === 'preventivo' && sezioniTab.includes('come-funziona') && pulsantiStrati === 4,
+    'tastiera: Tab dall\'ultima card attraverso le sezioni nuove fino al modulo',
+    `${percorso.length} Tab: ${sezioniTab.join(' → ')}; ${pulsantiStrati} pulsanti degli strati; ultimo focus #${percorso.at(-1)?.id}`,
+  )
 
   const casa = await card('Parti dal tuo progetto', 'casa')
   esito(

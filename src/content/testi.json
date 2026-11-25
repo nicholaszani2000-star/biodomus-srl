@@ -150,6 +150,8 @@
       "garanzia": "{GARANZIA}"
     },
     "nota": "Illustrazione schematica, non in scala.",
+    "disegno": "Parete in prospettiva, quattro strati da fuori a dentro: isolante esterno, calcestruzzo armato con l'armatura in acciaio, isolante interno, intonaco",
+    "stratiTitolo": "Gli strati, da fuori a dentro",
     "cta": "Richiedi un preventivo"
   },
   "realizzazioni": {

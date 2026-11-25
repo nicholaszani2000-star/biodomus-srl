@@ -1,5 +1,6 @@
 // Movimento della pagina (CLAUDE.md §5): Lenis sincronizzato con ScrollTrigger tramite gsap.ticker,
-// ingressi delle sezioni, linee di quota che si disegnano, la parete in prospettiva che si ricompone mentre scorri.
+// ingressi delle sezioni, linee di quota che si disegnano (anche la catena dei passaggi di «Come funziona»),
+// la parete in prospettiva che si ricompone mentre scorri (nell'hero e in «Com'è fatta la casa»).
 // Da 1024 px: titoli rivelati per righe (SplitText). Da 1024 px con il mouse: card che si inclinano, CTA primarie «magnetiche».
 // Si carica con import() dopo l'hydration, solo nel browser.
 // Con prefers-reduced-motion: niente Lenis, niente animazioni; la parete è già composta (CSS) e tutto resta visibile.
@@ -78,6 +79,24 @@ function preparaQuote(): void {
 }
 
 /**
+ * Catena di quote di «Come funziona» (§6.4): la linea si disegna mentre scorri, verticale su mobile e orizzontale
+ * da 1024 px (il CSS sceglie scaleY o scaleX, qui si muove solo --bd-traccia da 0 a 1). Parte quando l'elenco entra
+ * nello schermo e finisce quando il suo fondo arriva al 65%: la linea arriva a ogni passaggio mentre lo leggi.
+ * Se l'elenco è già nello schermo all'apertura resta disegnata (niente sfarfallio); senza JavaScript e con la
+ * riduzione del movimento vale 1 dal CSS.
+ */
+function preparaTracce(): void {
+  document.querySelectorAll<HTMLElement>('[data-bd-traccia]').forEach((elenco) => {
+    if (giaVisibile(elenco)) return
+    gsap.fromTo(
+      elenco,
+      { '--bd-traccia': 0 },
+      { '--bd-traccia': 1, ease: 'none', scrollTrigger: { trigger: elenco, start: 'top 85%', end: 'bottom 65%', scrub: 0.5 } },
+    )
+  })
+}
+
+/**
  * La parete in prospettiva (§5): --bd-esplodi va da 1 (strati staccati) a 0 (parete ricomposta, quote disegnate) mentre scorri.
  * Parte quando il disegno entra nello schermo (al 90% dell'altezza; se è già visibile all'apertura, dallo scroll 0)
  * e finisce quando il suo centro arriva al 30% dello schermo, con almeno 240 px di scorrimento: così la ricomposizione
@@ -87,7 +106,13 @@ function preparaPareti(): void {
   document.querySelectorAll<HTMLElement>('[data-bd-parete]').forEach((contenitore) => {
     const svg = contenitore.querySelector('svg')
     if (!svg) return
-    const inPagina = () => contenitore.getBoundingClientRect().top + window.scrollY
+    // Posizione nella pagina senza i transform: l'ingresso della sezione sposta il contenuto di 24 px finché non entra,
+    // e con getBoundingClientRect la ricomposizione finirebbe 24 px più in basso del previsto (succedeva in #sistema).
+    const inPagina = () => {
+      let y = 0
+      for (let el: HTMLElement | null = contenitore; el; el = el.offsetParent as HTMLElement | null) y += el.offsetTop
+      return y
+    }
     const inizio = () => Math.max(0, inPagina() - window.innerHeight * 0.9)
     const fine = () => Math.max(inizio() + 240, inPagina() + contenitore.offsetHeight / 2 - window.innerHeight * 0.3)
     gsap.fromTo(
@@ -96,6 +121,28 @@ function preparaPareti(): void {
       { '--bd-esplodi': 0, ease: 'none', scrollTrigger: { trigger: contenitore, start: inizio, end: fine, scrub: 0.6 } },
     )
   })
+}
+
+/**
+ * Quando l'altezza della pagina cambia (riquadri degli strati, passaggi del modulo, font arrivati dopo), ScrollTrigger
+ * ricalcola inizio e fine di ogni animazione: senza, quelle più in basso partirebbero spostate di quanto è cambiata la pagina.
+ * Lenis si aggiorna da solo (autoResize).
+ */
+function seguiAltezza(): () => void {
+  let ultima = document.documentElement.scrollHeight
+  let attesa = 0
+  const osservatore = new ResizeObserver(() => {
+    const altezza = document.documentElement.scrollHeight
+    if (altezza === ultima) return
+    ultima = altezza
+    window.clearTimeout(attesa)
+    attesa = window.setTimeout(() => ScrollTrigger.refresh(), 150)
+  })
+  osservatore.observe(document.body)
+  return () => {
+    osservatore.disconnect()
+    window.clearTimeout(attesa)
+  }
 }
 
 /**
@@ -246,10 +293,11 @@ export function avviaMovimento(): void {
 
       preparaIngressi(Boolean(largo))
       preparaQuote()
+      preparaTracce()
       preparaPareti()
       preparaIllustrazioni()
 
-      const pulizie: (() => void)[] = []
+      const pulizie: (() => void)[] = [seguiAltezza()]
       if (largo) {
         rivelaTitoloHero()
         preparaTitoli()

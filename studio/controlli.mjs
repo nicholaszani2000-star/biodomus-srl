@@ -150,9 +150,11 @@ controllo('nessun segnaposto o valore vuoto nel testo', () => {
   return trovati.length ? { ok: false, nota: `nel testo compare: ${trovati.join(', ')}` } : { ok: true, nota: 'testo pulito' }
 })
 
+// Parole vietate da §3.13 (D.Lgs. 30/2026): «Biodomus» resta ammesso. La usa anche il controllo dello step 5 sezione per sezione.
+const PAROLE_AMBIENTALI = /\b(eco|ecologic[oaie]?|green|sostenibil\w*|bio)\b|impatto zero|amica dell'ambiente/gi
+
 controllo('nessuna asserzione ambientale generica (§3.13)', () => {
-  const re = /\b(eco|ecologic[oaie]?|green|sostenibil\w*|bio)\b|impatto zero|amica dell'ambiente/gi
-  const trovati = [...new Set((TESTO.match(re) ?? []).map((p) => p.toLowerCase()))]
+  const trovati = [...new Set((TESTO.match(PAROLE_AMBIENTALI) ?? []).map((p) => p.toLowerCase()))]
   return trovati.length
     ? { ok: false, nota: `parole vietate: ${trovati.join(', ')}` }
     : { ok: true, nota: 'nessuna parola vietata (Biodomus ammesso)' }
@@ -665,7 +667,7 @@ controllo('Per chi è: tre card, ognuna con una CTA secondaria verso il modulo (
 })
 
 // Gli step 5 e 6 aggiungono qui gli id delle loro sezioni, nell'ordine di §6.
-const ORDINE_SEZIONI = ['inizio', 'per-chi', 'come-funziona', 'preventivo']
+const ORDINE_SEZIONI = ['inizio', 'per-chi', 'come-funziona', 'ruolo', 'sistema', 'preventivo']
 
 controllo('sezioni nell\'ordine di §6', () => {
   const posizioni = ORDINE_SEZIONI.map((id) => ({ id, pos: HTML.indexOf(` id="${id}"`) }))
@@ -783,6 +785,140 @@ controllo('ingressi senza visibility hidden: tutto raggiungibile con il tasto Ta
   return usi
     ? { ok: false, nota: `bd-motion.ts usa autoAlpha o visibility hidden (${usi} volte): le sezioni non ancora entrate escono dal Tab` }
     : { ok: true, nota: 'ingressi con opacity: le sezioni non ancora animate restano focalizzabili e trovabili con la ricerca' }
+})
+
+// ---------- STEP 5 ----------
+
+const COME_FUNZIONA = sezioneHtml('come-funziona')
+const RUOLO = sezioneHtml('ruolo')
+const SISTEMA = sezioneHtml('sistema')
+// Valore di un dato di §2 da dati.ts: solo dentro l'oggetto «dati» (non nei tipi dell'interfaccia), stringa su una riga
+// tra apici o virgolette (anche sulla riga dopo la chiave), oppure null. undefined se la chiave non c'è.
+const DATI_OGGETTO = DATI_TS.slice(Math.max(0, DATI_TS.indexOf('export const dati')))
+const valoreDato = (chiave) => {
+  const m = DATI_OGGETTO.match(new RegExp(`\\b${chiave}:\\s*(?:null|(['"\`])((?:(?!\\1)[^\\n])*)\\1)\\s*,`))
+  return m ? (m[2] ?? null) : undefined
+}
+
+controllo('«Come funziona»: sezione vera, bersaglio della CTA secondaria, 4 passaggi, tempi e CTA (§6.4, §8)', () => {
+  if (!COME_FUNZIONA) return { ok: false, nota: 'manca <section id="come-funziona">' }
+  const problemi = []
+  if (/<div[^>]*\sid="come-funziona"/.test(HTML) || /bd-ancora/.test(HTML)) problemi.push('c\'è ancora l\'ancora provvisoria dello step 4')
+  const secondaria = ctaIn(HERO).find((c) => !c.primaria)
+  if (secondaria?.href !== '#come-funziona') problemi.push(`la CTA secondaria dell'hero punta a ${secondaria?.href ?? 'niente'}`)
+  if (!/<header[\s\S]*?href="#come-funziona"[\s\S]*?<\/header>/.test(HTML)) problemi.push('il link «Come funziona» dell\'header non punta alla sezione')
+  const passaggi = COME_FUNZIONA.match(/<li class="bd-passaggio"[\s\S]*?<\/li>/g) ?? []
+  if (passaggi.length !== 4) problemi.push(`${passaggi.length} passaggi invece di 4`)
+  if (!/<ol class="bd-passaggi"[^>]*data-bd-traccia/.test(COME_FUNZIONA)) problemi.push('la catena di quote non ha data-bd-traccia (linea che si disegna)')
+  const icone = passaggi.filter((li) => /bd-passaggio__icona" aria-hidden="true"><svg/.test(li)).length
+  if (icone !== 4) problemi.push(`${icone} icone su 4`)
+  const numeri = passaggi.map((li) => testoVisibile((li.match(/<span class="bd-passaggio__numero"[^>]*>[^<]*<\/span>/) ?? [''])[0]))
+  if (numeri.join(',') !== '01,02,03,04') problemi.push(`numeri dei passaggi: ${numeri.join(', ')}`)
+  const tempi = valoreDato('TEMPI')
+  const quarto = testoVisibile(passaggi[3] ?? '')
+  if (tempi && !quarto.includes(`Tempi indicativi: ${tempi}.`)) problemi.push('il passaggio 4 non dice i tempi')
+  if (!tempi && /Tempi indicativi/.test(quarto)) problemi.push('tempi citati con TEMPI vuoto')
+  const cta = ctaIn(COME_FUNZIONA)
+  if (cta.length !== 1 || !cta[0].primaria || cta[0].href !== '#preventivo') problemi.push('serve una CTA primaria verso #preventivo')
+  else if (COME_FUNZIONA.indexOf('bd-cta--primaria') < COME_FUNZIONA.indexOf('</ol>')) problemi.push('la CTA non sta dopo il passaggio 4')
+  return problemi.length
+    ? { ok: false, nota: problemi.join('; ') }
+    : { ok: true, nota: `section#come-funziona bersaglio di hero e header; 4 passaggi con icona e numero 01–04; passaggio 4 con ${tempi ? `«${tempi}»` : 'la frase senza tempi'}; CTA primaria dopo il passaggio 4` }
+})
+
+controllo('«Un solo referente»: tre colonne con elenchi veri, costo solo con COSTO_SERVIZIO, niente ritratto senza foto (§6.5, §8)', () => {
+  if (!RUOLO) return { ok: false, nota: 'manca <section id="ruolo">' }
+  const problemi = []
+  const colonne = RUOLO.match(/<div class="bd-ruolo__colonna[^"]*">[\s\S]*?<\/ul>/g) ?? []
+  if (colonne.length !== 3) problemi.push(`${colonne.length} colonne invece di 3`)
+  const voci = colonne.map((c) => (c.match(/<li>/g) ?? []).length)
+  const attese = TESTI.ruolo.colonne.map((c) => c.voci.length)
+  if (voci.join(',') !== attese.join(',')) problemi.push(`voci per colonna ${voci.join('/')} invece di ${attese.join('/')}`)
+  if (colonne.some((c) => !/<h3[^>]*>[^<]+<\/h3>\s*<ul/.test(c))) problemi.push('ogni colonna vuole un titolo h3 e un elenco ul')
+  const costo = valoreDato('COSTO_SERVIZIO')
+  const riquadro = /data-bd-costo/.test(RUOLO)
+  if (costo === null && riquadro) problemi.push('COSTO_SERVIZIO è vuoto ma il riquadro del costo è nell\'HTML')
+  if (costo && !riquadro) problemi.push('manca il riquadro «Quanto costa il servizio»')
+  if (costo && riquadro && !testoVisibile(RUOLO).includes(costo.trim())) problemi.push('il riquadro non riporta COSTO_SERVIZIO di §2')
+  const fotoReferente = fileSotto('studio/originali', (n) => /(mirko|lanzafame|ritratto|referente)/i.test(n) && /\.(jpe?g|png|webp|avif|heic)$/i.test(n))
+  if (!fotoReferente.length && /<img/.test(RUOLO)) problemi.push('immagine nel ruolo senza una foto del referente negli originali')
+  return problemi.length
+    ? { ok: false, nota: problemi.join('; ') }
+    : {
+        ok: true,
+        nota: `3 colonne (${voci.join('/')} voci in ul); ${costo ? 'riquadro del costo con COSTO_SERVIZIO' : 'COSTO_SERVIZIO vuoto: nessun riquadro'}; ${fotoReferente.length ? 'foto del referente presente' : 'nessuna foto del referente: niente ritratto né segnaposto'}`,
+      }
+})
+
+controllo('«Com\'è fatta la casa»: parete chiara e 4 pulsanti degli strati con aria-expanded, aria-controls e nome (§6.6)', () => {
+  if (!SISTEMA) return { ok: false, nota: 'manca <section id="sistema">' }
+  const problemi = []
+  const svg = (SISTEMA.match(/data-bd-parete=""[^>]*>\s*(<svg[\s\S]*?<\/svg>)/) ?? [])[1] ?? ''
+  if (!svg) problemi.push('manca la parete (data-bd-parete con l\'SVG inline)')
+  else {
+    if (!/<svg[^>]*class="bdss"/.test(svg)) problemi.push('la parete non usa il prefisso bdss')
+    if ((svg.match(/data-strato="/g) ?? []).length !== 4) problemi.push('la parete non ha 4 strati')
+    if (/<button/.test(svg)) problemi.push('pulsanti dentro l\'SVG (role="img")')
+  }
+  if (/class="[^"]*\bbd-tema-scuro\b/.test((SISTEMA.match(/^<section[^>]*>/) ?? [''])[0])) problemi.push('la sezione è scura: la parete grande qui è nella versione chiara')
+  if (!testoVisibile(SISTEMA).includes(TESTI.sistema.nota)) problemi.push(`manca la nota «${TESTI.sistema.nota}»`)
+  const pulsanti = SISTEMA.match(/<button\b[^>]*>[\s\S]*?<\/button>/g) ?? []
+  if (pulsanti.length !== 4) problemi.push(`${pulsanti.length} pulsanti invece di 4`)
+  pulsanti.forEach((tag, i) => {
+    const apertura = (tag.match(/^<button[^>]*>/) ?? [''])[0]
+    const nome = (attributo(apertura, 'aria-label') ?? testoVisibile(tag)).trim()
+    const controlla = attributo(apertura, 'aria-controls')
+    if (!/\saria-expanded="(true|false)"/.test(apertura)) problemi.push(`pulsante ${i + 1} senza aria-expanded`)
+    if (!controlla || !SISTEMA.includes(` id="${controlla}"`)) problemi.push(`pulsante ${i + 1}: aria-controls verso un id che non c'è`)
+    if (!nome || !nome.includes(TESTI.sistema.strati[i]?.titolo ?? '§')) problemi.push(`pulsante ${i + 1} senza il nome dello strato`)
+    if (attributo(apertura, 'type') !== 'button') problemi.push(`pulsante ${i + 1} senza type="button"`)
+  })
+  // Senza JavaScript tutti i riquadri sono aperti: le frasi di §8 sono nell'HTML
+  const frasi = TESTI.sistema.strati.filter((s) => !testoVisibile(SISTEMA).includes(s.testo))
+  if (frasi.length) problemi.push(`frasi degli strati mancanti nell'HTML: ${frasi.map((s) => s.titolo).join(', ')}`)
+  const cta = ctaIn(SISTEMA)
+  if (cta.length !== 1 || !cta[0].primaria || cta[0].href !== '#preventivo') problemi.push('serve una CTA primaria verso #preventivo')
+  else if (SISTEMA.indexOf('bd-cta--primaria') < SISTEMA.lastIndexOf('bd-strati__riquadro')) problemi.push('la CTA non sta dopo i riquadri')
+  // Fatti solo se presenti: classe con P1_OK, garanzia con GARANZIA
+  const testo = testoVisibile(SISTEMA)
+  if (!autorizzato('P1_OK') && /classe energetica/i.test(testo)) problemi.push('classe energetica senza P1_OK «sì»')
+  if (valoreDato('GARANZIA') === null && /garanzi/i.test(testo)) problemi.push('garanzia citata con GARANZIA vuota')
+  return problemi.length
+    ? { ok: false, nota: problemi.join('; ') }
+    : { ok: true, nota: '4 <button type="button"> fuori dall\'SVG, con aria-expanded, aria-controls verso il loro riquadro e il nome dello strato; frasi tutte nell\'HTML (aperte senza JavaScript); parete bdss chiara con la nota; CTA dopo i riquadri; nessun fatto senza dato' }
+})
+
+controllo('RAPPORTO_PARTNER non confermato: in «Com\'è fatta la casa» nessun nome del produttore del sistema (§2)', () => {
+  const rapporto = valoreDato('RAPPORTO_PARTNER')
+  const p2 = valoreDato('P2_NOME')
+  if (rapporto === 'sì, confermato per iscritto') return { ok: true, nota: 'rapporto confermato per iscritto: il collegamento è ammesso' }
+  if (!SISTEMA) return { ok: false, nota: 'manca <section id="sistema">' }
+  const testo = testoVisibile(SISTEMA)
+  const trovati = [p2, p2?.split(/\s+/)[0]].filter((n) => n && n.length > 3 && testo.toLowerCase().includes(n.toLowerCase()))
+  return trovati.length
+    ? { ok: false, nota: `RAPPORTO_PARTNER «${rapporto}» ma in #sistema compare ${trovati[0]}` }
+    : { ok: true, nota: `RAPPORTO_PARTNER «${rapporto}»: in #sistema solo SISTEMA, nessuna citazione di ${p2}` }
+})
+
+controllo('parole vietate da §3.13 anche nelle sezioni nuove, nell\'HTML e in testi.json', () => {
+  const sezioni = { 'come-funziona': COME_FUNZIONA, ruolo: RUOLO, sistema: SISTEMA }
+  const problemi = []
+  for (const [id, html] of Object.entries(sezioni)) {
+    if (!html) {
+      problemi.push(`#${id} non trovata`)
+      continue
+    }
+    const testo = testoVisibile(html)
+    if (!TESTO.includes(testo.slice(0, 60))) problemi.push(`#${id} fuori dal testo controllato da §3.13`)
+    const parole = [...new Set((testo.match(PAROLE_AMBIENTALI) ?? []).map((p) => p.toLowerCase()))]
+    if (parole.length) problemi.push(`#${id}: ${parole.join(', ')}`)
+  }
+  const copy = JSON.stringify([TESTI.comeFunziona, TESTI.ruolo, TESTI.sistema])
+  const nelCopy = [...new Set((copy.match(PAROLE_AMBIENTALI) ?? []).map((p) => p.toLowerCase()))]
+  if (nelCopy.length) problemi.push(`testi.json: ${nelCopy.join(', ')}`)
+  return problemi.length
+    ? { ok: false, nota: problemi.join('; ') }
+    : { ok: true, nota: '#come-funziona, #ruolo e #sistema dentro il controllo di §3.13 e senza parole vietate, anche nel copy di testi.json' }
 })
 
 // ---------- esito ----------

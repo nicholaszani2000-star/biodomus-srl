@@ -924,11 +924,6 @@ html[data-angolo='investo'] .bd-v-investo {
     }
   }
 
-  /* Ancora provvisoria di «Come funziona» (step 5) */
-  .bd-ancora {
-    height: 0;
-  }
-
   /* Barra mobile: si nasconde di colpo, compare dal basso in 200 ms */
   .bd-barra-mobile {
     visibility: hidden;
@@ -1037,5 +1032,463 @@ html[data-angolo='investo'] .bd-v-investo {
     .bd-illustrazione--chiaro + .bd-sezione {
       padding-top: 40px;
     }
+  }
+}
+
+/* ---------- Step 5: «Come funziona», «Un solo referente», «Com'è fatta la casa» ---------- */
+
+@layer components {
+  /* Testa di sezione: titolo, introduzione, CTA in fondo */
+  .bd-sezione__titolo {
+    margin: 0 0 16px;
+    max-width: 22ch;
+  }
+
+  .bd-sezione__intro {
+    max-width: 65ch;
+    margin: 0 0 40px;
+    color: var(--bd-testo-2);
+    font-size: 1.125rem;
+  }
+
+  .bd-sezione__cta {
+    margin-top: 40px;
+  }
+
+  @media (min-width: 1024px) {
+    .bd-sezione__intro {
+      margin-bottom: 56px;
+    }
+
+    .bd-sezione__cta {
+      margin-top: 56px;
+    }
+  }
+
+  /* «Come funziona»: catena di quote con i numeri dentro la linea, come nella BdQuota.
+     --bd-traccia va da 0 a 1 mentre scorri (bd-motion); senza JavaScript e con la riduzione del movimento vale 1. */
+  .bd-passaggi {
+    --bd-traccia: 1;
+    --bd-asse: 24px; /* su mobile: asse della linea verticale, al centro della colonna dei numeri */
+    position: relative;
+    display: grid;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .bd-passaggi::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--bd-asse) - 0.625px);
+    width: 1.25px;
+    background: var(--bd-dettaglio);
+    transform: scaleY(var(--bd-traccia));
+    transform-origin: top;
+  }
+
+  /* Tratti obliqui a 45° all'inizio di ogni passaggio e in fondo alla catena, come le quote da tavola tecnica */
+  .bd-passaggi::after,
+  .bd-passaggio::before {
+    content: '';
+    position: absolute;
+    left: calc(var(--bd-asse) - 7px);
+    width: 14px;
+    height: 1.25px;
+    background: var(--bd-dettaglio);
+    transform: rotate(-45deg);
+  }
+
+  .bd-passaggi::after {
+    bottom: 0;
+  }
+
+  .bd-passaggio::before {
+    top: 0;
+  }
+
+  .bd-passaggio {
+    position: relative;
+    display: grid;
+    gap: 12px;
+    align-content: start;
+    justify-items: start;
+    padding: 18px 0 44px 64px;
+  }
+
+  .bd-passaggio:last-child {
+    padding-bottom: 24px;
+  }
+
+  .bd-passaggio__numero {
+    position: absolute;
+    top: 27px;
+    left: 0;
+    width: calc(var(--bd-asse) * 2);
+    padding-block: 6px;
+    background: var(--bd-fondo);
+    color: var(--bd-testo-2);
+    font-family: var(--bd-font-titoli);
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.04em;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+  }
+
+  .bd-passaggio__icona {
+    display: inline-grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--bd-linea);
+    border-radius: 14px;
+    background: var(--bd-carta);
+  }
+
+  .bd-passaggio__icona svg {
+    width: 24px;
+    height: 24px;
+    stroke: var(--bd-dettaglio);
+  }
+
+  .bd-passaggio__titolo {
+    margin: 4px 0 0;
+  }
+
+  .bd-passaggio__testo {
+    margin: 0;
+    max-width: 46ch;
+    color: var(--bd-testo-2);
+  }
+
+  @media (min-width: 1024px) {
+    .bd-passaggi {
+      --bd-quota-y: 13px; /* da 1024 px: altezza della linea orizzontale, al centro dei numeri */
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .bd-passaggi::before {
+      top: calc(var(--bd-quota-y) - 0.625px);
+      bottom: auto;
+      left: 0;
+      right: 0;
+      width: auto;
+      height: 1.25px;
+      transform: scaleX(var(--bd-traccia));
+      transform-origin: left;
+    }
+
+    .bd-passaggi::after,
+    .bd-passaggio::before {
+      top: calc(var(--bd-quota-y) - 0.625px);
+      bottom: auto;
+      left: -7px;
+    }
+
+    .bd-passaggi::after {
+      left: auto;
+      right: -7px;
+    }
+
+    .bd-passaggio,
+    .bd-passaggio:last-child {
+      gap: 14px;
+      padding: 52px 32px 0 0;
+    }
+
+    .bd-passaggio__numero {
+      top: 0;
+      left: 14px;
+      width: auto;
+      padding: 6px 10px;
+    }
+  }
+
+  /* «Un solo referente»: tre colonne con elenchi veri e il riquadro del costo */
+  .bd-ruolo__colonne {
+    display: grid;
+    gap: 16px;
+  }
+
+  .bd-ruolo__colonna {
+    padding: 24px;
+    border: 1px solid var(--bd-linea);
+    border-radius: var(--bd-raggio-card);
+    background: var(--bd-carta);
+  }
+
+  /* Biodomus: una barretta di rovere sul bordo alto, dettaglio grafico */
+  .bd-ruolo__colonna--noi {
+    position: relative;
+  }
+
+  .bd-ruolo__colonna--noi::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: 24px;
+    width: 48px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--bd-dettaglio);
+  }
+
+  .bd-ruolo__titolo {
+    margin: 0 0 14px;
+  }
+
+  .bd-elenco {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .bd-elenco li {
+    position: relative;
+    padding-left: 24px;
+  }
+
+  /* Trattino a pixel interi: con top in em cadrebbe a metà pixel e ogni riga avrebbe uno spessore diverso */
+  .bd-elenco li::before {
+    content: '';
+    position: absolute;
+    top: 13px;
+    left: 2px;
+    width: 12px;
+    height: 2px;
+    background: var(--bd-dettaglio);
+  }
+
+  .bd-ruolo__costo {
+    margin-top: 24px;
+    padding: 24px;
+    border: 1.5px solid var(--bd-accento);
+    border-radius: var(--bd-raggio-card);
+    background: var(--bd-carta);
+  }
+
+  .bd-ruolo__costo p {
+    max-width: 65ch;
+  }
+
+  @media (min-width: 1024px) {
+    .bd-ruolo__colonne {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 24px;
+    }
+
+    .bd-ruolo__colonna {
+      padding: 32px;
+    }
+
+    .bd-ruolo__colonna--noi::before {
+      left: 32px;
+    }
+
+    .bd-ruolo__costo {
+      display: grid;
+      grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+      gap: 32px;
+      align-items: baseline;
+      padding: 32px 40px;
+    }
+
+    .bd-ruolo__costo .bd-ruolo__titolo {
+      margin: 0;
+    }
+  }
+
+  /* «Com'è fatta la casa»: la parete grande (chiara) e i pulsanti degli strati accanto o sotto */
+  .bd-sistema__griglia {
+    display: grid;
+    gap: 32px;
+  }
+
+  .bd-sistema__disegno,
+  .bd-sistema__strati {
+    display: grid;
+    gap: 16px;
+    align-content: start;
+    min-width: 0;
+  }
+
+  .bd-sistema__figura {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+  }
+
+  .bd-sistema__figura figcaption {
+    text-align: center;
+  }
+
+  .bd-sistema__tela {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .bd-js .bd-sistema__tela .bd-strato {
+    cursor: pointer;
+  }
+
+  .bd-sistema__fatti {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-weight: 500;
+  }
+
+  .bd-strati {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .bd-strati__voce {
+    border: 1px solid var(--bd-linea);
+    border-radius: 14px;
+    background: var(--bd-carta);
+    transition: border-color 0.2s ease;
+  }
+
+  .bd-strati__voce:has([aria-expanded='true']) {
+    border-color: var(--bd-accento);
+  }
+
+  .bd-strati__intestazione {
+    margin: 0;
+    font-size: inherit;
+    letter-spacing: normal;
+  }
+
+  .bd-strati__pulsante {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    width: 100%;
+    min-height: 56px;
+    padding: 12px 16px;
+    border: 0;
+    border-radius: 14px;
+    background: transparent;
+    color: var(--bd-testo);
+    font-family: var(--bd-font-testo);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    line-height: 1.3;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .bd-strati__numero {
+    display: inline-grid;
+    flex: none;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border: 1.5px solid var(--bd-dettaglio);
+    border-radius: 50%;
+    color: var(--bd-testo-2);
+    font-family: var(--bd-font-titoli);
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .bd-strati__nome {
+    flex: 1;
+  }
+
+  .bd-strati__freccia {
+    flex: none;
+    color: var(--bd-testo-2);
+    transition: transform 0.2s ease;
+  }
+
+  .bd-strati__pulsante[aria-expanded='true'] .bd-strati__freccia {
+    transform: rotate(180deg);
+  }
+
+  .bd-strati__riquadro {
+    padding: 0 16px 16px 56px;
+    color: var(--bd-testo-2);
+  }
+
+  /* Colonne allineate in alto: aprendo un riquadro si allunga solo l'elenco, il disegno e i pulsanti sopra restano fermi */
+  @media (min-width: 1024px) {
+    .bd-sistema__griglia {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      gap: 56px;
+      align-items: start;
+    }
+  }
+}
+
+/* I riquadri si aprono con una dissolvenza di 200 ms; con la riduzione del movimento si aprono e basta */
+@media (prefers-reduced-motion: no-preference) {
+  .bd-strati__riquadro:not([hidden]) {
+    animation: bd-apri 0.2s ease-out;
+  }
+}
+
+@keyframes bd-apri {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+/* Il disegno di «Com'è fatta la casa». Queste regole stanno fuori dai layer: devono vincere sullo <style> dentro l'SVG,
+   che non è stratificato (una regola in @layer perde sempre contro una non stratificata, qualunque sia la specificità). */
+
+/* Leggibilità a 390 px: retini e bordi dei tondini almeno 1 px a schermo (il disegno è largo almeno 301 px) */
+.bd-parete--sistema .bdss-retino,
+.bd-parete--sistema .bdss-tondino {
+  stroke-width: 1;
+}
+
+/* Lo strato del riquadro aperto si vede nel disegno: esce di 10 unità dalla parete, bordo rovere, facce appena tinte.
+   Gli altri restano pieni: con l'opacità gli strati sovrapposti diventerebbero trasparenti. «translate» si somma
+   al transform dello stacco (--bd-esplodi) senza toccarlo. */
+.bd-sistema__tela .bd-strato {
+  transition: translate 0.25s ease;
+}
+
+.bd-sistema__tela[data-strato-attivo='1'] .bd-strato-1,
+.bd-sistema__tela[data-strato-attivo='2'] .bd-strato-2,
+.bd-sistema__tela[data-strato-attivo='3'] .bd-strato-3,
+.bd-sistema__tela[data-strato-attivo='4'] .bd-strato-4 {
+  translate: 0 -10px;
+}
+
+.bd-sistema__tela[data-strato-attivo='1'] .bd-strato-1 .bdss-l,
+.bd-sistema__tela[data-strato-attivo='2'] .bd-strato-2 .bdss-l,
+.bd-sistema__tela[data-strato-attivo='3'] .bd-strato-3 .bdss-l,
+.bd-sistema__tela[data-strato-attivo='4'] .bd-strato-4 .bdss-l {
+  stroke: var(--bd-dettaglio);
+  stroke-width: 2;
+}
+
+.bd-sistema__tela[data-strato-attivo='1'] .bd-strato-1 .bdss-pieno,
+.bd-sistema__tela[data-strato-attivo='2'] .bd-strato-2 .bdss-pieno,
+.bd-sistema__tela[data-strato-attivo='3'] .bd-strato-3 .bdss-pieno,
+.bd-sistema__tela[data-strato-attivo='4'] .bd-strato-4 .bdss-pieno {
+  fill: color-mix(in srgb, var(--bd-dettaglio) 16%, var(--bd-carta));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bd-strati__voce,
+  .bd-strati__freccia,
+  .bd-sistema__tela .bd-strato {
+    transition: none;
   }
 }

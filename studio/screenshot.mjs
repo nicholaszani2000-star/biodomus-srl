@@ -4,7 +4,8 @@
 // Controlla: errori di console, scroll orizzontale a 390 px, variante giusta del titolo per angolo, primo schermo,
 // le due illustrazioni sfumate (ritaglio giusto per la larghezza, AVIF, dicitura «Illustrazione» visibile),
 // logo e tema dell'header, la parete che si ricompone scorrendo, la barra mobile, una sola CTA primaria per schermata,
-// la riduzione del movimento a 390 e 1440 px.
+// la riduzione del movimento a 390 e 1440 px. Dallo step 5: «Com'è fatta la casa» con lo strato 2 aperto (screenshot),
+// il tocco sullo strato nel disegno, la leggibilità a 390 px (tratti ≥ 1 px, testi ≥ 14 px, niente scroll orizzontale).
 // Screenshot in studio/report/screenshot/ (escluso da git), riepilogo in studio/report/screenshot/riepilogo.json.
 
 import { chromium } from 'playwright'
@@ -361,6 +362,106 @@ for (const vista of VISTE) {
   }
 }
 
+// Step 5: «Com'è fatta la casa» con lo strato 2 aperto, a 390 e 1440 px. Il disegno si porta col centro al 28% dello schermo:
+// lì preparaPareti l'ha già ricomposto (la ricomposizione finisce quando il centro arriva al 30%). Header e barra nascosti nella foto.
+// A 390 px anche la leggibilità delle tre sezioni nuove: tratti del disegno ≥ 1 px, testi ≥ 14 px, nessuno scroll orizzontale.
+for (const vista of VISTE) {
+  const pagina = await browser.newPage({ viewport: { width: vista.width, height: vista.height } })
+  const errori = []
+  pagina.on('pageerror', (e) => errori.push(e.message))
+  pagina.on('console', (m) => {
+    if (m.type() === 'error') errori.push(m.text())
+  })
+  await pagina.goto(`${BASE}/`, { waitUntil: 'networkidle' })
+  await pagina.waitForTimeout(600)
+  await pagina.locator('#sistema-strato-2').scrollIntoViewIfNeeded()
+  await pagina.waitForTimeout(500)
+  await pagina.locator('#sistema-strato-2').click()
+  await pagina.evaluate(() => {
+    const tela = document.querySelector('#sistema .bd-sistema__tela')
+    const r = tela.getBoundingClientRect()
+    window.scrollTo(0, window.scrollY + r.top + r.height / 2 - window.innerHeight * 0.28)
+  })
+  await pagina.waitForTimeout(1600)
+  const stato = await pagina.evaluate(() => {
+    const pulsanti = [...document.querySelectorAll('#sistema .bd-strati__pulsante')]
+    const riquadri = pulsanti.map((b) => document.getElementById(b.getAttribute('aria-controls')))
+    const tela = document.querySelector('#sistema .bd-sistema__tela')
+    const svg = tela.querySelector('svg')
+    return {
+      espansi: pulsanti.map((b) => b.getAttribute('aria-expanded')).join(','),
+      visibili: riquadri.map((r) => (r && r.getClientRects().length > 0 ? 'sì' : 'no')).join(','),
+      attivo: tela.dataset.stratoAttivo ?? '',
+      esplodi: Number(getComputedStyle(svg).getPropertyValue('--bd-esplodi') || 0),
+      bordo: getComputedStyle(svg.querySelector('.bd-strato-2 [class$="-l"]')).stroke,
+      dettaglio: getComputedStyle(document.querySelector('#sistema')).getPropertyValue('--bd-dettaglio').trim(),
+    }
+  })
+  await pagina.screenshot({ path: join(USCITA, `sistema-strato-2-${vista.width}.png`), style: '.bd-header,.bd-barra-mobile{visibility:hidden!important}' })
+  esito(
+    stato.espansi === 'false,true,false,false' && stato.visibili === 'no,sì,no,no' && stato.attivo === '2' && stato.esplodi === 0 && errori.length === 0,
+    `«Com'è fatta la casa» con lo strato 2 aperto ${vista.width}px`,
+    `aria-expanded ${stato.espansi}; riquadri visibili ${stato.visibili}; strato attivo nel disegno ${stato.attivo || 'nessuno'} (bordo ${stato.bordo}); parete ${stato.esplodi === 0 ? 'ricomposta' : `staccata a ${stato.esplodi}`}${errori.length ? `; errori: ${errori.join(' | ')}` : ''}`,
+  )
+
+  // Tocco sullo strato 4 nel disegno: apre lo stesso riquadro del pulsante 4 (scorciatoia per il dito)
+  await pagina.evaluate(() => {
+    const strato = document.querySelector('#sistema .bd-strato-4 rect')
+    strato.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+  })
+  await pagina.waitForTimeout(300)
+  const dopoTocco = await pagina.evaluate(() => [...document.querySelectorAll('#sistema .bd-strati__pulsante')].map((b) => b.getAttribute('aria-expanded')).join(','))
+  esito(dopoTocco === 'false,false,false,true', `tocco sullo strato nel disegno ${vista.width}px`, `dopo il tocco sullo strato 4: aria-expanded ${dopoTocco}`)
+
+  if (vista.width === 390) {
+    const leggibile = await pagina.evaluate(() => {
+      const svg = document.querySelector('#sistema svg')
+      const [, , larghezzaVista] = svg.getAttribute('viewBox').split(/\s+/).map(Number)
+      const scala = svg.getBoundingClientRect().width / larghezzaVista
+      // Tratti: ogni elemento con stroke, compresi i retini dentro i <pattern> (unità del disegno × scala)
+      const tratti = [...svg.querySelectorAll('path, rect, circle, line, polyline, polygon')]
+        .map((el) => ({ el, stile: getComputedStyle(el) }))
+        .filter(({ stile }) => stile.stroke !== 'none' && parseFloat(stile.strokeWidth) > 0)
+        .map(({ el, stile }) => ({ classe: el.getAttribute('class') ?? el.tagName, px: parseFloat(stile.strokeWidth) * scala }))
+      const piuSottile = tratti.reduce((min, t) => (t.px < min.px ? t : min), { classe: '', px: Infinity })
+      // Testi delle tre sezioni nuove: dimensione minima
+      const testi = []
+      for (const id of ['come-funziona', 'ruolo', 'sistema']) {
+        const sezione = document.getElementById(id)
+        const giro = document.createTreeWalker(sezione, NodeFilter.SHOW_TEXT)
+        while (giro.nextNode()) {
+          const nodo = giro.currentNode
+          if (!nodo.textContent.trim() || !nodo.parentElement || nodo.parentElement.closest('svg')) continue
+          if (nodo.parentElement.getClientRects().length === 0) continue
+          testi.push({ id, testo: nodo.textContent.trim().slice(0, 30), px: parseFloat(getComputedStyle(nodo.parentElement).fontSize) })
+        }
+      }
+      const piuPiccolo = testi.reduce((min, t) => (t.px < min.px ? t : min), { px: Infinity, testo: '' })
+      const larghe = ['come-funziona', 'ruolo', 'sistema'].filter((id) => {
+        const el = document.getElementById(id)
+        return el.scrollWidth > el.clientWidth + 1 || el.getBoundingClientRect().right > window.innerWidth + 0.5
+      })
+      return { scala, piuSottile, piuPiccolo, larghe, documento: document.documentElement.scrollWidth }
+    })
+    esito(
+      leggibile.piuSottile.px >= 1 - 1e-6,
+      'disegno di «Com\'è fatta la casa» leggibile a 390px: tratti ≥ 1 px',
+      `scala ${leggibile.scala.toFixed(2)}; tratto più sottile ${leggibile.piuSottile.px.toFixed(2)} px (${leggibile.piuSottile.classe})`,
+    )
+    esito(
+      leggibile.piuPiccolo.px >= 14,
+      'testi delle sezioni nuove a 390px: almeno 14 px',
+      `testo più piccolo ${leggibile.piuPiccolo.px} px («${leggibile.piuPiccolo.testo}»)`,
+    )
+    esito(
+      leggibile.larghe.length === 0 && leggibile.documento <= 390,
+      'nessuno scroll orizzontale nelle sezioni nuove a 390px',
+      leggibile.larghe.length ? `troppo larghe: ${leggibile.larghe.join(', ')}` : `come-funziona, ruolo e sistema entro lo schermo; documento ${leggibile.documento} px`,
+    )
+  }
+  await pagina.close()
+}
+
 // Senza JavaScript (§3.8): header chiaro con il logo positivo, parete composta con le quote, titolo visibile, barra nascosta.
 {
   const contesto = await browser.newContext({ viewport: { width: 390, height: 844 }, javaScriptEnabled: false })
@@ -413,6 +514,29 @@ for (const vista of VISTE) {
       quote: quote ? Number(getComputedStyle(quote).opacity) : 0,
     }
   })
+  // Step 5: «Com'è fatta la casa» già composta, catena dei passaggi già disegnata, riquadri che si aprono senza animazione
+  await pagina.locator('#sistema-strato-3').scrollIntoViewIfNeeded()
+  await pagina.locator('#sistema-strato-3').click()
+  await pagina.waitForTimeout(100)
+  const passo5 = await pagina.evaluate(() => {
+    const strati = [...document.querySelectorAll('#sistema [data-bd-parete] .bd-strato')].map((s) => getComputedStyle(s).transform)
+    const elenco = document.querySelector('#come-funziona .bd-passaggi')
+    const riquadro = document.getElementById('sistema-strato-3-testo')
+    return {
+      sistemaComposta: strati.length === 4 && strati.every((t) => t === 'none'),
+      traccia: elenco ? getComputedStyle(elenco).getPropertyValue('--bd-traccia').trim() : '',
+      linea: elenco ? getComputedStyle(elenco, '::before').transform : '',
+      animazione: riquadro ? getComputedStyle(riquadro).animationName : '',
+      aperto: riquadro ? riquadro.getClientRects().length > 0 : false,
+    }
+  })
+  esito(
+    passo5.sistemaComposta && passo5.traccia === '1' && (passo5.linea === 'none' || passo5.linea === 'matrix(1, 0, 0, 1, 0, 0)') && passo5.animazione === 'none' && passo5.aperto,
+    `riduzione del movimento, sezioni dello step 5 ${vista.width}px`,
+    `parete di #sistema ${passo5.sistemaComposta ? 'già composta' : 'staccata'}; catena dei passaggi --bd-traccia ${passo5.traccia} (${passo5.linea}); riquadro aperto ${passo5.aperto ? 'sì' : 'no'} con animazione «${passo5.animazione}»`,
+  )
+  await pagina.evaluate(() => window.scrollTo(0, 0))
+  await pagina.waitForTimeout(100)
   await pagina.screenshot({ path: join(USCITA, `movimento-ridotto-${vista.width}.png`) })
   const ok = !stato.lenis && !stato.rivela && stato.titolo === 1 && stato.composta && stato.quote === 1 && errori.length === 0
   esito(
