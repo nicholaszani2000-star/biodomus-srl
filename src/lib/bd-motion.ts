@@ -150,7 +150,7 @@ function seguiAltezza(): () => void {
  * Parallasse leggera, solo senza riduzione del movimento (§3.8). Ingrandita del 14% così non scopre mai i bordi.
  */
 function preparaIllustrazioni(): void {
-  document.querySelectorAll<HTMLElement>('[data-bd-illustrazione]').forEach((figura) => {
+  document.querySelectorAll<HTMLElement>('.bd-illustrazione[data-bd-illustrazione]').forEach((figura) => {
     const immagine = figura.querySelector('img')
     if (!immagine) return
     gsap.fromTo(

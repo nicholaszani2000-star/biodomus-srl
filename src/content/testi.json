@@ -90,6 +90,12 @@
         "tempi": "Tempi indicativi: {TEMPI}."
       }
     ],
+    "percorso": {
+      "titolo": "Il cantiere, fase per fase",
+      "regione": "Le fasi del cantiere: scorri di lato",
+      "fasi": ["Progetto", "Fondazioni", "Pareti in casseri isolanti", "Impianti", "Casa finita"],
+      "nota": "Illustrazioni: le fasi di un cantiere tipo, non foto di case costruite."
+    },
     "cta": "Richiedi un preventivo"
   },
   "ruolo": {

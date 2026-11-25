@@ -1492,3 +1492,123 @@ html[data-angolo='investo'] .bd-v-investo {
     transition: none;
   }
 }
+
+/* ---------- Il percorso del cantiere in «Come funziona» (§2: illustrazioni AI, sempre dichiarate) ---------- */
+
+@layer components {
+  .bd-percorso {
+    margin-top: 56px;
+  }
+
+  .bd-percorso__titolo {
+    margin: 0 0 16px;
+  }
+
+  .bd-percorso__figura {
+    margin: 0;
+  }
+
+  /* Mobile: striscia a tutta larghezza che si scorre di lato; i bordi sfumano nella pagina */
+  .bd-percorso__scorri {
+    margin-inline: -16px;
+    padding-inline: 16px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 16px;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 40px), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 40px), transparent 100%);
+  }
+
+  .bd-percorso__scorri::-webkit-scrollbar {
+    display: none;
+  }
+
+  .bd-percorso__scorri:focus-visible {
+    outline: 2px solid var(--bd-accento);
+    outline-offset: 3px;
+  }
+
+  .bd-percorso__elenco {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: min(64vw, 260px);
+    gap: 12px;
+    margin: 0;
+    padding: 0 0 4px;
+    list-style: none;
+  }
+
+  .bd-percorso__fase {
+    display: grid;
+    gap: 10px;
+    align-content: start;
+    scroll-snap-align: start;
+  }
+
+  /* Il fondo dell'immagine si dissolve nella pagina, come le ville */
+  .bd-percorso__immagine {
+    display: block;
+    aspect-ratio: 2 / 3;
+    overflow: hidden;
+    border-radius: 20px 20px 0 0;
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 70%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 0%, #000 70%, transparent 100%);
+  }
+
+  .bd-percorso__immagine picture,
+  .bd-percorso__immagine img {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .bd-percorso__immagine img {
+    object-fit: cover;
+  }
+
+  .bd-percorso__etichetta {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    margin-top: -36px;
+    padding-inline: 4px;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    line-height: 1.35;
+  }
+
+  .bd-percorso__numero {
+    flex: none;
+    color: var(--bd-testo-2);
+    font-size: 0.875rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bd-percorso__nota {
+    margin-top: 16px;
+    color: var(--bd-testo-2);
+    font-size: 0.875rem;
+  }
+
+  @media (min-width: 1024px) {
+    .bd-percorso {
+      margin-top: 72px;
+    }
+
+    .bd-percorso__scorri {
+      margin-inline: 0;
+      padding-inline: 0;
+      overflow: visible;
+      -webkit-mask-image: none;
+      mask-image: none;
+    }
+
+    .bd-percorso__elenco {
+      grid-auto-flow: row;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 16px;
+    }
+  }
+}

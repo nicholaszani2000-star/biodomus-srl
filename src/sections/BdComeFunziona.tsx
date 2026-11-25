@@ -3,6 +3,7 @@ import iconaConversazione from '../assets/svg/bd-icona-conversazione.svg?raw'
 import iconaFirma from '../assets/svg/bd-icona-firma.svg?raw'
 import iconaTavola from '../assets/svg/bd-icona-tavola.svg?raw'
 import BdCta from '../components/BdCta.tsx'
+import BdPercorso from '../components/BdPercorso.tsx'
 import BdSezione from '../components/BdSezione.tsx'
 import { t, tt } from '../content/bd-testi.ts'
 import testi from '../content/testi.json'
@@ -23,6 +24,7 @@ const ICONE = [iconaConversazione, iconaTavola, iconaFirma, iconaChiave].map(dec
  * con la linea orizzontale. La linea si disegna mentre scorri (bd-motion, --bd-traccia da 0 a 1);
  * senza JavaScript e con la riduzione del movimento è già disegnata.
  * Il passaggio 4 dice i tempi solo se TEMPI c'è: altrimenti la frase finisce senza.
+ * Sotto i passaggi il percorso del cantiere (BdPercorso): cinque illustrazioni dal progetto alla casa finita (§2).
  */
 export default function BdComeFunziona() {
   return (
@@ -49,6 +51,7 @@ export default function BdComeFunziona() {
           )
         })}
       </ol>
+      <BdPercorso />
       <div className="bd-sezione__cta">
         <BdCta>{tt('comeFunziona.cta')}</BdCta>
       </div>

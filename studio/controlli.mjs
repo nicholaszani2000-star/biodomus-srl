@@ -742,31 +742,44 @@ controllo('ancore delle CTA verso id esistenti, primarie solo verso #preventivo 
 })
 
 // §2 (decisione del 23 novembre 2026): entrano solo due illustrazioni AI, sfumate, sempre dichiarate come illustrazioni.
+// Per ogni illustrazione scelta i file del kit da cui nasce (il riquadro 3 del percorso nasce dall'originale nuovo di Niko).
 const ILLUSTRAZIONI_SCELTE = {
   'villa-dal-disegno': ['villa-dal-disegno-672', 'villa-dal-disegno-panoramica-1200'],
   'villa-tramonto': ['villa-tramonto-640', 'villa-tramonto-1052'],
+  'percorso-1-progetto': ['percorso-1-progetto'],
+  'percorso-2-fondazioni': ['percorso-2-fondazioni'],
+  'percorso-3-casseri': [],
+  'percorso-4-impianti': ['percorso-4-impianti'],
+  'percorso-5-casa-finita': ['percorso-5-casa-finita'],
 }
 
-controllo('illustrazioni AI: solo le due scelte, con «Illustrazione» visibile e alt che lo dice (§2, §10.9)', () => {
+controllo('illustrazioni AI: solo quelle scelte, con «Illustrazione» visibile e alt che lo dice (§2, §10.9)', () => {
   const problemi = []
   const voci = (MANIFESTO?.immagini ?? []).filter((v) => v.tipo === 'illustrazione-ai')
   for (const v of voci) if (!ILLUSTRAZIONI_SCELTE[v.id]) problemi.push(`illustrazione non prevista dal brief: ${v.id}`)
-  // Nel sito nessun altro file del kit (per nome o per impronta) e mai il percorso: il pannello 3 ha i muri in laterizio
+  // Nel sito nessun altro file del kit (per nome o per impronta) e mai il riquadro 3 del kit: ha i muri in laterizio
   const kit = fileSotto('studio/originali/biodomus-asset/illustrazioni')
   const basiScelte = Object.values(ILLUSTRAZIONI_SCELTE).flat()
   const scelte = new Set(kit.filter((f) => basiScelte.some((b) => f.includes(`/${b}.`)) && /\.(avif|webp)$/.test(f)).map(impronta))
   const vietate = new Set(kit.map(impronta).filter((i) => !scelte.has(i)))
   const sito = [...fileSotto('src'), ...fileSotto('public'), ...(esiste('dist') ? fileSotto('dist') : [])]
-  const fuori = sito.filter((f) => /percorso-\d/i.test(f) || vietate.has(impronta(f)))
+  const fuori = sito.filter((f) => /percorso-3-struttura/i.test(f) || vietate.has(impronta(f)))
   if (fuori.length) problemi.push(`illustrazioni del kit non scelte nel sito: ${fuori.join(', ')}`)
-  // In pagina: dentro una figure con la dicitura visibile e un alt che comincia con «Illustrazione»
+  // In pagina: dentro una figure con la dicitura visibile; ogni immagine con un alt che comincia con «Illustrazione»
   const figure = HTML.match(/<figure[^>]*data-bd-illustrazione[\s\S]*?<\/figure>/g) ?? []
-  if (figure.length !== 2) problemi.push(`${figure.length} illustrazioni in pagina invece di 2`)
+  if (figure.length !== 3) problemi.push(`${figure.length} gruppi di illustrazioni in pagina invece di 3 (due ville e il percorso)`)
   for (const f of figure) {
-    const alt = attributo((f.match(/<img[^>]*>/) ?? [''])[0], 'alt') ?? ''
-    if (!alt.startsWith('Illustrazione')) problemi.push(`alt che non dice «Illustrazione»: ${alt.slice(0, 40)}`)
-    if (!/<figcaption[^>]*>Illustrazione<\/figcaption>/.test(f)) problemi.push('manca la dicitura «Illustrazione» visibile')
+    for (const img of f.match(/<img[^>]*>/g) ?? []) {
+      const alt = attributo(img, 'alt') ?? ''
+      if (!alt.startsWith('Illustrazione')) problemi.push(`alt che non dice «Illustrazione»: ${alt.slice(0, 40)}`)
+    }
+    if (!/<figcaption[^>]*>Illustrazion[ei]\b/.test(f)) problemi.push('manca la dicitura «Illustrazione» visibile')
   }
+  // Il percorso: in «Come funziona», cinque riquadri, il terzo con i casseri isolanti
+  const percorso = (sezioneHtml('come-funziona').match(/<figure[^>]*bd-percorso__figura[\s\S]*?<\/figure>/) ?? [''])[0]
+  const riquadri = percorso.match(/<img[^>]*>/g) ?? []
+  if (riquadri.length !== 5) problemi.push(`il percorso in «Come funziona» ha ${riquadri.length} riquadri invece di 5`)
+  else if (!/bd-percorso-3-casseri-/.test(riquadri[2])) problemi.push('il riquadro 3 del percorso non è quello con i casseri isolanti')
   // Posizioni: la villa dal disegno in fondo all'hero, la villa al tramonto subito prima del modulo; mai tra realizzazioni o partner
   if (!/bd-illustrazione--villa-dal-disegno/.test(HERO)) problemi.push('«villa dal disegno» non è in fondo all\'hero')
   const tramonto = HTML.indexOf('bd-illustrazione--villa-tramonto')
@@ -775,7 +788,7 @@ controllo('illustrazioni AI: solo le due scelte, con «Illustrazione» visibile 
   for (const id of ['realizzazioni', 'partner']) if (/bd-illustrazione/.test(sezioneHtml(id))) problemi.push(`illustrazione dentro #${id}`)
   return problemi.length
     ? { ok: false, nota: problemi.join('; ') }
-    : { ok: true, nota: 'villa dal disegno in fondo all\'hero, villa al tramonto prima del modulo; entrambe con «Illustrazione» visibile e alt che lo dice; nessun altro file del kit' }
+    : { ok: true, nota: 'villa dal disegno in fondo all\'hero, villa al tramonto prima del modulo, percorso del cantiere (riquadro 3 con i casseri isolanti) in «Come funziona»; tutte dichiarate; nessun altro file del kit' }
 })
 
 controllo('ingressi senza visibility hidden: tutto raggiungibile con il tasto Tab (§5, §9)', () => {

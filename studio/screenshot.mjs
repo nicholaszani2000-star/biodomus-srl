@@ -353,6 +353,49 @@ for (const vista of VISTE) {
         `illustrazioni sfumate ${vista.width}px`,
         illustrazioni.map((x) => `${x.id}: ${x.file}${x.caricata ? '' : ' (non caricata)'}, «${x.nota}» ${x.notaVisibile ? 'visibile' : 'nascosta'}`).join(' · '),
       )
+      // Il percorso del cantiere in «Come funziona»: su mobile una striscia che si scorre di lato senza allargare la pagina,
+      // da 1024 px cinque colonne sulla stessa riga; il riquadro 3 è quello con i casseri isolanti
+      await pagina.evaluate(() => {
+        const r = document.querySelector('.bd-percorso').getBoundingClientRect()
+        window.scrollTo(0, window.scrollY + r.top - 90)
+      })
+      await pagina.waitForTimeout(900)
+      await pagina.screenshot({ path: join(USCITA, `percorso-${vista.width}.png`) })
+      await pagina.evaluate(async () => {
+        const striscia = document.querySelector('.bd-percorso__scorri')
+        striscia.scrollTo({ left: striscia.scrollWidth })
+        await new Promise((r) => setTimeout(r, 700))
+        striscia.scrollTo({ left: 0 })
+      })
+      await pagina.waitForTimeout(500)
+      const percorso = await pagina.evaluate(() => {
+        const striscia = document.querySelector('.bd-percorso__scorri')
+        const fasi = [...document.querySelectorAll('.bd-percorso__fase')]
+        const immagini = [...document.querySelectorAll('.bd-percorso img')]
+        const nota = document.querySelector('.bd-percorso__nota')
+        return {
+          fasi: fasi.length,
+          righe: new Set(fasi.map((f) => Math.round(f.getBoundingClientRect().top))).size,
+          scorre: striscia.scrollWidth > striscia.clientWidth + 1,
+          caricate: immagini.filter((i) => i.complete && i.naturalWidth > 0).length,
+          terza: immagini[2]?.currentSrc.split('/').pop() ?? '',
+          nota: nota?.textContent.trim() ?? '',
+          larghezzaPagina: document.documentElement.scrollWidth,
+        }
+      })
+      const okPercorso =
+        percorso.fasi === 5 &&
+        percorso.caricate === 5 &&
+        percorso.terza.startsWith('bd-percorso-3-casseri-') &&
+        percorso.nota.startsWith('Illustrazioni') &&
+        percorso.larghezzaPagina <= vista.width &&
+        (vista.width < 1024 ? percorso.scorre : !percorso.scorre && percorso.righe === 1)
+      esito(
+        okPercorso,
+        `percorso del cantiere ${vista.width}px`,
+        `${percorso.fasi} riquadri, ${percorso.caricate} caricati, il terzo è ${percorso.terza}; ${vista.width < 1024 ? (percorso.scorre ? 'striscia che scorre di lato' : 'striscia ferma') : `${percorso.righe} riga`}; pagina larga ${percorso.larghezzaPagina} px; «${percorso.nota.slice(0, 40)}…»`,
+      )
+
       await pagina.evaluate(() => window.scrollTo(0, 0))
       await pagina.waitForTimeout(600)
     }

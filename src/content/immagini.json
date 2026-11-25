@@ -140,6 +140,111 @@
       "dicitura": "Illustrazione",
       "dove": "subito prima del modulo (#preventivo): la casa finita, sfumata nel fondo chiaro",
       "autorizzazione": "scelta di Niko del 23 novembre 2026 (CLAUDE.md §2)"
+    },
+    {
+      "id": "percorso-1-progetto",
+      "tipo": "illustrazione-ai",
+      "gruppo": "percorso",
+      "fase": 1,
+      "file": "src/assets/illustrazioni/bd-percorso-1-progetto",
+      "formati": [
+        "avif",
+        "webp"
+      ],
+      "larghezze": [
+        332
+      ],
+      "width": 332,
+      "height": 498,
+      "alt": "Illustrazione: il progetto della casa sul tavolo, con le piante stampate, un metro e il portatile.",
+      "credito": "Illustrazione generata con l'AI, non è una casa costruita",
+      "dicitura": "Illustrazione",
+      "dove": "BdComeFunziona: il percorso del cantiere, dal progetto alla casa finita",
+      "autorizzazione": "scelta di Niko del 25 novembre 2026 (CLAUDE.md §2)"
+    },
+    {
+      "id": "percorso-2-fondazioni",
+      "tipo": "illustrazione-ai",
+      "gruppo": "percorso",
+      "fase": 2,
+      "file": "src/assets/illustrazioni/bd-percorso-2-fondazioni",
+      "formati": [
+        "avif",
+        "webp"
+      ],
+      "larghezze": [
+        332
+      ],
+      "width": 332,
+      "height": 498,
+      "alt": "Illustrazione: lo scavo con le fondazioni in calcestruzzo, i ferri d'armatura e le casseforme di legno.",
+      "credito": "Illustrazione generata con l'AI, non è una casa costruita",
+      "dicitura": "Illustrazione",
+      "dove": "BdComeFunziona: il percorso del cantiere, dal progetto alla casa finita",
+      "autorizzazione": "scelta di Niko del 25 novembre 2026 (CLAUDE.md §2)"
+    },
+    {
+      "id": "percorso-3-casseri",
+      "tipo": "illustrazione-ai",
+      "gruppo": "percorso",
+      "fase": 3,
+      "file": "src/assets/illustrazioni/bd-percorso-3-casseri",
+      "formati": [
+        "avif",
+        "webp"
+      ],
+      "larghezze": [
+        332
+      ],
+      "width": 332,
+      "height": 498,
+      "alt": "Illustrazione: le pareti fatte di casseri isolanti bianchi, con i ferri d'armatura e il calcestruzzo gettato dentro.",
+      "credito": "Illustrazione generata con l'AI, non è una casa costruita",
+      "dicitura": "Illustrazione",
+      "dove": "BdComeFunziona: il percorso del cantiere, dal progetto alla casa finita",
+      "autorizzazione": "riquadro rifatto con i casseri isolanti, scelta di Niko del 25 novembre 2026 (CLAUDE.md §2)"
+    },
+    {
+      "id": "percorso-4-impianti",
+      "tipo": "illustrazione-ai",
+      "gruppo": "percorso",
+      "fase": 4,
+      "file": "src/assets/illustrazioni/bd-percorso-4-impianti",
+      "formati": [
+        "avif",
+        "webp"
+      ],
+      "larghezze": [
+        332
+      ],
+      "width": 332,
+      "height": 498,
+      "alt": "Illustrazione: l'interno al grezzo, con i tubi del riscaldamento a pavimento stesi sull'isolante.",
+      "credito": "Illustrazione generata con l'AI, non è una casa costruita",
+      "dicitura": "Illustrazione",
+      "dove": "BdComeFunziona: il percorso del cantiere, dal progetto alla casa finita",
+      "autorizzazione": "scelta di Niko del 25 novembre 2026 (CLAUDE.md §2)"
+    },
+    {
+      "id": "percorso-5-casa-finita",
+      "tipo": "illustrazione-ai",
+      "gruppo": "percorso",
+      "fase": 5,
+      "file": "src/assets/illustrazioni/bd-percorso-5-casa-finita",
+      "formati": [
+        "avif",
+        "webp"
+      ],
+      "larghezze": [
+        332
+      ],
+      "width": 332,
+      "height": 498,
+      "alt": "Illustrazione: la casa finita, bianca, con il giardino davanti.",
+      "credito": "Illustrazione generata con l'AI, non è una casa costruita",
+      "dicitura": "Illustrazione",
+      "dove": "BdComeFunziona: il percorso del cantiere, dal progetto alla casa finita",
+      "autorizzazione": "scelta di Niko del 25 novembre 2026 (CLAUDE.md §2)"
     }
   ]
 }

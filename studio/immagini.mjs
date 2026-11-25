@@ -54,6 +54,19 @@ export const ILLUSTRAZIONI_AI = [
   },
 ]
 
+// Il percorso del cantiere in «Come funziona» (§2, scelta di Niko del 25 novembre 2026): i riquadri 1, 2, 4 e 5 del kit
+// e un riquadro 3 nuovo con le pareti in casseri isolanti (originali/biodomus-percorso-3-casseri-originale.png).
+// Il riquadro 3 del kit ha i muri in laterizio e non entra mai. Tutti alla stessa misura verticale 2:3.
+export const LARGHEZZA_PERCORSO = 332
+export const ALTEZZA_PERCORSO = 498
+export const PERCORSO_AI = [
+  { id: 'percorso-1-progetto', kit: 'percorso-1-progetto', alt: 'Illustrazione: il progetto della casa sul tavolo, con le piante stampate, un metro e il portatile.' },
+  { id: 'percorso-2-fondazioni', kit: 'percorso-2-fondazioni', alt: "Illustrazione: lo scavo con le fondazioni in calcestruzzo, i ferri d'armatura e le casseforme di legno." },
+  { id: 'percorso-3-casseri', originale: 'biodomus-percorso-3-casseri-originale.png', alt: "Illustrazione: le pareti fatte di casseri isolanti bianchi, con i ferri d'armatura e il calcestruzzo gettato dentro." },
+  { id: 'percorso-4-impianti', kit: 'percorso-4-impianti', alt: "Illustrazione: l'interno al grezzo, con i tubi del riscaldamento a pavimento stesi sull'isolante." },
+  { id: 'percorso-5-casa-finita', kit: 'percorso-5-casa-finita', alt: 'Illustrazione: la casa finita, bianca, con il giardino davanti.' },
+]
+
 const kB = (byte) => byte / 1024
 const slug = (testo) =>
   testo
@@ -305,6 +318,35 @@ async function main() {
     })
     report.note.push(`Illustrazione AI ${ill.id}: ${ill.mobile} e ${ill.largo} → src/assets/illustrazioni/`)
   }
+
+  // 5c. Il percorso del cantiere (§2): stessa misura per tutti i riquadri, AVIF e WebP senza metadati, entro i pesi di §9.
+  //     I riquadri del kit si ritagliano dal loro JPG; il 3 nuovo dall'originale che ha mandato Niko.
+  for (const [i, fase] of PERCORSO_AI.entries()) {
+    const sorgente = fase.originale ? join(KIT, 'originali', fase.originale) : join(KIT, 'illustrazioni', 'percorso', `${fase.kit}.jpg`)
+    const immagine = sharp(sorgente).rotate().resize(LARGHEZZA_PERCORSO, ALTEZZA_PERCORSO, { fit: 'cover', position: 'centre' })
+    for (const formato of ['avif', 'webp']) {
+      const buffer = await (formato === 'avif' ? immagine.clone().avif({ quality: 55, effort: 5 }) : immagine.clone().webp({ quality: 78, effort: 5 })).toBuffer()
+      if (kB(buffer.length) > LIMITE_KB.altre) throw new Error(`${fase.id}.${formato} pesa più di ${LIMITE_KB.altre} kB (§9)`)
+      writeFileSync(join(OUT_ILL, `bd-${fase.id}-${LARGHEZZA_PERCORSO}.${formato}`), buffer)
+    }
+    vociAi.push({
+      id: fase.id,
+      tipo: 'illustrazione-ai',
+      gruppo: 'percorso',
+      fase: i + 1,
+      file: `src/assets/illustrazioni/bd-${fase.id}`,
+      formati: ['avif', 'webp'],
+      larghezze: [LARGHEZZA_PERCORSO],
+      width: LARGHEZZA_PERCORSO,
+      height: ALTEZZA_PERCORSO,
+      alt: fase.alt,
+      credito: "Illustrazione generata con l'AI, non è una casa costruita",
+      dicitura: 'Illustrazione',
+      dove: 'BdComeFunziona: il percorso del cantiere, dal progetto alla casa finita',
+      autorizzazione: fase.originale ? 'riquadro rifatto con i casseri isolanti, scelta di Niko del 25 novembre 2026 (CLAUDE.md §2)' : 'scelta di Niko del 25 novembre 2026 (CLAUDE.md §2)',
+    })
+  }
+  report.note.push('Percorso del cantiere: riquadri 1, 2, 4, 5 del kit e riquadro 3 nuovo con i casseri isolanti → src/assets/illustrazioni/')
 
   // 6. Manifesto: illustrazioni SVG disegnate per il progetto (§5), illustrazioni AI scelte e foto autorizzate
   const svg = (nome) => {
