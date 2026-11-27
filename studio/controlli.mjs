@@ -951,7 +951,25 @@ controllo('parole vietate da §3.13 anche nelle sezioni nuove, nell\'HTML e in t
 const FAQ = sezioneHtml('faq')
 const CHIUSURA = sezioneHtml('chiusura')
 const FOOTER = (HTML.match(/<footer[\s\S]*?<\/footer>/) ?? [''])[0]
-const REALIZZAZIONI_RIGHE = ((DATI_TS.match(/REALIZZAZIONI_TESTO = `([\s\S]*?)`/) ?? [])[1] ?? '').split('\n').filter((r) => r.trim()).length
+// Le righe di REALIZZAZIONI_TESTO in dati.ts: nome · comune · m² · anno · classe («–» = comune non indicato)
+const TESTO_REALIZZAZIONI = (DATI_TS.match(/REALIZZAZIONI_TESTO = `([\s\S]*?)`/) ?? [])[1]
+const RIGHE_REALIZZAZIONI = (TESTO_REALIZZAZIONI ?? '')
+  .split('\n')
+  .map((riga) => riga.trim())
+  .filter(Boolean)
+  .map((riga) => {
+    const [nome, comune] = riga.split('·').map((parte) => parte.trim())
+    return { nome, comune: comune && comune !== '–' ? comune : null }
+  })
+const REALIZZAZIONI_RIGHE = RIGHE_REALIZZAZIONI.length
+// Come diventa un nome nei file (studio/immagini.mjs): «Villa Mary» → «villa-mary»
+const comeFile = (testo) =>
+  testo
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
 const nomeAutorizzati = [1, 2].filter((n) => autorizzato(`P${n}_OK`))
 
 // I testi di testi.json con i dati di §2, come li risolve bd-testi.ts: null se un dato è vuoto, maiuscola se il testo
@@ -968,7 +986,7 @@ function risolviTesto(modello) {
   return modello.startsWith('{') ? testo.charAt(0).toUpperCase() + testo.slice(1) : testo
 }
 
-controllo('partner senza autorizzazione: né nome né sito né file in dist, nemmeno nel JavaScript (§2, §10.7)', () => {
+controllo('partner senza autorizzazione: né nome né sito né realizzazioni né file in dist, nemmeno nel JavaScript (§2, §10.7)', () => {
   const problemi = []
   const testiDist = esiste('dist') ? fileSotto('dist', (n) => /\.(html|js|css|json|svg|txt|xml|webmanifest)$/.test(n)) : []
   const impronteDist = new Set((esiste('dist') ? fileSotto('dist') : []).map(impronta))
@@ -979,10 +997,16 @@ controllo('partner senza autorizzazione: né nome né sito né file in dist, nem
     const parola = nome?.split(/\s+/)[0]
     const dominio = (DATI_TS.match(new RegExp(`\\bP${n}_SITO:[^\\n]*?'https?://(?:www\\.)?([^/']+)`)) ?? [])[1]
     controllati.push(`P${n} (${parola ?? '?'})`)
+    // Realizzazioni di P1: per ogni riga il nome (anche come nome di file, «villa-mary») e il comune se non è «–».
+    // I comuni dicono dove stanno case di clienti: senza autorizzazione nemmeno il JavaScript li deve contenere.
+    if (n === 1 && TESTO_REALIZZAZIONI === undefined) problemi.push('REALIZZAZIONI_TESTO non trovato in dati.ts: le realizzazioni non si possono verificare')
+    const daNascondere = n === 1 ? [...new Set(RIGHE_REALIZZAZIONI.flatMap(({ nome, comune }) => [nome, comeFile(nome), comune].filter(Boolean)))] : []
     for (const f of testiDist) {
       const testo = leggi(f)
+      const minuscolo = testo.toLowerCase()
       if (parola && new RegExp(`\\b${parola}\\b`, 'i').test(testo)) problemi.push(`${f} contiene «${parola}»`)
-      if (dominio && testo.toLowerCase().includes(dominio.toLowerCase())) problemi.push(`${f} contiene ${dominio}`)
+      if (dominio && minuscolo.includes(dominio.toLowerCase())) problemi.push(`${f} contiene ${dominio}`)
+      for (const voce of daNascondere) if (minuscolo.includes(voce.toLowerCase())) problemi.push(`${f} contiene «${voce}»`)
     }
     // Foto (P1, src/assets/img) e loghi (src/assets/partner): nessuna copia in dist, nemmeno con un nome diverso
     const fileDelPartner = [
@@ -994,7 +1018,10 @@ controllo('partner senza autorizzazione: né nome né sito né file in dist, nem
   if (!controllati.length) return { ok: true, nota: 'P1 e P2 autorizzati: nomi, loghi e foto ammessi' }
   return problemi.length
     ? { ok: false, nota: [...new Set(problemi)].join('; ') }
-    : { ok: true, nota: `${controllati.join(' e ')} non autorizzati: nome, dominio del sito, foto e loghi assenti da tutti i ${testiDist.length} file di testo di dist e da ogni asset` }
+    : {
+        ok: true,
+        nota: `${controllati.join(' e ')} non autorizzati: nome, dominio del sito, foto e loghi${autorizzato('P1_OK') ? '' : `, nomi e comuni delle ${REALIZZAZIONI_RIGHE} realizzazioni di P1`} assenti da tutti i ${testiDist.length} file di testo di dist e da ogni asset`,
+      }
 })
 
 controllo('Realizzazioni e Partner solo con autorizzazione; CTA dopo Sistema se le realizzazioni non ci sono (§2, §6)', () => {

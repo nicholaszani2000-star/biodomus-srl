@@ -61,12 +61,14 @@ export interface DatiProgetto {
 }
 
 // Autorizzazioni scritte dei partner (§2: P1_OK, P2_OK, §10.7). Si cambiano qui, in un posto solo.
-// Senza autorizzazione nome, ruolo e sito del partner valgono null in «dati»: non compaiono nella pagina e,
-// siccome il build toglie il ramo che non si usa, non finiscono nemmeno nel JavaScript pubblicato (lo verifica controlli.mjs).
+// Senza autorizzazione nome, ruolo e sito del partner valgono null in «dati» e le realizzazioni di P1 sono un elenco vuoto:
+// non compaiono nella pagina e, siccome il build toglie il ramo che non si usa, non finiscono nemmeno nel JavaScript
+// pubblicato. Nomi e comuni delle realizzazioni dicono dove stanno case di clienti (lo verifica controlli.mjs).
 const P1_OK = false
 const P2_OK = false
 
 // Una per riga: nome · comune · m² · anno · classe («–» = comune non indicato).
+// Si modifica qui, anche dal sito di GitHub. Entra nella pagina solo con P1_OK «sì» (vedi REALIZZAZIONI più sotto).
 const REALIZZAZIONI_TESTO = `Villa Smeraldo · – · 282 · 2025 · A4
 Villa Serena · – · 388 · 2024 · A4
 Villa Mary · Carnago · 336 · 2020 · A4
@@ -137,7 +139,7 @@ export const dati = {
   GARANZIA: null, // vuoto: non citare garanzie
   CLASSE: 'A4',
   BUDGET_MIN: 250_000,
-  REALIZZAZIONI: leggiRealizzazioni(REALIZZAZIONI_TESTO),
+  REALIZZAZIONI: P1_OK ? leggiRealizzazioni(REALIZZAZIONI_TESTO) : [],
 
   STILE: 'misto',
   COLORE_ACCENTO: '#383E42',

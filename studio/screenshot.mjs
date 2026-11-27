@@ -8,7 +8,8 @@
 // il tocco sullo strato nel disegno, la leggibilità a 390 px (tratti ≥ 1 px, testi ≥ 14 px, niente scroll orizzontale).
 // Dallo step 6: la pagina intera a 390 e 1440 px (angolo famiglia), la FAQ con una domanda aperta (una per volta, anche da
 // tastiera; senza JavaScript <details>), «Chiusura» (parete ricomposta in fondo alla pagina, canali secondari più piccoli
-// della CTA ma con 44 px di tocco), il ritmo verticale delle sezioni e le quote numerate in fila.
+// della CTA ma con 44 px di tocco), il ritmo verticale delle sezioni e le quote numerate in fila. Correzioni dello step 6:
+// ogni link e pulsante di «Chiusura» e del footer almeno 44 × 44 px e su una riga sola (§9).
 // Screenshot in studio/report/screenshot/ (escluso da git), riepilogo in studio/report/screenshot/riepilogo.json.
 
 import { chromium } from 'playwright'
@@ -627,6 +628,25 @@ for (const vista of VISTE) {
     `parete ${chiusura.esplodi === 0 ? 'ricomposta' : `staccata a ${chiusura.esplodi}`} in chiaro (dettagli ${chiusura.dettaglio}); CTA primaria ${chiusura.primaria?.h} px verso ${chiusura.primaria?.href}; secondarie ${chiusura.secondarie.map((a) => `${a.href} ${a.w}×${a.h} px`).join(', ')}`,
   )
   await pagina.locator('#chiusura').screenshot({ path: join(USCITA, `chiusura-${vista.width}.png`), style: NASCONDI_FISSI })
+
+  // Aree di tocco (§9): ogni link e ogni pulsante di «Chiusura» e del footer almeno 44 × 44 px e su una riga sola
+  const tocchi = await pagina.evaluate(() =>
+    [...document.querySelectorAll('#chiusura a, #chiusura button, footer a, footer button')].map((el) => {
+      const r = el.getBoundingClientRect()
+      const copia = el.cloneNode(true)
+      copia.querySelectorAll('.bd-sr-only').forEach((s) => s.remove())
+      return { testo: copia.textContent.replace(/\s+/g, ' ').trim(), w: r.width, h: r.height, righe: el.getClientRects().length }
+    }),
+  )
+  const fuoriMisura = tocchi.filter((x) => x.w + 0.01 < 44 || x.h + 0.01 < 44 || x.righe !== 1)
+  esito(
+    tocchi.length > 0 && fuoriMisura.length === 0,
+    `aree di tocco di «Chiusura» e del footer ${vista.width}px`,
+    fuoriMisura.length
+      ? `sotto i 44 × 44 px o su più righe: ${fuoriMisura.map((x) => `«${x.testo}» ${Math.round(x.w)} × ${Math.round(x.h)} px su ${x.righe} righe`).join(', ')}`
+      : `${tocchi.length} tra link e pulsanti, tutti su una riga; altezza minima ${Math.round(Math.min(...tocchi.map((x) => x.h)))} px, larghezza minima ${Math.round(Math.min(...tocchi.map((x) => x.w)))} px («${tocchi.reduce((m, x) => (x.w < m.w ? x : m)).testo}»)`,
+  )
+  await pagina.locator('footer').screenshot({ path: join(USCITA, `footer-${vista.width}.png`), style: NASCONDI_FISSI })
   await pagina.close()
 }
 
