@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import BdBannerCookie from './components/BdBannerCookie.tsx'
 import BdBarraMobile from './components/BdBarraMobile.tsx'
 import BdFooter from './components/BdFooter.tsx'
 import BdHeader from './components/BdHeader.tsx'
@@ -23,9 +24,11 @@ import { salvaUtm } from './lib/bd-utm.ts'
 // preso dall'elenco «ordine», così i numeri restano in fila anche quando una sezione condizionale non c'è.
 export default function App() {
   useEffect(() => {
-    // Dopo l'hydration: parametri della campagna e movimento (caricato a parte, fuori dal primo bundle).
+    // Dopo l'hydration: parametri della campagna, movimento e tracciamento (caricati a parte, fuori dal primo bundle).
+    // bd-traccia non fa richieste a Meta senza il consenso «accettato» e senza META_PIXEL (§10 punto 4).
     salvaUtm()
     void import('./lib/bd-motion.ts').then((modulo) => modulo.avviaMovimento())
+    void import('./lib/bd-traccia.ts').then((modulo) => modulo.avviaTracciamento())
   }, [])
 
   // Le sezioni dopo l'hero, nell'ordine di §6: la quota prima di ognuna porta il suo numero (01, 02, …)
@@ -48,6 +51,8 @@ export default function App() {
       <a className="bd-salta" href="#contenuto">
         {tt('comuni.saltaAlContenuto')}
       </a>
+      {/* Solo dopo l'hydration e solo finché manca una scelta (o quando la si riapre): vedi BdBannerCookie */}
+      <BdBannerCookie />
       <BdHeader />
       <main id="contenuto" tabIndex={-1}>
         <BdHero />

@@ -10,6 +10,10 @@
 // tastiera; senza JavaScript <details>), «Chiusura» (parete ricomposta in fondo alla pagina, canali secondari più piccoli
 // della CTA ma con 44 px di tocco), il ritmo verticale delle sezioni e le quote numerate in fila. Correzioni dello step 6:
 // ogni link e pulsante di «Chiusura» e del footer almeno 44 × 44 px e su una riga sola (§9).
+// Dallo step 7: nessuna richiesta esterna senza consenso, il Pixel (di prova) solo dopo «Accetta», «Contact» sui quattro
+// link di contatto, la revoca, il banner (misure, tastiera, Esc, X, «Gestisci cookie», barra mobile sopra, LCP nell'hero),
+// zero violazioni della CSP di netlify.toml (applicata dall'anteprima) sulla landing e su privacy, cookie, grazie e 404.
+// Le prove degli step precedenti partono con una scelta sui cookie già salvata, così il banner non copre clic e foto.
 // Screenshot in studio/report/screenshot/ (escluso da git), riepilogo in studio/report/screenshot/riepilogo.json.
 
 import { chromium } from 'playwright'
@@ -78,6 +82,41 @@ if (!browser) {
   process.exit(0)
 }
 
+// Dallo step 7 il banner dei cookie compare a ogni contesto nuovo: le prove degli step precedenti partono con una scelta
+// già salvata («rifiutato», solo se manca), così il banner non copre clic e screenshot. Lo step 7 lo prova davvero.
+const SCELTA_SALVATA = () => {
+  try {
+    if (!localStorage.getItem('bd-consenso')) localStorage.setItem('bd-consenso', JSON.stringify({ stato: 'rifiutato', data: Date.now() }))
+  } catch {
+    // senza localStorage il banner resta: le prove lo vedrebbero
+  }
+}
+// Header e barra mobile nascosti negli screenshot con il CSSOM (el.style, ammesso dalla CSP): l'opzione «style» di
+// Playwright inietta uno <style> senza hash che la Content-Security-Policy dell'anteprima blocca (step 7).
+async function senzaFissi(pagina, scatta) {
+  const imposta = (nascondi) =>
+    pagina.evaluate((n) => {
+      for (const el of document.querySelectorAll('.bd-header, .bd-barra-mobile')) {
+        if (n) el.style.setProperty('visibility', 'hidden', 'important')
+        else el.style.removeProperty('visibility')
+      }
+    }, nascondi)
+  await imposta(true)
+  try {
+    return await scatta()
+  } finally {
+    await imposta(false)
+  }
+}
+
+async function paginaSenzaBanner(opzioni) {
+  const contesto = await browser.newContext(opzioni)
+  await contesto.addInitScript(SCELTA_SALVATA)
+  const pagina = await contesto.newPage()
+  pagina.once('close', () => void contesto.close())
+  return pagina
+}
+
 const risultati = []
 const esito = (ok, nome, nota) => {
   risultati.push({ ok, nome, nota })
@@ -86,7 +125,7 @@ const esito = (ok, nome, nota) => {
 
 for (const vista of VISTE) {
   for (const angolo of ANGOLI) {
-    const pagina = await browser.newPage({ viewport: { width: vista.width, height: vista.height } })
+    const pagina = await paginaSenzaBanner({ viewport: { width: vista.width, height: vista.height } })
     const errori = []
     pagina.on('console', (m) => {
       if (m.type() === 'error') errori.push(m.text())
@@ -284,7 +323,7 @@ for (const vista of VISTE) {
       const inFondo = await leggiHeader()
       await scorriA(() => window.scrollTo(0, 0), 500)
       const inCima = await leggiHeader()
-      const conAncora = await browser.newPage({ viewport: { width: vista.width, height: vista.height } })
+      const conAncora = await paginaSenzaBanner({ viewport: { width: vista.width, height: vista.height } })
       await conAncora.goto(`${BASE}/?a=famiglia#preventivo`, { waitUntil: 'networkidle' })
       await conAncora.waitForTimeout(500)
       const temaAncora = await conAncora.evaluate(() => document.querySelector('.bd-header').dataset.bdTema)
@@ -413,7 +452,7 @@ for (const vista of VISTE) {
 // lì preparaPareti l'ha già ricomposto (la ricomposizione finisce quando il centro arriva al 30%). Header e barra nascosti nella foto.
 // A 390 px anche la leggibilità delle tre sezioni nuove: tratti del disegno ≥ 1 px, testi ≥ 14 px, nessuno scroll orizzontale.
 for (const vista of VISTE) {
-  const pagina = await browser.newPage({ viewport: { width: vista.width, height: vista.height } })
+  const pagina = await paginaSenzaBanner({ viewport: { width: vista.width, height: vista.height } })
   const errori = []
   pagina.on('pageerror', (e) => errori.push(e.message))
   pagina.on('console', (m) => {
@@ -444,7 +483,7 @@ for (const vista of VISTE) {
       dettaglio: getComputedStyle(document.querySelector('#sistema')).getPropertyValue('--bd-dettaglio').trim(),
     }
   })
-  await pagina.screenshot({ path: join(USCITA, `sistema-strato-2-${vista.width}.png`), style: '.bd-header,.bd-barra-mobile{visibility:hidden!important}' })
+  await senzaFissi(pagina, () => pagina.screenshot({ path: join(USCITA, `sistema-strato-2-${vista.width}.png`) }))
   esito(
     stato.espansi === 'false,true,false,false' && stato.visibili === 'no,sì,no,no' && stato.attivo === '2' && stato.esplodi === 0 && errori.length === 0,
     `«Com'è fatta la casa» con lo strato 2 aperto ${vista.width}px`,
@@ -510,9 +549,8 @@ for (const vista of VISTE) {
 }
 
 // Step 6: ritmo verticale, quote in fila, FAQ con una domanda aperta e «Chiusura», a 390 e 1440 px.
-const NASCONDI_FISSI = '.bd-header,.bd-barra-mobile{visibility:hidden!important}'
 for (const vista of VISTE) {
-  const pagina = await browser.newPage({ viewport: { width: vista.width, height: vista.height } })
+  const pagina = await paginaSenzaBanner({ viewport: { width: vista.width, height: vista.height } })
   const errori = []
   pagina.on('pageerror', (e) => errori.push(e.message))
   pagina.on('console', (m) => {
@@ -590,7 +628,7 @@ for (const vista of VISTE) {
   // Screenshot con la domanda 5 aperta, la risposta più lunga («Quanto costa il servizio…»)
   await domande.nth(4).click()
   await pagina.waitForTimeout(400)
-  await pagina.locator('#faq').screenshot({ path: join(USCITA, `faq-aperta-${vista.width}.png`), style: NASCONDI_FISSI })
+  await senzaFissi(pagina, () => pagina.locator('#faq').screenshot({ path: join(USCITA, `faq-aperta-${vista.width}.png`) }))
 
   // «Chiusura»: si arriva in fondo come una persona, a colpi di rotella, e la parete piccola dev'essere ricomposta
   for (let i = 0; i < 40; i++) {
@@ -627,7 +665,7 @@ for (const vista of VISTE) {
     `«Chiusura» in fondo alla pagina ${vista.width}px`,
     `parete ${chiusura.esplodi === 0 ? 'ricomposta' : `staccata a ${chiusura.esplodi}`} in chiaro (dettagli ${chiusura.dettaglio}); CTA primaria ${chiusura.primaria?.h} px verso ${chiusura.primaria?.href}; secondarie ${chiusura.secondarie.map((a) => `${a.href} ${a.w}×${a.h} px`).join(', ')}`,
   )
-  await pagina.locator('#chiusura').screenshot({ path: join(USCITA, `chiusura-${vista.width}.png`), style: NASCONDI_FISSI })
+  await senzaFissi(pagina, () => pagina.locator('#chiusura').screenshot({ path: join(USCITA, `chiusura-${vista.width}.png`) }))
 
   // Aree di tocco (§9): ogni link e ogni pulsante di «Chiusura» e del footer almeno 44 × 44 px e su una riga sola
   const tocchi = await pagina.evaluate(() =>
@@ -646,7 +684,7 @@ for (const vista of VISTE) {
       ? `sotto i 44 × 44 px o su più righe: ${fuoriMisura.map((x) => `«${x.testo}» ${Math.round(x.w)} × ${Math.round(x.h)} px su ${x.righe} righe`).join(', ')}`
       : `${tocchi.length} tra link e pulsanti, tutti su una riga; altezza minima ${Math.round(Math.min(...tocchi.map((x) => x.h)))} px, larghezza minima ${Math.round(Math.min(...tocchi.map((x) => x.w)))} px («${tocchi.reduce((m, x) => (x.w < m.w ? x : m)).testo}»)`,
   )
-  await pagina.locator('footer').screenshot({ path: join(USCITA, `footer-${vista.width}.png`), style: NASCONDI_FISSI })
+  await senzaFissi(pagina, () => pagina.locator('footer').screenshot({ path: join(USCITA, `footer-${vista.width}.png`) }))
   await pagina.close()
 }
 
@@ -703,6 +741,7 @@ for (const vista of VISTE) {
 // Riduzione del movimento: niente Lenis, parete già composta con le quote, titolo subito visibile, nessun errore.
 for (const vista of VISTE) {
   const contesto = await browser.newContext({ viewport: { width: vista.width, height: vista.height }, reducedMotion: 'reduce' })
+  await contesto.addInitScript(SCELTA_SALVATA)
   const pagina = await contesto.newPage()
   const errori = []
   pagina.on('pageerror', (e) => errori.push(e.message))
@@ -752,6 +791,330 @@ for (const vista of VISTE) {
     `${stato.lenis ? 'Lenis attivo' : 'niente Lenis'}, titolo opacità ${stato.titolo}, parete ${stato.composta ? 'già composta' : 'esplosa'}, quote opacità ${stato.quote}${errori.length ? `, errori: ${errori.join(' | ')}` : ''}`,
   )
   await contesto.close()
+}
+
+// ---------- Step 7: banner dei cookie, Pixel solo con il consenso, Contact, revoca, CSP, LCP ----------
+// Meta non si raggiunge mai: route() intercetta connect.facebook.net e www.facebook.com. Lo script del Pixel diventa
+// un fbq finto che registra le chiamate in window.__fbqChiamate. Il «META_PIXEL di prova» entra riscrivendo, solo qui,
+// il bundle servito (META_PIXEL:null → un ID finto): nel codice del sito non c'è nessun aggancio per i test.
+const PIXEL_PROVA = '000000000000007'
+const FBEVENTS_FINTO = `(function () {
+  window.__fbqChiamate = window.__fbqChiamate || [];
+  var f = window.fbq; if (!f) return;
+  var coda = f.queue || [];
+  f.callMethod = function () { window.__fbqChiamate.push(Array.prototype.slice.call(arguments)); };
+  for (var i = 0; i < coda.length; i++) f.callMethod.apply(f, coda[i]);
+  f.queue = [];
+})();`
+const SCRIPT_PIXEL = 'https://connect.facebook.net/en_US/fbevents.js'
+const LINK_CONTATTO = 'a[href^="tel:"], a[href^="https://wa.me/"]'
+
+async function contestoStep7({ width, height }, { ridotto = false, pixel = false, consenso = null } = {}) {
+  const contesto = await browser.newContext({ viewport: { width, height }, reducedMotion: ridotto ? 'reduce' : 'no-preference' })
+  await contesto.addInitScript((scelta) => {
+    window.__violazioni = []
+    document.addEventListener('securitypolicyviolation', (e) => {
+      window.__violazioni.push(`${e.violatedDirective} ${e.blockedURI || 'inline'} ${(e.sourceFile || '').split('/').pop()}:${e.lineNumber}`)
+    })
+    window.__lcp = []
+    try {
+      new PerformanceObserver((lista) => window.__lcp.push(...lista.getEntries())).observe({ type: 'largest-contentful-paint', buffered: true })
+    } catch {
+      // senza LCP la prova lo segnala
+    }
+    try {
+      if (scelta && !localStorage.getItem('bd-consenso')) localStorage.setItem('bd-consenso', JSON.stringify({ stato: scelta, data: Date.now() }))
+    } catch {
+      // niente
+    }
+  }, consenso)
+  const richieste = []
+  contesto.on('request', (r) => richieste.push(r.url()))
+  await contesto.route(/^https:\/\/(?:connect\.facebook\.net|www\.facebook\.com)\//, (route) =>
+    route.request().url() === SCRIPT_PIXEL
+      ? route.fulfill({ status: 200, contentType: 'text/javascript; charset=utf-8', body: FBEVENTS_FINTO })
+      : route.fulfill({ status: 204, body: '' }),
+  )
+  if (pixel) {
+    await contesto.route(/\/assets\/index-[\w-]+\.js$/, async (route) => {
+      const risposta = await route.fetch()
+      const corpo = await risposta.text()
+      if (!corpo.includes('META_PIXEL:null')) return route.abort()
+      return route.fulfill({ response: risposta, body: corpo.replace('META_PIXEL:null', `META_PIXEL:${JSON.stringify(PIXEL_PROVA)}`) })
+    })
+  }
+  const pagina = await contesto.newPage()
+  const errori = []
+  pagina.on('pageerror', (e) => errori.push(e.message))
+  pagina.on('console', (m) => {
+    if (m.type() === 'error' && !/status of 404/.test(m.text())) errori.push(m.text())
+  })
+  return { contesto, pagina, richieste, errori }
+}
+const esterne = (richieste) => richieste.filter((u) => !u.startsWith(BASE) && !u.startsWith('data:') && !u.startsWith('blob:'))
+const violazioniDi = (pagina) => pagina.evaluate(() => window.__violazioni ?? [])
+async function scorriTutta(pagina) {
+  for (let i = 0; i < 30; i++) {
+    await pagina.mouse.wheel(0, 700)
+    await pagina.waitForTimeout(40)
+  }
+  await pagina.waitForTimeout(600)
+  await pagina.evaluate(() => window.scrollTo(0, 0))
+  await pagina.waitForTimeout(400)
+}
+const alCentro = (localizzatore) => localizzatore.evaluate((el) => el.scrollIntoView({ block: 'center' }))
+
+// 1. Senza consenso nessuna richiesta esterna, nemmeno con un Pixel configurato; il Pixel parte solo dopo «Accetta».
+//    Zero violazioni della CSP prima e dopo «Accetta», con il movimento e con la riduzione del movimento.
+for (const ridotto of [false, true]) {
+  for (const vista of VISTE) {
+    const etichetta = `${vista.width}px ${ridotto ? 'movimento ridotto' : 'con movimento'}`
+    const { contesto, pagina, richieste, errori } = await contestoStep7(vista, { ridotto, pixel: true })
+    await pagina.goto(`${BASE}/`, { waitUntil: 'networkidle' })
+    await pagina.waitForTimeout(500)
+    await scorriTutta(pagina)
+    const primaEsterne = esterne(richieste)
+    const violazioniPrima = await violazioniDi(pagina)
+    const bannerVisibile = await pagina.locator('.bd-banner').isVisible()
+    const attesaPixel = pagina.waitForRequest(SCRIPT_PIXEL, { timeout: 5000 }).catch(() => null)
+    await pagina.locator('.bd-banner').getByRole('button', { name: 'Accetta', exact: true }).click()
+    const richiestaPixel = await attesaPixel
+    await pagina.waitForTimeout(500)
+    await scorriTutta(pagina)
+    const chiamate = await pagina.evaluate(() => window.__fbqChiamate ?? [])
+    const violazioniDopo = await violazioniDi(pagina)
+    const init = chiamate.some((c) => c[0] === 'init' && c[1] === PIXEL_PROVA)
+    const pageView = chiamate.some((c) => c[0] === 'track' && c[1] === 'PageView')
+    esito(
+      bannerVisibile && primaEsterne.length === 0 && richiestaPixel !== null && init && pageView,
+      `Pixel solo dopo «Accetta» ${etichetta}`,
+      `prima: ${richieste.length} richieste, esterne ${primaEsterne.length ? primaEsterne.join(', ') : 'nessuna'}; dopo «Accetta»: ${richiestaPixel ? 'fbevents.js richiesto' : 'fbevents.js MAI richiesto'}, init ${init ? 'sì' : 'no'}, PageView ${pageView ? 'sì' : 'no'}`,
+    )
+    esito(
+      violazioniPrima.length === 0 && violazioniDopo.length === 0 && errori.length === 0,
+      `CSP senza violazioni prima e dopo «Accetta» ${etichetta}`,
+      violazioniPrima.length || violazioniDopo.length || errori.length
+        ? `prima ${violazioniPrima.join(' | ') || '0'}; dopo ${violazioniDopo.join(' | ') || '0'}${errori.length ? `; errori: ${errori.join(' | ')}` : ''}`
+        : '0 eventi securitypolicyviolation, console pulita',
+    )
+    await contesto.close()
+  }
+}
+
+// 2. Con il consenso: un clic su ognuno dei quattro link tel: e wa.me registra un «Contact» senza parametri,
+//    senza aprire il link. 3. Revoca da «Gestisci cookie»: _fbp e _fbc cancellati, nessun nuovo evento.
+for (const vista of VISTE) {
+  const { contesto, pagina, errori } = await contestoStep7(vista, { pixel: true, consenso: 'accettato' })
+  await pagina.goto(`${BASE}/`, { waitUntil: 'networkidle' })
+  await pagina.waitForTimeout(600)
+  // Un ascoltatore in cattura annulla l'apertura del link; quello delegato del sito sente lo stesso il clic
+  await pagina.evaluate((selettore) => {
+    window.addEventListener('click', (e) => {
+      if (e.target instanceof Element && e.target.closest(selettore)) e.preventDefault()
+    }, true)
+  }, LINK_CONTATTO)
+  const link = pagina.locator(LINK_CONTATTO)
+  const quanti = await link.count()
+  for (let i = 0; i < quanti; i++) {
+    await alCentro(link.nth(i))
+    await pagina.waitForTimeout(250)
+    await link.nth(i).click()
+    await pagina.waitForTimeout(100)
+  }
+  const chiamate = await pagina.evaluate(() => window.__fbqChiamate ?? [])
+  const contatti = chiamate.filter((c) => c[0] === 'track' && c[1] === 'Contact')
+  const senzaDati = contatti.every((c) => JSON.stringify(c.slice(2)) === '[{},{}]')
+  esito(
+    quanti === 4 && contatti.length === 4 && senzaDati && contesto.pages().length === 1 && pagina.url().startsWith(BASE) && errori.length === 0,
+    `«Contact» sui quattro link di contatto ${vista.width}px`,
+    `${quanti} link, ${contatti.length} eventi Contact ${senzaDati ? 'senza parametri' : 'CON parametri'}; nessun link aperto (${contesto.pages().length} scheda)${errori.length ? `; errori: ${errori.join(' | ')}` : ''}`,
+  )
+
+  await pagina.evaluate(() => {
+    document.cookie = '_fbp=fb.1.1700000000000.123; Path=/'
+    document.cookie = '_fbc=fb.1.1700000000000.prova; Path=/'
+  })
+  const gestisci = pagina.getByRole('button', { name: 'Gestisci cookie' })
+  await alCentro(gestisci)
+  await pagina.waitForTimeout(250)
+  await gestisci.click()
+  await pagina.waitForTimeout(300)
+  const riaperto = await pagina.evaluate(() => ({
+    focus: Boolean(document.activeElement?.closest('.bd-banner')),
+    stato: document.querySelector('.bd-banner__stato')?.textContent?.trim() ?? '',
+  }))
+  await pagina.locator('.bd-banner').getByRole('button', { name: 'Rifiuta', exact: true }).click()
+  await pagina.waitForTimeout(200)
+  const focusDopoRifiuta = await pagina.evaluate(() => document.activeElement?.textContent?.trim() ?? '')
+  const primaDelClic = await pagina.evaluate(() => window.__fbqChiamate.length)
+  await alCentro(link.first())
+  await pagina.waitForTimeout(250)
+  await link.first().click()
+  await pagina.waitForTimeout(150)
+  const dopo = await pagina.evaluate((da) => ({
+    cookie: document.cookie,
+    consenso: JSON.parse(localStorage.getItem('bd-consenso') || '{}').stato,
+    revoca: window.__fbqChiamate.some((c) => c[0] === 'consent' && c[1] === 'revoke'),
+    nuovi: window.__fbqChiamate.slice(da).filter((c) => c[0] === 'track').length,
+  }), primaDelClic)
+  esito(
+    riaperto.focus && /accettati/.test(riaperto.stato) && dopo.consenso === 'rifiutato' && !/_fbp|_fbc/.test(dopo.cookie) && dopo.revoca && dopo.nuovi === 0 && focusDopoRifiuta === 'Gestisci cookie',
+    `revoca da «Gestisci cookie» ${vista.width}px`,
+    `banner riaperto con il focus ${riaperto.focus ? 'dentro' : 'FUORI'} («${riaperto.stato}»); dopo «Rifiuta»: consenso ${dopo.consenso}, cookie _fbp/_fbc ${/_fbp|_fbc/.test(dopo.cookie) ? 'ANCORA presenti' : 'cancellati'}, fbq consent revoke ${dopo.revoca ? 'sì' : 'no'}, ${dopo.nuovi} eventi nuovi dopo un clic su «Chiama»; focus tornato su «${focusDopoRifiuta}»`,
+  )
+  await contesto.close()
+}
+
+// 4. Il banner con i dati veri (META_PIXEL vuoto): misure, LCP nell'hero, barra mobile sopra, tastiera, Esc, X, «Gestisci cookie».
+for (const vista of VISTE) {
+  const { contesto, pagina, richieste, errori } = await contestoStep7(vista)
+  await pagina.goto(`${BASE}/`, { waitUntil: 'networkidle' })
+  await pagina.waitForTimeout(1500)
+  const misure = await pagina.evaluate(() => {
+    const b = document.querySelector('.bd-banner')
+    if (!b) return null
+    const [rifiuta, accetta] = [...b.querySelectorAll('.bd-banner__scelta')]
+    const aspetto = (el) => {
+      const s = getComputedStyle(el)
+      return [s.backgroundColor, s.borderTopWidth, s.borderTopColor, s.color, s.fontSize, s.fontWeight, s.borderTopLeftRadius].join('|')
+    }
+    const r = (el) => el.getBoundingClientRect()
+    const x = b.querySelector('.bd-banner__chiudi')
+    const link = b.querySelector('.bd-banner__link')
+    const ultimo = window.__lcp.at(-1)
+    return {
+      ruolo: b.getAttribute('role'),
+      etichetta: b.getAttribute('aria-label'),
+      scelte: [rifiuta?.textContent, accetta?.textContent].join(' / '),
+      stessaMisura: Math.abs(r(rifiuta).width - r(accetta).width) < 0.5 && Math.abs(r(rifiuta).height - r(accetta).height) < 0.5,
+      stessoAspetto: aspetto(rifiuta) === aspetto(accetta),
+      scelta: `${Math.round(r(rifiuta).width)}×${Math.round(r(rifiuta).height)}`,
+      x: `${Math.round(r(x).width)}×${Math.round(r(x).height)}`,
+      xEtichetta: x.getAttribute('aria-label'),
+      link: link.getAttribute('href'),
+      linkAlto: r(link).height,
+      testo: parseFloat(getComputedStyle(b.querySelector('.bd-banner__testo')).fontSize),
+      altezza: Math.round(r(b).height),
+      lcp: ultimo ? { nellHero: Boolean(ultimo.element?.closest('#inizio')), elemento: `${ultimo.element?.tagName ?? '?'}.${String(ultimo.element?.className ?? '').split(' ')[0]}` } : null,
+      ctaHero: Math.round(document.querySelector('#inizio .bd-cta--primaria').getBoundingClientRect().bottom),
+      bannerCima: Math.round(r(b).top),
+    }
+  })
+  await pagina.screenshot({ path: join(USCITA, `banner-${vista.width}.png`) })
+  esito(
+    misure !== null &&
+      misure.ruolo === 'dialog' &&
+      misure.stessaMisura &&
+      misure.stessoAspetto &&
+      misure.x === '44×44' &&
+      misure.xEtichetta === 'Chiudi e rifiuta' &&
+      misure.link === '/cookie.html' &&
+      misure.linkAlto >= 44 &&
+      misure.testo === 14 &&
+      misure.ctaHero <= misure.bannerCima,
+    `banner dei cookie ${vista.width}px`,
+    misure
+      ? `«${misure.etichetta}», ${misure.scelte} ${misure.stessaMisura && misure.stessoAspetto ? 'uguali' : 'DIVERSI'} (${misure.scelta} px), X ${misure.x} «${misure.xEtichetta}», link ${misure.link}, testo ${misure.testo} px, alto ${misure.altezza} px; CTA dell'hero finisce a ${misure.ctaHero} px, banner da ${misure.bannerCima} px`
+      : 'banner assente al primo accesso',
+  )
+  esito(
+    misure?.lcp?.nellHero === true,
+    `LCP nell'hero con il banner aperto ${vista.width}px`,
+    misure?.lcp ? `ultimo elemento LCP: ${misure.lcp.elemento}${misure.lcp.nellHero ? ' (in #inizio)' : ' (FUORI dall\'hero)'}` : 'nessuna voce LCP',
+  )
+
+  if (vista.width < 768) {
+    // Con il banner aperto la barra mobile sale sopra di lui: la CTA della barra resta scoperta
+    await pagina.evaluate(() => document.getElementById('ruolo').scrollIntoView({ block: 'start' }))
+    await pagina.waitForTimeout(800)
+    const posizioni = await pagina.evaluate(() => {
+      const barra = document.querySelector('.bd-barra-mobile')
+      const banner = document.querySelector('.bd-banner')
+      return {
+        vista: barra.classList.contains('bd-barra-mobile--vista'),
+        barraFondo: Math.round(barra.getBoundingClientRect().bottom),
+        bannerCima: Math.round(banner.getBoundingClientRect().top),
+      }
+    })
+    await pagina.screenshot({ path: join(USCITA, `banner-barra-${vista.width}.png`) })
+    esito(
+      posizioni.vista && posizioni.barraFondo <= posizioni.bannerCima + 1,
+      `barra mobile sopra il banner ${vista.width}px`,
+      `barra ${posizioni.vista ? 'visibile' : 'nascosta'}, finisce a ${posizioni.barraFondo} px; il banner comincia a ${posizioni.bannerCima} px`,
+    )
+    await pagina.evaluate(() => window.scrollTo(0, 0))
+    await pagina.waitForTimeout(400)
+  }
+
+  // Tastiera: subito dopo «Vai al contenuto» c'è il banner; Esc chiude e vale come rifiuto
+  await pagina.locator('.bd-salta').focus()
+  await pagina.keyboard.press('Tab')
+  const primoNelBanner = await pagina.evaluate(() => (document.activeElement?.closest('.bd-banner') ? document.activeElement.textContent.trim() : document.activeElement?.tagName ?? ''))
+  await pagina.keyboard.press('Escape')
+  await pagina.waitForTimeout(200)
+  const dopoEsc = await pagina.evaluate(() => ({ aperto: Boolean(document.querySelector('.bd-banner')), stato: JSON.parse(localStorage.getItem('bd-consenso') || '{}').stato }))
+  esito(
+    primoNelBanner === 'Cookie policy' && !dopoEsc.aperto && dopoEsc.stato === 'rifiutato',
+    `banner da tastiera ${vista.width}px`,
+    `dopo «Vai al contenuto» il Tab va su «${primoNelBanner}»; Esc: banner ${dopoEsc.aperto ? 'ancora aperto' : 'chiuso'}, scelta «${dopoEsc.stato}»`,
+  )
+
+  // «Gestisci cookie» lo riapre con il focus dentro; la X vale come rifiuto e il focus torna sul pulsante
+  const gestisci = pagina.getByRole('button', { name: 'Gestisci cookie' })
+  await alCentro(gestisci)
+  await pagina.waitForTimeout(250)
+  await gestisci.click()
+  await pagina.waitForTimeout(300)
+  const focusDentro = await pagina.evaluate(() => Boolean(document.activeElement?.closest('.bd-banner')))
+  await pagina.locator('.bd-banner__chiudi').click()
+  await pagina.waitForTimeout(200)
+  const dopoX = await pagina.evaluate(() => ({
+    aperto: Boolean(document.querySelector('.bd-banner')),
+    stato: JSON.parse(localStorage.getItem('bd-consenso') || '{}').stato,
+    focus: document.activeElement?.textContent?.trim() ?? '',
+  }))
+  // «Accetta» con META_PIXEL vuoto: scelta salvata, nessuna richiesta a Meta (codice pronto ma inattivo)
+  await gestisci.click()
+  await pagina.waitForTimeout(300)
+  await pagina.locator('.bd-banner').getByRole('button', { name: 'Accetta', exact: true }).click()
+  await pagina.waitForTimeout(800)
+  const dopoAccetta = await pagina.evaluate(() => JSON.parse(localStorage.getItem('bd-consenso') || '{}').stato)
+  // Dalla cookie policy, «cambia la tua scelta» (/#gestisci-cookie) lo riapre anche con una scelta salvata; l'ancora sparisce
+  await pagina.goto(`${BASE}/cookie.html`, { waitUntil: 'networkidle' })
+  await pagina.getByRole('link', { name: 'cambia la tua scelta' }).click()
+  await pagina.waitForLoadState('networkidle')
+  await pagina.waitForTimeout(800)
+  const daAncora = await pagina.evaluate(() => ({ aperto: Boolean(document.querySelector('.bd-banner')), indirizzo: location.hash, focus: Boolean(document.activeElement?.closest('.bd-banner')) }))
+  const violazioni = await violazioniDi(pagina)
+  esito(
+    focusDentro && !dopoX.aperto && dopoX.stato === 'rifiutato' && dopoX.focus === 'Gestisci cookie' && dopoAccetta === 'accettato' && esterne(richieste).length === 0 && daAncora.aperto && daAncora.indirizzo === '' && daAncora.focus && violazioni.length === 0 && errori.length === 0,
+    `banner da «Gestisci cookie» e dalla cookie policy ${vista.width}px`,
+    `riaperto con il focus ${focusDentro ? 'dentro' : 'FUORI'}; X: «${dopoX.stato}», focus su «${dopoX.focus}»; «Accetta» con META_PIXEL vuoto: «${dopoAccetta}», richieste esterne ${esterne(richieste).length}; da «cambia la tua scelta» della cookie policy: banner ${daAncora.aperto ? 'aperto' : 'chiuso'} con il focus ${daAncora.focus ? 'dentro' : 'fuori'}, ancora ${daAncora.indirizzo || 'tolta'}${violazioni.length ? `; violazioni CSP: ${violazioni.join(' | ')}` : ''}${errori.length ? `; errori: ${errori.join(' | ')}` : ''}`,
+  )
+  await contesto.close()
+}
+
+// 5. Pagine statiche: zero violazioni della CSP e nessuna richiesta esterna; foto di privacy, cookie, grazie e 404
+for (const vista of VISTE) {
+  const righe = []
+  let ok = true
+  for (const [nome, percorso, atteso] of [
+    ['privacy', '/privacy.html', 200],
+    ['cookie', '/cookie.html', 200],
+    ['grazie', '/grazie.html', 200],
+    ['404', '/non-esiste/pagina', 404],
+  ]) {
+    const { contesto, pagina, richieste, errori } = await contestoStep7(vista)
+    const risposta = await pagina.goto(`${BASE}${percorso}`, { waitUntil: 'networkidle' })
+    const violazioni = await violazioniDi(pagina)
+    const larga = await pagina.evaluate(() => document.documentElement.scrollWidth)
+    await pagina.screenshot({ path: join(USCITA, `pagina-${nome}-${vista.width}.png`) })
+    const bene = risposta?.status() === atteso && violazioni.length === 0 && esterne(richieste).length === 0 && errori.length === 0 && larga <= vista.width
+    ok &&= bene
+    righe.push(`${nome} ${risposta?.status()}${violazioni.length ? ` violazioni: ${violazioni.join(' | ')}` : ''}${esterne(richieste).length ? ` esterne: ${esterne(richieste).join(', ')}` : ''}${larga > vista.width ? ` larga ${larga} px` : ''}${errori.length ? ` errori: ${errori.join(' | ')}` : ''}`)
+    await contesto.close()
+  }
+  esito(ok, `CSP senza violazioni su privacy, cookie, grazie e 404 ${vista.width}px`, `${righe.join(' · ')}; nessuna richiesta esterna`)
 }
 
 await browser.close()

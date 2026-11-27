@@ -18,7 +18,6 @@ import {
   type DatiModulo,
   type Errori,
 } from '../lib/bd-lead-regole.ts'
-import { track } from '../lib/bd-traccia.ts'
 import { leggiUtm } from '../lib/bd-utm.ts'
 
 type Passo = 1 | 2 | 3
@@ -283,7 +282,10 @@ export default function BdModulo() {
         body: JSON.stringify(corpo),
       })
       if (risposta.ok) {
-        track('Lead', {}, { eventID: corpo.event_id })
+        // «Lead» con lo stesso ID mandato alla funzione: Pixel e API Conversioni si deduplicano (§4).
+        // Import dinamico: bd-traccia resta un file a parte e senza consenso non fa nulla.
+        const eventID = corpo.event_id
+        void import('../lib/bd-traccia.ts').then((modulo) => modulo.track('Lead', {}, { eventID }))
         setStato('successo')
         focusDopo.current = 'bd-m-successo'
         return

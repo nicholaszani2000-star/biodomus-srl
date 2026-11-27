@@ -7,6 +7,7 @@ import { tt } from '../content/bd-testi.ts'
  * e sparisce quando nello schermo c'è il modulo o un'altra CTA primaria: così resta sempre una sola primaria (§5).
  * Nell'HTML prerenderizzato è nascosta dal CSS (senza JavaScript non serve: le CTA della pagina sono ancore vere).
  * Si nasconde di colpo e compare scorrendo dal basso in 200 ms; nascosta è anche inert: fuori dal tab e dai lettori di schermo.
+ * Con il banner dei cookie aperto sale sopra di lui (--bd-banner-h, scritto da BdBannerCookie): la CTA resta scoperta.
  */
 export default function BdBarraMobile() {
   const barra = useRef<HTMLDivElement>(null)
@@ -36,7 +37,7 @@ export default function BdBarraMobile() {
     <div
       ref={barra}
       className={[
-        'bd-barra-mobile fixed inset-x-0 bottom-0 z-40 border-t border-linea bg-fondo/95 px-4 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md md:hidden',
+        'bd-barra-mobile fixed inset-x-0 bottom-[var(--bd-banner-h,0px)] z-40 border-t border-linea bg-fondo/95 px-4 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md md:hidden',
         visibile ? 'bd-barra-mobile--vista' : '',
       ]
         .filter(Boolean)

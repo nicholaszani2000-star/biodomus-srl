@@ -4,6 +4,9 @@
 // e riga in studio/report/lead-mock.jsonl. Poi un invio con honeypot pieno (non deve comparire nel file)
 // e un invio senza JavaScript (form classico → 303 → /grazie.html).
 // Step 4: le card di «Per chi è» portano al modulo con la risposta 1 (e il terreno) già scelti e tornano al passo 1.
+// Step 7: ogni prova parte con una scelta sui cookie già salvata (il banner non copre i clic); con «terreno» la scelta è
+// «accettato» e la riga ha consenso_marketing true, con gli altri angoli false. L'invio senza JavaScript arriva a
+// /grazie.html con stato 200.
 // Screenshot di ogni passaggio e del successo in studio/report/e2e/ (escluso da git). Avvio: npm run e2e.
 
 import { chromium } from 'playwright'
@@ -72,13 +75,45 @@ const righe = () =>
 
 const attendi = (ms) => new Promise((r) => setTimeout(r, ms))
 
-async function nuovaPagina(opzioni = {}) {
+// Pixel di prova (step 7): Meta non si raggiunge mai. route() serve un fbevents.js finto che registra le chiamate a fbq
+// e, solo in questa prova, riscrive il bundle servito (META_PIXEL:null → un ID finto): nel sito nessun aggancio per i test.
+const PIXEL_PROVA = '000000000000007'
+const FBEVENTS_FINTO = `(function () {
+  window.__fbqChiamate = window.__fbqChiamate || [];
+  var f = window.fbq; if (!f) return;
+  var coda = f.queue || [];
+  f.callMethod = function () { window.__fbqChiamate.push(Array.prototype.slice.call(arguments)); };
+  for (var i = 0; i < coda.length; i++) f.callMethod.apply(f, coda[i]);
+  f.queue = [];
+})();`
+
+async function nuovaPagina({ consenso = 'rifiutato', pixel = false, ...opzioni } = {}) {
   const contesto = await browser.newContext({ viewport: { width: 390, height: 844 }, ...opzioni })
+  await contesto.route(/^https:\/\/(?:connect\.facebook\.net|www\.facebook\.com)\//, (route) =>
+    route.request().url().endsWith('/fbevents.js')
+      ? route.fulfill({ status: 200, contentType: 'text/javascript; charset=utf-8', body: FBEVENTS_FINTO })
+      : route.fulfill({ status: 204, body: '' }),
+  )
+  if (pixel) {
+    await contesto.route(/\/assets\/index-[\w-]+\.js$/, async (route) => {
+      const risposta = await route.fetch()
+      const corpo = await risposta.text()
+      if (!corpo.includes('META_PIXEL:null')) return route.abort()
+      return route.fulfill({ response: risposta, body: corpo.replace('META_PIXEL:null', `META_PIXEL:${JSON.stringify(PIXEL_PROVA)}`) })
+    })
+  }
+  // Scelta sui cookie già salvata (solo se manca): il banner non compare e consenso_marketing la segue
+  await contesto.addInitScript((scelta) => {
+    try {
+      if (!localStorage.getItem('bd-consenso')) localStorage.setItem('bd-consenso', JSON.stringify({ stato: scelta, data: Date.now() }))
+    } catch {
+      // niente
+    }
+  }, consenso)
   const pagina = await contesto.newPage()
   const errori = []
   pagina.on('console', (m) => {
-    // L'informativa privacy arriva allo step 7: un 404 su /privacy.html non è un errore di questa prova.
-    if (m.type() === 'error' && !/404/.test(m.text())) errori.push(m.text())
+    if (m.type() === 'error') errori.push(m.text())
   })
   pagina.on('pageerror', (e) => errori.push(e.message))
   const inviati = []
@@ -95,10 +130,27 @@ const passoVisibile = (pagina) =>
   })
 
 // Screenshot della sezione: dopo le transizioni (≤ 200 ms) e senza l'header fisso sopra il modulo
-const NASCONDI_HEADER = '.bd-header { visibility: hidden !important; }'
+// Header e barra mobile nascosti negli screenshot con il CSSOM (el.style, ammesso dalla CSP): l'opzione «style» di
+// Playwright inietta uno <style> senza hash che la Content-Security-Policy dell'anteprima blocca (step 7).
+async function senzaFissi(pagina, scatta) {
+  const imposta = (nascondi) =>
+    pagina.evaluate((n) => {
+      for (const el of document.querySelectorAll('.bd-header, .bd-barra-mobile')) {
+        if (n) el.style.setProperty('visibility', 'hidden', 'important')
+        else el.style.removeProperty('visibility')
+      }
+    }, nascondi)
+  await imposta(true)
+  try {
+    return await scatta()
+  } finally {
+    await imposta(false)
+  }
+}
+
 async function foto(pagina, file) {
   await attendi(300)
-  await pagina.locator('#preventivo').screenshot({ path: join(USCITA, file), style: NASCONDI_HEADER })
+  await senzaFissi(pagina, () => pagina.locator('#preventivo').screenshot({ path: join(USCITA, file) }))
 }
 
 const focusSu = (pagina) => pagina.evaluate(() => document.activeElement?.id ?? document.activeElement?.tagName)
@@ -114,7 +166,9 @@ const PRESCELTE = { famiglia: { profilo: 'casa', terreno: null }, terreno: { pro
 
 for (const angolo of ['famiglia', 'terreno', 'investo']) {
   const d = DATI[angolo]
-  const { contesto, pagina, errori, inviati } = await nuovaPagina()
+  // consenso_marketing segue la scelta sui cookie: «accettato» solo nella prova dell'angolo terreno
+  const consenso = angolo === 'terreno' ? 'accettato' : 'rifiutato'
+  const { contesto, pagina, errori, inviati } = await nuovaPagina({ consenso, pixel: consenso === 'accettato' })
   const nome = `angolo ${angolo} 390px`
   await pagina.goto(`${BASE}/?a=${angolo}&utm_source=e2e&utm_campaign=prova-${angolo}`, { waitUntil: 'networkidle' })
   const aperta = Date.now()
@@ -205,8 +259,22 @@ for (const angolo of ['famiglia', 'terreno', 'investo']) {
     if (riga.pagina !== `${BASE}/`) problemi.push(`pagina ${riga.pagina}`)
     if (!/^[a-z]\*\*\*@[a-z]\*\*\*\.it$/.test(riga.email)) problemi.push(`email non mascherata: ${riga.email}`)
     if (d.telefono ? !/^\+39\*+\d\d$/.test(riga.telefono ?? '') : riga.telefono !== null) problemi.push(`telefono ${riga.telefono}`)
+    if (riga.consenso_marketing !== (consenso === 'accettato')) problemi.push(`consenso_marketing ${riga.consenso_marketing} con la scelta «${consenso}»`)
   }
-  esito(!problemi.length, `${nome}: riga in lead-mock.jsonl`, problemi.length ? problemi.join('; ') : `id ${riga.id.slice(0, 8)}…, email ${riga.email}, telefono ${riga.telefono ?? '—'}`)
+  esito(!problemi.length, `${nome}: riga in lead-mock.jsonl`, problemi.length ? problemi.join('; ') : `id ${riga.id.slice(0, 8)}…, email ${riga.email}, telefono ${riga.telefono ?? '—'}, consenso_marketing ${riga.consenso_marketing} (cookie «${consenso}»)`)
+  // Con il consenso e un Pixel di prova: dopo l'invio «Lead» con lo stesso ID mandato alla funzione (deduplica con l'API
+  // Conversioni, §4). Senza consenso nessuna chiamata a fbq.
+  await attendi(400)
+  const lead = await pagina.evaluate(() => (window.__fbqChiamate ?? []).filter((c) => c[0] === 'track' && c[1] === 'Lead'))
+  if (consenso === 'accettato') {
+    esito(
+      lead.length === 1 && lead[0][3]?.eventID === corpo.event_id && JSON.stringify(lead[0][2]) === '{}',
+      `${nome}: evento Lead con lo stesso event_id`,
+      lead.length ? `Lead con eventID ${String(lead[0][3]?.eventID).slice(0, 8)}…, uguale all'event_id del POST: ${lead[0][3]?.eventID === corpo.event_id ? 'sì' : 'no'}` : 'nessun Lead',
+    )
+  } else {
+    esito(lead.length === 0, `${nome}: nessun Lead senza consenso`, `${lead.length} chiamate Lead`)
+  }
 
   const urlPulito = !/nome|email|telefono|comune|@/.test(new URL(successo.url).search + new URL(successo.url).hash) && inviati.every((i) => !i.url.includes('?'))
   esito(urlPulito && inviati.length === 1, `${nome}: un solo POST, nessun dato negli URL`, `${inviati.length} POST su /api/lead, URL finale ${new URL(successo.url).search}${new URL(successo.url).hash}`)
@@ -348,11 +416,20 @@ for (const angolo of ['famiglia', 'terreno', 'investo']) {
   await pagina.locator('#bd-m-nome').fill('Anna Gialli')
   await pagina.locator('#bd-m-email').fill('anna.gialli@esempio.it')
   await foto(pagina, 'senza-js-modulo.png')
+  const rispostaLead = pagina.waitForResponse((r) => r.url().endsWith('/api/lead') && r.request().method() === 'POST')
+  const rispostaGrazie = pagina.waitForResponse((r) => new URL(r.url()).pathname === '/grazie.html')
   await Promise.all([pagina.waitForURL('**/grazie.html'), pagina.getByRole('button', { name: 'Invia la richiesta' }).click()])
+  const statoLead = (await rispostaLead).status()
+  const statoGrazie = (await rispostaGrazie).status()
   const h1 = await pagina.locator('h1').textContent()
   await pagina.screenshot({ path: join(USCITA, 'senza-js-grazie.png'), fullPage: true })
   const riga = righe().find((r) => r.comune === comune)
   esito(passiVisibili === 3, 'senza JavaScript: tutti i passaggi in una pagina', `${passiVisibili} passaggi visibili`)
+  esito(
+    statoLead === 303 && statoGrazie === 200 && pagina.url().endsWith('/grazie.html'),
+    'senza JavaScript: /grazie.html arriva con stato 200',
+    `POST /api/lead ${statoLead}, poi /grazie.html ${statoGrazie}`,
+  )
   esito(
     pagina.url().endsWith('/grazie.html') && h1 === 'Grazie per averci scritto.' && riga?.angolo === 'investo' && riga?.utm_source === 'e2e-senza-js',
     'senza JavaScript: 303 verso /grazie.html e riga salvata',

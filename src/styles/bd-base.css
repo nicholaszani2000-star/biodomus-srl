@@ -1944,3 +1944,236 @@ html[data-angolo='investo'] .bd-v-investo {
     transition: none;
   }
 }
+
+/* ---------- Step 7: banner dei cookie e pagine statiche (privacy, cookie, grazie, 404) ---------- */
+
+@layer components {
+  /* Con il banner aperto la pagina ha in fondo uno spazio alto quanto lui (--bd-banner-h, scritto da BdBannerCookie):
+     l'ultima riga del footer, con «Gestisci cookie», si può sempre raggiungere e toccare. Nessuno spostamento visibile. */
+  body {
+    padding-bottom: var(--bd-banner-h, 0px);
+  }
+
+  /* Banner dei cookie (§8, §10 punto 4): in basso, testo piccolo (non diventa l'elemento LCP).
+     «Rifiuta» e «Accetta» con la stessa misura e lo stesso aspetto; la X in alto a destra vale come rifiuto. */
+  .bd-banner {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 50;
+    display: grid;
+    gap: 10px;
+    padding: 14px var(--bd-gutter) max(14px, env(safe-area-inset-bottom));
+    border-top: 1px solid var(--bd-linea);
+    background: var(--bd-carta);
+    color: var(--bd-testo);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    box-shadow: 0 -16px 32px -28px rgb(31 35 38 / 0.5);
+  }
+
+  .bd-banner__testo {
+    max-width: 60ch;
+    margin: 0;
+    padding-right: 40px;
+  }
+
+  .bd-banner__stato {
+    color: var(--bd-testo-2);
+  }
+
+  .bd-banner__azioni {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+    align-items: center;
+  }
+
+  .bd-banner__link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding-right: 4px;
+    white-space: nowrap;
+  }
+
+  .bd-banner__scelta {
+    min-height: 44px;
+    padding: 0 12px;
+    border: 1.5px solid var(--bd-accento);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--bd-accento);
+    font: inherit;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+
+  .bd-banner__scelta:hover {
+    background: var(--bd-fondo);
+  }
+
+  .bd-banner__chiudi {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--bd-testo-2);
+    cursor: pointer;
+  }
+
+  .bd-banner__chiudi:hover {
+    color: var(--bd-testo);
+  }
+
+  /* Da 768 px una barra bassa a tutta larghezza, allineata al contenuto: testo a sinistra, scelte a destra.
+     Resta sotto la CTA dell'hero (a 1440 × 900 la CTA finisce a 757 px, la barra comincia dopo gli 820). */
+  @media (min-width: 768px) {
+    .bd-banner {
+      --bd-margine: max(var(--bd-gutter), calc((100% - 1200px) / 2));
+      grid-template-columns: minmax(0, 1fr) auto;
+      column-gap: 24px;
+      align-items: center;
+      padding: 12px calc(var(--bd-margine) + 48px) 12px var(--bd-margine);
+    }
+
+    .bd-banner__testo {
+      padding-right: 0;
+    }
+
+    .bd-banner__azioni {
+      grid-template-columns: auto 140px 140px;
+    }
+
+    .bd-banner__chiudi {
+      top: 50%;
+      right: calc(var(--bd-margine) - 6px);
+      transform: translateY(-50%);
+    }
+  }
+
+  /* Pagine statiche: testata con il logo, contenuto, piede con i dati legali */
+  .bd-pagina__testata {
+    padding-block: 14px;
+    border-bottom: 1px solid var(--bd-linea);
+  }
+
+  .bd-pagina {
+    padding-block: 48px 96px;
+  }
+
+  @media (min-width: 1024px) {
+    .bd-pagina {
+      padding-block: 72px 128px;
+    }
+  }
+
+  /* Riquadro di avviso: testi da far verificare, dati mancanti */
+  .bd-avviso {
+    padding: 12px 16px;
+    border: 1px solid var(--bd-linea);
+    border-left: 4px solid var(--bd-accento);
+    border-radius: var(--bd-raggio-tecnico);
+    background: var(--bd-carta);
+    color: var(--bd-testo);
+    font-weight: 600;
+  }
+
+  /* Informativa privacy e cookie policy: righe di 65 caratteri, titoli in scala */
+  .bd-documento {
+    max-width: 760px;
+  }
+
+  .bd-documento > .bd-avviso {
+    margin: 0 0 32px;
+  }
+
+  .bd-documento h1 {
+    margin: 0 0 8px;
+    font-size: clamp(2.25rem, 4vw + 1rem, 3.5rem);
+  }
+
+  .bd-documento h2 {
+    margin: 40px 0 12px;
+    font-size: 1.375rem;
+    font-weight: 650;
+    line-height: 1.2;
+  }
+
+  .bd-documento p,
+  .bd-documento ul {
+    max-width: 65ch;
+    margin: 0 0 12px;
+  }
+
+  .bd-documento ul {
+    padding-left: 1.25em;
+    list-style: disc;
+  }
+
+  .bd-documento li + li {
+    margin-top: 6px;
+  }
+
+  .bd-documento li::marker {
+    color: var(--bd-dettaglio);
+  }
+
+  .bd-documento__data {
+    color: var(--bd-testo-2);
+    font-size: 0.875rem;
+  }
+
+  .bd-documento__intro {
+    font-size: 1.125rem;
+  }
+
+  .bd-documento__tabella {
+    width: 100%;
+    max-width: 65ch;
+    margin: 4px 0 16px;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+  }
+
+  .bd-documento__tabella th,
+  .bd-documento__tabella td {
+    padding: 10px 12px 10px 0;
+    border-bottom: 1px solid var(--bd-linea);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .bd-documento__tabella thead th {
+    color: var(--bd-testo-2);
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .bd-documento code {
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+    font-size: 0.875em;
+  }
+}
+
+/* Il banner entra con una dissolvenza di 200 ms; con la riduzione del movimento compare e basta */
+@media (prefers-reduced-motion: no-preference) {
+  .bd-banner {
+    animation: bd-banner-entra 0.2s ease-out;
+  }
+}
+
+@keyframes bd-banner-entra {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}

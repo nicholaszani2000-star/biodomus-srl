@@ -263,8 +263,186 @@
   },
   "grazie": {
     "metaTitolo": "Richiesta ricevuta · {BRAND}",
-    "titolo": "Grazie per averci scritto.",
-    "tornaSitoEtichetta": "{BRAND}: torna alla pagina principale"
+    "titolo": "Grazie per averci scritto."
+  },
+  "pagine": {
+    "tornaSitoEtichetta": "{BRAND}: torna alla pagina principale",
+    "aggiornamento": "Ultimo aggiornamento: {data}",
+    "avviso": "Testo da far verificare a un consulente privacy prima della pubblicazione.",
+    "datiMancanti": "Mancano i dati del titolare: questa pagina non è pronta per la pubblicazione.",
+    "navLegale": "Pagine legali",
+    "tabella": {
+      "nome": "Nome",
+      "scopo": "A cosa serve",
+      "durata": "Durata"
+    }
+  },
+  "privacy": {
+    "metaTitolo": "Informativa privacy · {BRAND}",
+    "metaDescrizione": "Come {BRAND} usa i dati del modulo di preventivo: chi li tratta, perché, per quanto tempo e quali sono i tuoi diritti.",
+    "titolo": "Informativa privacy",
+    "aggiornamento": "27 novembre 2026",
+    "intro": "Qui trovi come trattiamo i dati che ci lasci quando chiedi un preventivo su questo sito, come chiede l'articolo 13 del Regolamento europeo 2016/679 (GDPR).",
+    "sezioni": [
+      {
+        "titolo": "Chi è il titolare",
+        "contenuto": [
+          "Il titolare del trattamento è {TITOLARE}, {FORMA}, con sede in {SEDE}, partita IVA {PIVA}.",
+          "Per qualsiasi domanda sui tuoi dati scrivi a [{EMAIL_PUBBLICA}](mailto:{EMAIL_PUBBLICA}).",
+          "Indirizzo PEC: {PEC}."
+        ]
+      },
+      {
+        "titolo": "Quali dati raccogliamo",
+        "contenuto": [
+          "Quando compili il modulo di preventivo raccogliamo:",
+          [
+            "i dati del progetto: per cosa ci contatti, se hai già il terreno, comune o zona, budget indicativo e quando vorresti iniziare;",
+            "i tuoi contatti: nome e cognome, email e, se li scrivi, telefono e messaggio;",
+            "i dati della richiesta: data e ora, la pagina da cui scrivi e, se arrivi da un annuncio, i parametri della campagna (per esempio utm_source e fbclid)."
+          ],
+          "Se accetti i cookie di marketing, il pixel di Meta raccoglie anche i dati descritti nella [cookie policy](/cookie.html).",
+          "Come ogni sito, il servizio che lo ospita tratta dati tecnici delle visite, come l'indirizzo IP e il tipo di browser, per farlo funzionare e proteggerlo."
+        ]
+      },
+      {
+        "titolo": "Perché li usiamo e su quale base",
+        "contenuto": [
+          [
+            "Per rispondere alla tua richiesta e preparare il preventivo con l'impresa partner. La base giuridica sono le misure precontrattuali che chiedi tu (articolo 6, paragrafo 1, lettera b del GDPR).",
+            "Per misurare i risultati delle campagne su Facebook e Instagram, solo se accetti i cookie di marketing. La base giuridica è il tuo consenso (articolo 6, paragrafo 1, lettera a), che puoi revocare quando vuoi.",
+            "Per far funzionare il sito e proteggerlo, con i dati tecnici delle visite. La base giuridica è il nostro legittimo interesse alla sicurezza del sito (articolo 6, paragrafo 1, lettera f)."
+          ],
+          "Non usiamo i tuoi dati per newsletter o promozioni e non li vendiamo a nessuno."
+        ]
+      },
+      {
+        "titolo": "Se non ci dai i dati",
+        "contenuto": [
+          "I campi obbligatori del modulo servono per risponderti: senza, non possiamo preparare il preventivo. Telefono e messaggio sono facoltativi."
+        ]
+      },
+      {
+        "titolo": "A chi li comunichiamo",
+        "contenuto": [
+          "Per preparare il preventivo i tuoi dati li riceve:",
+          [
+            "l'impresa partner che costruisce: l'impresa di costruzioni che prepara progetto e preventivo e con cui, se decidi di andare avanti, firmi il contratto;",
+            "l'impresa partner che produce il sistema costruttivo (casseri isolanti per pareti e solai), solo se serve per il preventivo."
+          ],
+          "Li trattano per nostro conto, come responsabili del trattamento, questi fornitori:",
+          [
+            "Netlify (Netlify, Inc., Stati Uniti): ospita il sito e la funzione che riceve il modulo;",
+            "Supabase: conserva le richieste in un database in una regione dell'Unione europea;",
+            "Brevo (Sendinblue SAS, Francia): invia a noi la richiesta e a te l'email di conferma."
+          ],
+          "Solo se accetti i cookie di marketing, Meta Platforms Ireland Limited riceve l'evento della richiesta per misurare le campagne, con email e telefono cifrati (hash SHA-256). Meta li tratta secondo la sua [informativa](https://www.facebook.com/privacy/policy/).",
+          "I tuoi dati non vengono pubblicati né venduti."
+        ]
+      },
+      {
+        "titolo": "Trasferimenti fuori dall'Unione europea",
+        "contenuto": [
+          [
+            "Netlify ha sede negli Stati Uniti: aderisce al Data Privacy Framework UE-USA, che la Commissione europea ha riconosciuto adeguato, e il suo accordo sul trattamento dei dati include le clausole contrattuali standard.",
+            "Supabase conserva le richieste in una regione dell'Unione europea; se tratta dati negli Stati Uniti o a Singapore usa le clausole contrattuali standard approvate dalla Commissione europea.",
+            "Meta trasferisce dati negli Stati Uniti sulla base del Data Privacy Framework UE-USA."
+          ],
+          "Per ogni altro trasferimento fuori dall'Unione europea i fornitori usano le garanzie previste dagli articoli 45 e 46 del GDPR."
+        ]
+      },
+      {
+        "titolo": "Per quanto tempo li conserviamo",
+        "contenuto": [
+          "Conserviamo la richiesta per 24 mesi dall'ultimo contatto con te, poi la cancelliamo.",
+          "Le durate dei cookie di marketing sono nella [cookie policy](/cookie.html)."
+        ]
+      },
+      {
+        "titolo": "I tuoi diritti",
+        "contenuto": [
+          "Puoi chiedere in ogni momento di:",
+          [
+            "sapere quali dati abbiamo e averne una copia (accesso);",
+            "correggerli (rettifica) o cancellarli (cancellazione);",
+            "limitarne l'uso (limitazione);",
+            "riceverli in un formato leggibile da un computer (portabilità);",
+            "opporti al trattamento basato sul nostro legittimo interesse (opposizione);",
+            "revocare il consenso ai cookie di marketing, senza effetti su quello che è stato fatto prima della revoca."
+          ],
+          "Scrivi a [{EMAIL_PUBBLICA}](mailto:{EMAIL_PUBBLICA}): ti rispondiamo entro un mese."
+        ]
+      },
+      {
+        "titolo": "Reclamo",
+        "contenuto": [
+          "Se pensi che i tuoi dati siano trattati in modo non corretto, puoi fare reclamo al [Garante per la protezione dei dati personali](https://www.garanteprivacy.it/)."
+        ]
+      },
+      {
+        "titolo": "Decisioni automatiche",
+        "contenuto": [
+          "Non prendiamo decisioni automatiche e non facciamo profilazione con i dati del modulo."
+        ]
+      }
+    ]
+  },
+  "cookie": {
+    "metaTitolo": "Cookie policy · {BRAND}",
+    "metaDescrizione": "Quali cookie e strumenti simili usa il sito di {BRAND}, a cosa servono, quanto durano e come cambiare la tua scelta.",
+    "titolo": "Cookie policy",
+    "aggiornamento": "27 novembre 2026",
+    "intro": "I cookie sono piccoli file che un sito salva nel tuo browser. Qui trovi quali usa questo sito, insieme agli strumenti simili come la memoria del browser.",
+    "sezioni": [
+      {
+        "titolo": "Strumenti tecnici: sempre attivi",
+        "contenuto": [
+          "Servono a far funzionare il sito e non richiedono il consenso. Nessuno è un cookie di terze parti.",
+          [
+            "bd-consenso, nella memoria del browser (localStorage): ricorda la tua scelta sui cookie per 6 mesi;",
+            "bd-utm, nella memoria della scheda (sessionStorage): ricorda i parametri della campagna da cui arrivi (utm e fbclid) finché chiudi la scheda, per allegarli alla richiesta di preventivo se la invii."
+          ]
+        ]
+      },
+      {
+        "titolo": "Cookie di marketing: solo con il tuo consenso",
+        "contenuto": [
+          "Se accetti, il sito carica il pixel di Meta (Meta Platforms Ireland Limited) per misurare quante richieste arrivano dalle campagne su Facebook e Instagram. Se rifiuti o chiudi il banner, il pixel non viene caricato e il browser non contatta Meta.",
+          "Il pixel salva sul nostro dominio questi cookie:",
+          {
+            "tabella": [
+              {
+                "nome": "_fbp",
+                "scopo": "riconosce il browser tra una visita e l'altra per misurare le campagne e la pubblicità",
+                "durata": "90 giorni"
+              },
+              {
+                "nome": "_fbc",
+                "scopo": "conserva l'identificativo del clic su un annuncio (fbclid) quando arrivi da Facebook o Instagram",
+                "durata": "90 giorni"
+              }
+            ]
+          },
+          "Meta può usare anche i propri cookie sul dominio facebook.com, come spiega la sua [cookie policy](https://www.facebook.com/privacy/policies/cookies/).",
+          "Con il consenso, quando invii il modulo mandiamo a Meta l'evento della richiesta anche dal nostro server (API Conversioni), come spiega l'[informativa privacy](/privacy.html)."
+        ]
+      },
+      {
+        "titolo": "Come cambiare la tua scelta",
+        "contenuto": [
+          "Puoi cambiare idea quando vuoi con «Gestisci cookie», in fondo alla pagina principale, oppure da qui: [cambia la tua scelta](/#gestisci-cookie).",
+          "Se revochi il consenso, il sito smette di mandare eventi a Meta e cancella i cookie _fbp e _fbc dal nostro dominio.",
+          "La scelta vale 6 mesi, poi te la chiediamo di nuovo. Puoi anche cancellare cookie e dati dei siti dalle impostazioni del browser."
+        ]
+      }
+    ]
+  },
+  "pagina404": {
+    "metaTitolo": "Pagina non trovata · {BRAND}",
+    "titolo": "Questa pagina non c'è.",
+    "testo": "Forse l'indirizzo è cambiato o contiene un errore. Puoi tornare alla pagina principale o chiedere subito un preventivo.",
+    "home": "Torna alla pagina principale",
+    "modulo": "Richiedi un preventivo"
   },
   "faq": {
     "titolo": "Domande frequenti",
@@ -329,7 +507,10 @@
     "rifiuta": "Rifiuta",
     "accetta": "Accetta",
     "chiudi": "Chiudi e rifiuta",
-    "policy": "Cookie policy"
+    "policy": "Cookie policy",
+    "etichetta": "Scelta sui cookie",
+    "statoAccettato": "Oggi i cookie di marketing sono accettati.",
+    "statoRifiutato": "Oggi i cookie di marketing sono rifiutati."
   },
   "barraMobile": {
     "cta": "Richiedi un preventivo"

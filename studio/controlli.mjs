@@ -1055,7 +1055,7 @@ controllo('Realizzazioni e Partner solo con autorizzazione; CTA dopo Sistema se 
 })
 
 controllo('link esterni con rel="noopener" (§6.8, §8)', () => {
-  const pagine = ['dist/index.html', 'dist/grazie.html'].filter(esiste)
+  const pagine = ['dist/index.html', 'dist/grazie.html', 'dist/privacy.html', 'dist/cookie.html', 'dist/404.html'].filter(esiste)
   const esterni = pagine.flatMap((f) => (leggi(f).match(/<a\b[^>]*href="(?:https?:)?\/\/[^"]*"[^>]*>/g) ?? []).map((tag) => ({ f, tag })))
   const senza = esterni.filter(({ tag }) => !(attributo(tag, 'rel') ?? '').split(/\s+/).includes('noopener'))
   return senza.length
@@ -1112,6 +1112,251 @@ controllo('telefono e WhatsApp solo in BdChiusura e nel footer, con il numero di
   return problemi.length
     ? { ok: false, nota: problemi.join('; ') }
     : { ok: true, nota: `${tutti.length} link (tel:+${internazionale}${whatsapp ? `, https://wa.me/${internazionale}` : ''}), tutti in chiusura e footer` }
+})
+
+// ---------- STEP 7 ----------
+
+const PAGINE_STATICHE = ['privacy.html', 'cookie.html', 'grazie.html', '404.html']
+const TOML = esiste('netlify.toml') ? leggi('netlify.toml') : ''
+// Le regole [[headers]] di netlify.toml (stesso sottoinsieme di TOML che legge l'anteprima)
+const REGOLE_HEADER = TOML.split(/^\[\[headers\]\]\s*$/m)
+  .slice(1)
+  .map((pezzo) => {
+    const corpo = pezzo.split(/^\[(?!headers\.values\])/m)[0]
+    const valori = Object.fromEntries([...corpo.matchAll(/^\s*([A-Za-z-]+)\s*=\s*"((?:[^"\\]|\\.)*)"/gm)].map((m) => [m[1], m[2]]))
+    return { per: valori.for, valori }
+  })
+const HEADER_TUTTE = REGOLE_HEADER.find((r) => r.per === '/*')?.valori ?? {}
+const CSP = HEADER_TUTTE['Content-Security-Policy'] ?? ''
+const direttivaCsp = (nome) =>
+  (CSP.split(';').map((d) => d.trim()).find((d) => d.split(/\s+/)[0] === nome) ?? '').split(/\s+/).slice(1)
+const sha256 = (testo) => `'sha256-${createHash('sha256').update(testo, 'utf8').digest('base64')}'`
+const TESTA = (HTML.match(/<head>[\s\S]*<\/head>/) ?? [''])[0]
+const metaContenuto = (attributo, nome) => (TESTA.match(new RegExp(`<meta ${attributo}="${nome}" content="([^"]*)"`)) ?? [])[1]
+const decodifica = (testo) => (testo ?? '').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#x27;|&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+const ORIGINE = (() => {
+  const dominio = valoreDato('DOMINIO')
+  return dominio ? `https://${dominio}/` : `https://${valoreDato('NETLIFY_SITO') ?? 'biodomus'}.netlify.app/`
+})()
+
+controllo('pagine statiche: privacy, cookie, grazie e 404 con titolare e partita IVA, senza script né stili inline (§4, §10.1)', () => {
+  const problemi = []
+  const titolare = valoreDato('TITOLARE')
+  const piva = valoreDato('PIVA')
+  for (const file of PAGINE_STATICHE) {
+    if (!esiste(`dist/${file}`)) {
+      problemi.push(`manca dist/${file}`)
+      continue
+    }
+    const pagina = leggi(`dist/${file}`)
+    const testo = testoVisibile(pagina)
+    if (titolare && piva) {
+      if (!testo.includes(titolare) || !testo.includes(piva)) problemi.push(`${file} senza ${titolare} o P.IVA ${piva}`)
+    } else if (!/class="bd-avviso/.test(pagina)) problemi.push(`${file}: TITOLARE o PIVA vuoti e nessun riquadro di avviso`)
+    if (/<script\b|<style\b|\sstyle="/.test(pagina)) problemi.push(`${file} ha script o stili inline`)
+    if (!/<link rel="stylesheet"[^>]*href="\/assets\/[^"]+\.css"/.test(pagina)) problemi.push(`${file} senza il CSS della landing`)
+    if (!/<html[^>]*\blang="it"/.test(pagina) || !/<h1[\s>]/.test(pagina)) problemi.push(`${file} senza lang="it" o senza h1`)
+    if (/<!--bd-|DA COMPILARE|\{[A-Z_]+\}/.test(pagina)) problemi.push(`${file} con segnaposti non risolti`)
+    const noindex = /<meta name="robots" content="noindex"/.test(pagina)
+    if (['grazie.html', '404.html'].includes(file) !== noindex) problemi.push(`${file}: noindex ${noindex ? 'di troppo' : 'mancante'}`)
+  }
+  const nonTrovata = esiste('dist/404.html') ? leggi('dist/404.html') : ''
+  if (!/href="\/"/.test(nonTrovata) || !/href="\/#preventivo"/.test(nonTrovata)) problemi.push('404 senza link alla home e al modulo')
+  return problemi.length
+    ? { ok: false, nota: problemi.join('; ') }
+    : { ok: true, nota: `${PAGINE_STATICHE.length} pagine con ${titolare} e P.IVA ${piva}, CSS esterno, nessuno script né stile inline; grazie e 404 noindex` }
+})
+
+controllo('informativa privacy (art. 13) e cookie policy: contenuti di §10, data di aggiornamento e riquadro da far verificare', () => {
+  const problemi = []
+  const privacy = testoVisibile(esiste('dist/privacy.html') ? leggi('dist/privacy.html') : '')
+  const cookie = testoVisibile(esiste('dist/cookie.html') ? leggi('dist/cookie.html') : '')
+  const avviso = TESTI.pagine.avviso
+  for (const [nome, testo] of [['privacy', privacy], ['cookie', cookie]]) {
+    if (!testo.includes(avviso)) problemi.push(`${nome}: manca «${avviso}»`)
+    if (!/Ultimo aggiornamento: \d{1,2} \w+ \d{4}/.test(testo)) problemi.push(`${nome}: manca la data di aggiornamento`)
+  }
+  const attesiPrivacy = {
+    'titolare e sede': [valoreDato('TITOLARE'), valoreDato('SEDE')],
+    finalità: ['preparare il preventivo'],
+    'base giuridica (6.1.b, 6.1.a)': ['lettera b', 'lettera a'],
+    'destinatari: impresa partner': ["l'impresa partner che costruisce", "l'impresa partner che produce il sistema costruttivo"],
+    'fornitori': ['Netlify', 'Supabase', 'Brevo', 'Meta Platforms Ireland Limited'],
+    'trasferimenti fuori UE': ['Data Privacy Framework', 'clausole contrattuali standard'],
+    'conservazione 24 mesi': ['24 mesi'],
+    diritti: ['accesso', 'rettifica', 'cancellazione', 'portabilità', 'opposizione', 'revocare il consenso'],
+    'reclamo al Garante': ['Garante per la protezione dei dati personali'],
+  }
+  for (const [cosa, parole] of Object.entries(attesiPrivacy)) {
+    const mancano = parole.filter((parola) => parola && !privacy.includes(parola))
+    if (mancano.length) problemi.push(`privacy senza ${cosa} (${mancano.join(', ')})`)
+  }
+  if (/newsletter/i.test(privacy) && !/Non usiamo i tuoi dati per newsletter/.test(privacy)) problemi.push('privacy: uso per newsletter')
+  for (const parola of ['localStorage', '_fbp', '_fbc', '90 giorni', '6 mesi', 'cambia la tua scelta']) {
+    if (!cookie.includes(parola)) problemi.push(`cookie senza «${parola}»`)
+  }
+  if (!/href="\/#gestisci-cookie"/.test(esiste('dist/cookie.html') ? leggi('dist/cookie.html') : '')) problemi.push('cookie senza il link che riapre la scelta')
+  for (const file of ['privacy.html', 'cookie.html']) {
+    const ambientali = testoVisibile(esiste(`dist/${file}`) ? leggi(`dist/${file}`) : '').replace(/Biodomus/g, '').match(PAROLE_AMBIENTALI)
+    if (ambientali) problemi.push(`${file}: asserzioni ambientali (${[...new Set(ambientali)].join(', ')})`)
+  }
+  return problemi.length
+    ? { ok: false, nota: problemi.join('; ') }
+    : { ok: true, nota: 'titolare, finalità, basi giuridiche, impresa partner e fornitori, trasferimenti, 24 mesi, diritti, Garante; cookie tecnici e _fbp/_fbc a 90 giorni; riquadro e data in tutte e due' }
+})
+
+controllo('Meta solo da bd-traccia.ts: nel sorgente e nel bundle nessun altro file contatta facebook (§10 punto 4)', () => {
+  const problemi = []
+  const META = /facebook\.(?:com|net)|fbevents|\bfbq\s*\(/
+  // testi.json ha i link alle informative di Meta: sono testi delle pagine statiche e il bundle non li porta (vite.config.ts)
+  const sorgenti = fileSotto('src', (n) => /\.(ts|tsx|js|jsx|css|html)$/.test(n)).filter((f) => !f.endsWith('src/lib/bd-traccia.ts') && META.test(leggi(f)))
+  if (sorgenti.length) problemi.push(`riferimenti a Meta fuori da bd-traccia.ts: ${sorgenti.join(', ')}`)
+  const traccia = ASSETS.filter((f) => /^bd-traccia-[\w-]+\.js$/.test(f))
+  if (traccia.length !== 1) problemi.push(`bd-traccia non è un file a parte in dist/assets (${traccia.length})`)
+  const altri = ASSETS.filter((f) => f.endsWith('.js') && !traccia.includes(f) && /facebook\.(?:com|net)|fbevents/.test(leggi(`dist/assets/${f}`)))
+  if (altri.length) problemi.push(`facebook nel bundle fuori da bd-traccia: ${altri.join(', ')}`)
+  for (const file of ['index.html', ...PAGINE_STATICHE].filter((f) => esiste(`dist/${f}`))) {
+    const pagina = leggi(`dist/${file}`)
+    const richieste = [...pagina.matchAll(/<(?:script|img|link|iframe|source)\b[^>]*\b(?:src|href)="([^"]*facebook[^"]*)"/g)].map((m) => m[1])
+    if (richieste.length) problemi.push(`${file} carica ${richieste.join(', ')}`)
+  }
+  if (traccia.length === 1 && !/connect\.facebook\.net\/en_US\/fbevents\.js/.test(leggi(`dist/assets/${traccia[0]}`))) problemi.push('bd-traccia senza lo script ufficiale del Pixel')
+  return problemi.length
+    ? { ok: false, nota: problemi.join('; ') }
+    : { ok: true, nota: `facebook.com e facebook.net solo in ${traccia[0]} (import dinamico dopo l'hydration); nessun tag che carica Meta nelle pagine` }
+})
+
+controllo('header di netlify.toml: CSP con gli hash di dist/index.html, niente unsafe-inline, nosniff, referrer, permessi, cache (§4)', () => {
+  const problemi = []
+  if (!CSP) return { ok: false, nota: 'manca Content-Security-Policy per "/*" in netlify.toml' }
+  const scriptSrc = direttivaCsp('script-src')
+  const styleSrc = direttivaCsp('style-src')
+  const scriptInline = [...HTML.matchAll(/<script(?![^>]*\bsrc=)(?![^>]*type="application\/ld\+json")[^>]*>([\s\S]*?)<\/script>/g)].map((m) => sha256(m[1]))
+  const stiliInline = [...HTML.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => sha256(m[1]))
+  if (!scriptInline.length) problemi.push('dist/index.html senza lo script dell\'angolo')
+  const scriptMancanti = scriptInline.filter((h) => !scriptSrc.includes(h))
+  if (scriptMancanti.length) problemi.push(`script-src senza l'hash dello script dell'angolo ${scriptMancanti.join(' ')}`)
+  const stiliMancanti = stiliInline.filter((h) => !styleSrc.includes(h) && !styleSrc.includes("'unsafe-inline'"))
+  if (stiliMancanti.length) problemi.push(`style-src senza ${stiliMancanti.length} hash dei <style>`)
+  if (scriptSrc.includes("'unsafe-inline'") || scriptSrc.includes("'unsafe-eval'")) problemi.push("script-src con 'unsafe-inline' o 'unsafe-eval'")
+  const attese = {
+    'default-src': ["'self'"],
+    'script-src': ["'self'", 'https://connect.facebook.net'],
+    'img-src': ["'self'", 'https://www.facebook.com'],
+    'connect-src': ["'self'", 'https://www.facebook.com'],
+    'object-src': ["'none'"],
+    'base-uri': ["'self'"],
+    'form-action': ["'self'"],
+    'frame-ancestors': ["'none'"],
+  }
+  for (const [nome, valori] of Object.entries(attese)) {
+    const presenti = direttivaCsp(nome)
+    const mancano = valori.filter((v) => !presenti.includes(v))
+    if (mancano.length) problemi.push(`${nome} senza ${mancano.join(' ')}`)
+  }
+  const esterni = CSP.match(/https?:\/\/[^\s;]+/g) ?? []
+  const ammessi = new Set(['https://connect.facebook.net', 'https://www.facebook.com'])
+  const altriHost = esterni.filter((h) => !ammessi.has(h))
+  if (altriHost.length) problemi.push(`host esterni non previsti: ${altriHost.join(', ')}`)
+  if (HEADER_TUTTE['X-Content-Type-Options'] !== 'nosniff') problemi.push('manca X-Content-Type-Options: nosniff')
+  if (HEADER_TUTTE['Referrer-Policy'] !== 'strict-origin-when-cross-origin') problemi.push('Referrer-Policy diversa da strict-origin-when-cross-origin')
+  const permessi = HEADER_TUTTE['Permissions-Policy'] ?? ''
+  for (const p of ['camera=()', 'microphone=()', 'geolocation=()']) if (!permessi.includes(p)) problemi.push(`Permissions-Policy senza ${p}`)
+  const cache = REGOLE_HEADER.find((r) => r.per === '/assets/*')?.valori['Cache-Control'] ?? ''
+  if (!/max-age=31536000/.test(cache) || !/immutable/.test(cache)) problemi.push('/assets/* senza Cache-Control di un anno immutable')
+  return problemi.length
+    ? { ok: false, nota: problemi.join('; ') }
+    : {
+        ok: true,
+        nota: `script-src con l'hash dello script dell'angolo ${scriptInline[0]}; style-src con ${stiliInline.length} hash dei <style>${styleSrc.includes("'unsafe-inline'") ? " e 'unsafe-inline'" : ", senza 'unsafe-inline'"}; Pixel solo connect.facebook.net e www.facebook.com; nosniff, referrer, permessi, cache immutable`,
+      }
+})
+
+controllo('dati strutturati JSON-LD Organization e WebSite: JSON valido e senza campi vuoti, niente recensioni né prezzi', () => {
+  const blocchi = [...HTML.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map((m) => m[1])
+  if (blocchi.length !== 1) return { ok: false, nota: `${blocchi.length} blocchi JSON-LD invece di 1` }
+  let dati
+  try {
+    dati = JSON.parse(blocchi[0])
+  } catch (errore) {
+    return { ok: false, nota: `JSON-LD non valido: ${errore.message}` }
+  }
+  const problemi = []
+  const vuoti = []
+  const visita = (valore, percorso) => {
+    if (valore === null || valore === '' || (Array.isArray(valore) && !valore.length) || (typeof valore === 'object' && !Array.isArray(valore) && !Object.keys(valore).length)) vuoti.push(percorso)
+    else if (Array.isArray(valore)) valore.forEach((v, i) => visita(v, `${percorso}[${i}]`))
+    else if (typeof valore === 'object') for (const [k, v] of Object.entries(valore)) visita(v, `${percorso}.${k}`)
+  }
+  visita(dati, 'jsonld')
+  if (vuoti.length) problemi.push(`campi vuoti: ${vuoti.join(', ')}`)
+  const grafo = dati['@graph'] ?? []
+  const org = grafo.find((n) => n['@type'] === 'Organization')
+  const sito = grafo.find((n) => n['@type'] === 'WebSite')
+  if (!org || !sito) problemi.push('manca Organization o WebSite')
+  if (org) {
+    if (org.name !== valoreDato('BRAND')) problemi.push(`name ${org.name} invece di ${valoreDato('BRAND')}`)
+    if (org.url !== ORIGINE) problemi.push(`url ${org.url} invece di ${ORIGINE}`)
+    if (!/^https:\/\/.+\.(png|jpg|svg)$/.test(org.logo ?? '') || !esiste(`dist/${new URL(org.logo).pathname.slice(1)}`)) problemi.push(`logo ${org.logo} non valido`)
+    const email = valoreDato('EMAIL_PUBBLICA') ?? valoreDato('EMAIL_LEAD')
+    if (org.email !== email) problemi.push(`email ${org.email} invece di ${email}`)
+  }
+  if (/review|rating|offers|price/i.test(blocchi[0])) problemi.push('recensioni o prezzi nei dati strutturati')
+  return problemi.length
+    ? { ok: false, nota: problemi.join('; ') }
+    : { ok: true, nota: `Organization (${org.name}, ${org.url}, logo, email) e WebSite (${sito.inLanguage}), JSON valido` }
+})
+
+controllo('SEO e condivisione: title ≤ 60 e description ≤ 155 (angolo famiglia), canonical, Open Graph e Twitter card', () => {
+  const problemi = []
+  const titolo = decodifica(TITOLO)
+  const descrizione = decodifica(DESCRIZIONE)
+  if (titolo.length > 60) problemi.push(`title di ${titolo.length} caratteri`)
+  if (descrizione.length > 155) problemi.push(`description di ${descrizione.length} caratteri`)
+  const canonical = (TESTA.match(/<link rel="canonical" href="([^"]+)"/) ?? [])[1]
+  if (canonical !== ORIGINE) problemi.push(`canonical ${canonical} invece di ${ORIGINE}`)
+  const immagine = new URL('og-image.jpg', ORIGINE).href
+  const attesi = [
+    ['property', 'og:title', titolo],
+    ['property', 'og:description', descrizione],
+    ['property', 'og:url', ORIGINE],
+    ['property', 'og:image', immagine],
+    ['property', 'og:site_name', valoreDato('BRAND')],
+    ['name', 'twitter:card', 'summary_large_image'],
+    ['name', 'twitter:title', titolo],
+    ['name', 'twitter:description', descrizione],
+    ['name', 'twitter:image', immagine],
+  ]
+  for (const [attributo, nome, valore] of attesi) {
+    const trovato = decodifica(metaContenuto(attributo, nome))
+    if (trovato !== valore) problemi.push(`${nome}: «${trovato || 'assente'}»`)
+  }
+  return problemi.length
+    ? { ok: false, nota: problemi.join('; ') }
+    : { ok: true, nota: `title ${titolo.length}/60 «${titolo}», description ${descrizione.length}/155, canonical ${canonical}, og e twitter con og-image.jpg` }
+})
+
+controllo('robots.txt e sitemap.xml: la home e le pagine legali verso il dominio di §2', () => {
+  const problemi = []
+  const robots = esiste('dist/robots.txt') ? leggi('dist/robots.txt') : ''
+  const sitemap = esiste('dist/sitemap.xml') ? leggi('dist/sitemap.xml') : ''
+  if (!/User-agent: \*/.test(robots) || /Disallow: \/\s*$/m.test(robots)) problemi.push('robots.txt assente o chiude il sito')
+  if (!robots.includes(`Sitemap: ${new URL('sitemap.xml', ORIGINE).href}`)) problemi.push('robots.txt senza la sitemap del dominio')
+  const indirizzi = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1])
+  const attesi = [ORIGINE, new URL('privacy.html', ORIGINE).href, new URL('cookie.html', ORIGINE).href]
+  if (indirizzi.join() !== attesi.join()) problemi.push(`sitemap con ${indirizzi.join(', ') || 'nessun indirizzo'} invece di ${attesi.join(', ')}`)
+  return problemi.length ? { ok: false, nota: problemi.join('; ') } : { ok: true, nota: `${indirizzi.length} indirizzi su ${ORIGINE}; robots punta alla sitemap` }
+})
+
+controllo('banner dei cookie fuori dall\'HTML prerenderizzato, «Gestisci cookie» nel footer (§10 punto 4)', () => {
+  const problemi = []
+  // L'elemento del banner (la barra mobile cita solo la variabile --bd-banner-h)
+  if (/class="bd-banner[\s"]|aria-label="Scelta sui cookie"/.test(HTML)) problemi.push('il banner è nell\'HTML prerenderizzato')
+  if (!/<footer[\s\S]*>Gestisci cookie<\/button>[\s\S]*<\/footer>/.test(HTML)) problemi.push('manca «Gestisci cookie» nel footer')
+  const banner = esiste('src/components/BdBannerCookie.tsx') ? leggi('src/components/BdBannerCookie.tsx') : ''
+  if (!/useIdratato\(\)/.test(banner)) problemi.push('il banner non aspetta l\'hydration')
+  if (!/'Escape'/.test(banner) || !/bd:apri-cookie/.test(banner)) problemi.push('il banner non si chiude con Esc o non si riapre da «Gestisci cookie»')
+  return problemi.length ? { ok: false, nota: problemi.join('; ') } : { ok: true, nota: 'il banner si monta dopo l\'hydration (useIdratato), si riapre da «Gestisci cookie», Esc chiude' }
 })
 
 // ---------- esito ----------
