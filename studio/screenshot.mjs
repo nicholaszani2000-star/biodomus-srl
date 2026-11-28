@@ -443,7 +443,8 @@ for (const vista of VISTE) {
       await pagina.waitForTimeout(600)
     }
 
-    if (angolo === 'famiglia') await pagina.screenshot({ path: join(USCITA, `pagina-intera-${vista.width}.png`), fullPage: true })
+    // Pagina intera per ogni angolo (step 8), dopo lo scorrimento: gli ingressi sono già entrati
+    await pagina.screenshot({ path: join(USCITA, `pagina-intera-${angolo}-${vista.width}.png`), fullPage: true })
     await pagina.close()
   }
 }

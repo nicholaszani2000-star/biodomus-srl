@@ -12,6 +12,7 @@ dist-ssr
 studio/.tmp
 studio/report/screenshot/
 studio/report/e2e/
+studio/report/lighthouse/
 
 # Dallo scaffold Vite
 # Logs

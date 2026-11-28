@@ -10,6 +10,8 @@
 // Correzioni dello step 7: con /?a=terreno&utm_source=prova&utm_campaign=prova&fbclid=PROVA123 e nessuna scelta sui cookie
 // sessionStorage e localStorage restano vuoti e la riga ha gli utm ma non fbclid; dopo «Accetta» fbclid c'è; l'invio senza
 // JavaScript prende dal Referer gli utm ma non fbclid.
+// Step 8: il modulo in errore con BD_MOCK=errore (502 e il ripiego con l'email pubblica); il Tab su tutta la pagina a 390
+// e 1440 px con il focus sempre visibile e mai coperto; il modulo completato solo da tastiera.
 // Screenshot di ogni passaggio e del successo in studio/report/e2e/ (escluso da git). Avvio: npm run e2e.
 
 import { chromium } from 'playwright'
@@ -508,6 +510,160 @@ for (const angolo of ['famiglia', 'terreno', 'investo']) {
     `riga: utm_source ${daReferer?.utm_source}, utm_campaign ${daReferer?.utm_campaign}, fbclid ${daReferer?.fbclid}`,
   )
   await senzaJs.contesto.close()
+}
+
+// ---------- step 8: modulo in errore, tastiera su tutta la pagina, modulo senza mouse ----------
+const tabFino = async (pagina, condizione, massimo = 40) => {
+  for (let i = 0; i < massimo; i++) {
+    await pagina.keyboard.press('Tab')
+    if (await pagina.evaluate(condizione)) return true
+  }
+  return false
+}
+
+// Il modulo in errore: un'altra anteprima con BD_MOCK=errore (email e Supabase non riescono insieme)
+{
+  const PORTA_ERRORE = PORTA + 1
+  const BASE_ERRORE = `http://localhost:${PORTA_ERRORE}`
+  const serverErrore = spawn(process.execPath, [tsx, join(ROOT, 'studio', 'anteprima-server.mts')], {
+    cwd: ROOT,
+    env: { ...process.env, PORTA: String(PORTA_ERRORE), BD_MOCK: 'errore' },
+    stdio: 'ignore',
+  })
+  const pronta = async () => {
+    try {
+      return (await fetch(`${BASE_ERRORE}/`)).ok
+    } catch {
+      return false
+    }
+  }
+  for (let i = 0; i < 50 && !(await pronta()); i++) await attendi(200)
+  const { contesto, pagina } = await nuovaPagina()
+  await pagina.goto(`${BASE_ERRORE}/?a=terreno`, { waitUntil: 'networkidle' })
+  await attendi(600)
+  const aperta = Date.now()
+  await pagina.locator('#inizio .bd-cta--primaria').click()
+  await pagina.waitForFunction(() => document.activeElement?.closest('#preventivo'), null, { timeout: 4000 }).catch(() => {})
+  await pagina.getByRole('button', { name: 'Avanti' }).click()
+  await pagina.locator('#bd-m-comune').fill('Gallarate')
+  await pagina.locator('label[for="bd-m-budget-fascia-1"]').click()
+  await pagina.locator('label[for="bd-m-tempistica-entro-6"]').click()
+  await pagina.getByRole('button', { name: 'Avanti' }).click()
+  await pagina.locator('#bd-m-nome').fill('Prova Errore')
+  await pagina.locator('#bd-m-email').fill('prova.errore@esempio.it')
+  await attendi(Math.max(0, 3300 - (Date.now() - aperta)))
+  const risposta = pagina.waitForResponse((r) => r.url().endsWith('/api/lead') && r.request().method() === 'POST')
+  await pagina.getByRole('button', { name: 'Invia la richiesta' }).click()
+  const stato = (await risposta).status()
+  await pagina.locator('.bd-m-errore-invio').waitFor({ timeout: 5000 }).catch(() => {})
+  const messaggio = (await pagina.locator('.bd-m-errore-invio').textContent().catch(() => '')) ?? ''
+  const linkEmail = await pagina.locator('.bd-m-errore-invio a[href^="mailto:"]').count()
+  await foto(pagina, 'modulo-errore.png')
+  esito(
+    stato === 502 && /Non siamo riusciti a inviare la richiesta/.test(messaggio) && messaggio.includes('biodomus2025@libero.it') && linkEmail === 1,
+    'modulo in errore con BD_MOCK=errore',
+    `POST ${stato}; «${messaggio.trim().slice(0, 90)}…» con il link all'email pubblica`,
+  )
+  await contesto.close()
+  serverErrore.kill()
+}
+
+// Il Tab su tutta la pagina: ogni fermata nello schermo, con un indicatore di focus e non coperta da header o barra
+for (const vista of [{ width: 390, height: 844 }, { width: 1440, height: 900 }]) {
+  const { contesto, pagina, errori } = await nuovaPagina({ viewport: vista })
+  await pagina.goto(`${BASE}/`, { waitUntil: 'networkidle' })
+  await attendi(800)
+  const fermate = []
+  let prima = null
+  for (let i = 0; i < 250; i++) {
+    await pagina.keyboard.press('Tab')
+    await attendi(80)
+    const fermata = await pagina.evaluate(() => {
+      const el = document.activeElement
+      if (!el || el === document.body || el === document.documentElement) return null
+      // I radio del modulo mostrano il focus sulla loro etichetta (.bd-m-scelta:has(input:focus-visible))
+      const cornice = el.matches('input[type="radio"]') ? el.closest('label') ?? el : el
+      const r = cornice.getBoundingClientRect()
+      const indicatore = [cornice, el].some((x) => {
+        const s = getComputedStyle(x)
+        return (s.outlineStyle !== 'none' && parseFloat(s.outlineWidth) >= 2) || (s.boxShadow !== 'none' && s.boxShadow !== '')
+      })
+      const cx = Math.min(Math.max(r.left + r.width / 2, 0), innerWidth - 1)
+      const cy = Math.min(Math.max(r.top + r.height / 2, 0), innerHeight - 1)
+      const sopra = document.elementFromPoint(cx, cy)
+      return {
+        chi: `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ''} «${(el.getAttribute('aria-label') || el.textContent || el.getAttribute('name') || '').trim().replace(/\s+/g, ' ').slice(0, 28)}»`,
+        firma: `${el.tagName}|${el.id}|${el.getAttribute('href') ?? ''}|${(el.textContent ?? '').trim().slice(0, 20)}|${Math.round(r.top + scrollY)}`,
+        nelloSchermo: r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth,
+        indicatore,
+        libero: Boolean(sopra) && (cornice.contains(sopra) || sopra.contains(cornice)),
+      }
+    })
+    if (!fermata || fermata.firma === prima) break
+    prima ??= fermata.firma
+    fermate.push(fermata)
+  }
+  const nascoste = fermate.filter((f) => !f.nelloSchermo || !f.indicatore || !f.libero)
+  esito(
+    fermate.length > 30 && nascoste.length === 0 && errori.length === 0,
+    `tastiera su tutta la pagina ${vista.width}px`,
+    nascoste.length
+      ? `${nascoste.length} fermate senza focus visibile: ${nascoste.map((f) => `${f.chi}${f.nelloSchermo ? '' : ' fuori schermo'}${f.indicatore ? '' : ' senza indicatore'}${f.libero ? '' : ' coperta'}`).join(', ')}`
+      : `${fermate.length} fermate con il Tab, dalla prima («${fermate[0]?.chi}») all'ultima («${fermate.at(-1)?.chi}»): tutte nello schermo, con il contorno di focus e non coperte`,
+  )
+  await contesto.close()
+}
+
+// Il modulo solo da tastiera: Invio sulla CTA dell'hero, poi Tab, Spazio, testo e Invio
+{
+  const { contesto, pagina, errori } = await nuovaPagina({ viewport: { width: 1440, height: 900 } })
+  await pagina.goto(`${BASE}/?a=famiglia&utm_source=e2e-tastiera`, { waitUntil: 'networkidle' })
+  await attendi(800)
+  const aperta = Date.now()
+  const passi = []
+  const suCta = await tabFino(pagina, () => document.activeElement?.matches('#inizio .bd-cta--primaria') ?? false)
+  await pagina.keyboard.press('Enter')
+  await pagina.waitForFunction(() => document.activeElement?.closest('#preventivo'), null, { timeout: 4000 }).catch(() => {})
+  passi.push(`CTA dell'hero con Invio → focus su #${await focusSu(pagina)}`)
+  // Passo 1: il profilo è già scelto dall'angolo; Tab sul gruppo «Hai già il terreno?», Spazio sceglie «Sì»
+  await pagina.keyboard.press('Tab')
+  await pagina.keyboard.press('Space')
+  const terreno = await pagina.evaluate(() => document.querySelector('input[name="terreno"]:checked')?.value ?? null)
+  await tabFino(pagina, () => document.activeElement?.textContent?.trim() === 'Avanti')
+  await pagina.keyboard.press('Enter')
+  passi.push(`passo 1 con terreno «${terreno}»`)
+  // Passo 2
+  await tabFino(pagina, () => document.activeElement?.id === 'bd-m-comune')
+  await pagina.keyboard.type('Gallarate tastiera')
+  await pagina.keyboard.press('Tab')
+  await pagina.keyboard.press('Space')
+  await pagina.keyboard.press('Tab')
+  await pagina.keyboard.press('Space')
+  const passo2 = await pagina.evaluate(() => ({
+    budget: document.querySelector('input[name="budget"]:checked')?.value ?? null,
+    tempistica: document.querySelector('input[name="tempistica"]:checked')?.value ?? null,
+  }))
+  await tabFino(pagina, () => document.activeElement?.textContent?.trim() === 'Avanti')
+  await pagina.keyboard.press('Enter')
+  passi.push(`passo 2 con budget «${passo2.budget}» e tempistica «${passo2.tempistica}»`)
+  // Passo 3
+  await tabFino(pagina, () => document.activeElement?.id === 'bd-m-nome')
+  await pagina.keyboard.type('Tastiera Prova')
+  await pagina.keyboard.press('Tab')
+  await pagina.keyboard.type('tastiera.prova@esempio.it')
+  await attendi(Math.max(0, 3300 - (Date.now() - aperta)))
+  const suInvia = await tabFino(pagina, () => document.activeElement?.textContent?.trim() === 'Invia la richiesta')
+  await pagina.keyboard.press('Enter')
+  await pagina.locator('#bd-m-successo').waitFor({ timeout: 10000 }).catch(() => {})
+  await attendi(300)
+  const successo = await pagina.evaluate(() => document.activeElement?.id === 'bd-m-successo')
+  const riga = righe().find((r) => r.comune === 'Gallarate tastiera' && r.utm_source === 'e2e-tastiera')
+  esito(
+    suCta && suInvia && successo && Boolean(riga) && errori.length === 0,
+    'modulo completato senza mouse',
+    `${passi.join('; ')}; «Invia la richiesta» con Invio → ${successo ? 'messaggio di successo con il focus' : 'nessun successo'}; riga ${riga ? 'salvata' : 'MANCANTE'}`,
+  )
+  await contesto.close()
 }
 
 await browser.close()

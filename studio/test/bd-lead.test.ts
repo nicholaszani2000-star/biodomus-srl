@@ -244,6 +244,18 @@ describe('BD_MOCK=1', () => {
     assert.equal(riga.fbclid, null)
   })
 
+  test('BD_MOCK=errore: 502 con l\'email pubblica (JSON) o la pagina di errore (senza JavaScript)', async (t) => {
+    t.mock.method(console, 'error', () => {})
+    process.env.BD_MOCK = 'errore'
+    const conJson = await bdLead(richiestaJson(campiValidi()))
+    assert.equal(conJson.status, 502)
+    assert.deepEqual(await conJson.json(), { ok: false, errore: 'invio non riuscito', email: dati.EMAIL_PUBBLICA })
+    const senzaJs = await bdLead(richiestaForm({ ...campiValidi(), avviato_il: '' }))
+    assert.equal(senzaJs.status, 502)
+    assert.match(await senzaJs.text(), /Non siamo riusciti a inviare la richiesta/)
+    assert.equal(righeMock().length, 0, 'nessuna riga nel file di prova')
+  })
+
   test('fbclid solo con il consenso di marketing (§10.4)', async () => {
     mock()
     await bdLead(richiestaJson({ ...campiValidi(), fbclid: 'PROVA123', consenso_marketing: 'no' }))

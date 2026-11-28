@@ -1423,6 +1423,22 @@ controllo('Pixel con la configurazione automatica spenta prima di init (step 7)'
     : { ok: false, nota: 'autoConfig false manca o arriva dopo init' }
 })
 
+// ---------- STEP 8 ----------
+
+controllo('conservazione (§10 punto 3): bd-keepalive cancella ogni giorno le richieste create più di 24 mesi fa', () => {
+  const problemi = []
+  const keep = esiste('netlify/functions/bd-keepalive.mts') ? leggi('netlify/functions/bd-keepalive.mts') : ''
+  if (!/schedule: '@daily'/.test(keep)) problemi.push('bd-keepalive senza schedule @daily')
+  if (!/MESI_CONSERVAZIONE = 24\b/.test(keep)) problemi.push('conservazione diversa da 24 mesi')
+  if (!/method: 'DELETE'/.test(keep) || !/\/rest\/v1\/bd_leads\?creato_il=lt\./.test(keep)) problemi.push('manca la DELETE con il filtro su creato_il')
+  if (!esiste('studio/test/bd-keepalive.test.ts')) problemi.push('manca la prova della richiesta di cancellazione')
+  const privacy = testoVisibile(esiste('dist/privacy.html') ? leggi('dist/privacy.html') : '')
+  if (!/24 mesi/.test(privacy)) problemi.push('la privacy non dice 24 mesi')
+  return problemi.length
+    ? { ok: false, nota: problemi.join('; ') }
+    : { ok: true, nota: 'ogni giorno DELETE /rest/v1/bd_leads?creato_il=lt.(oggi − 24 mesi), con la chiave segreta solo in apikey; la privacy dice 24 mesi' }
+})
+
 // ---------- esito ----------
 
 let ko = 0

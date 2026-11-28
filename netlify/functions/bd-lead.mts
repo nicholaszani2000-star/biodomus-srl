@@ -15,6 +15,8 @@
 //
 // Con BD_MOCK=1 non chiama nessun servizio: scrive il contatto, con email e telefono mascherati,
 // in studio/report/lead-mock.jsonl (e le due email in studio/report/lead-mock-email.txt).
+// Con BD_MOCK=errore (anteprima e prove) simula email e Supabase non riusciti insieme: risposta 502 e, nella pagina,
+// il messaggio con l'email pubblica come ripiego. Nessun servizio esterno.
 
 import type { Config, Context } from '@netlify/functions'
 import { createHash, randomUUID } from 'node:crypto'
@@ -359,6 +361,11 @@ export default async function bdLead(req: Request, context?: Pick<Context, 'ip'>
   const perReferente = emailReferente(lead, id, creatoIl)
   const perCliente = emailCliente(lead)
 
+  if (ambiente('BD_MOCK') === 'errore') {
+    console.error('bd-lead: BD_MOCK=errore, email a EMAIL_LEAD e Supabase simulati come non riusciti')
+    return invioNonRiuscito(vuoleJson)
+  }
+
   if (ambiente('BD_MOCK') === '1') {
     const riga = {
       ricevuto_il: creatoIl.toISOString(),
@@ -405,8 +412,13 @@ export default async function bdLead(req: Request, context?: Pick<Context, 'ip'>
 
   if (!referente.ok && !supabase.ok) {
     console.error('bd-lead: email a EMAIL_LEAD e Supabase non riusciti, richiesta persa')
-    if (vuoleJson) return json(502, { ok: false, errore: 'invio non riuscito', email: emailPubblica() })
-    return paginaErrore(502, tt('modulo.erroreInvio').replace(/\.$/, ''), [])
+    return invioNonRiuscito(vuoleJson)
   }
   return successo(id)
+}
+
+/** Email e Supabase non riusciti insieme: 502, e la pagina mostra l'email pubblica come ripiego (§4). */
+function invioNonRiuscito(vuoleJson: boolean): Response {
+  if (vuoleJson) return json(502, { ok: false, errore: 'invio non riuscito', email: emailPubblica() })
+  return paginaErrore(502, tt('modulo.erroreInvio').replace(/\.$/, ''), [])
 }
