@@ -37,6 +37,7 @@ export interface DatiProgetto {
   PEC: string | null
   RUOLO_LEGALE: string
   COSTO_SERVIZIO: string | null
+  PRIVACY_VERIFICATA: boolean
   P1_NOME: string | null
   P1_RUOLO: string | null
   P1_SITO: string | null
@@ -122,6 +123,9 @@ export const dati = {
   RUOLO_LEGALE: 'da definire con il commercialista',
   COSTO_SERVIZIO:
     "Il primo incontro conoscitivo è gratuito e senza impegno. Il cliente non sostiene costi per il servizio di consulenza: l'eventuale compenso viene riconosciuto direttamente dall'azienda partner, secondo accordi preventivamente definiti.",
+  // Il consulente privacy ha approvato privacy e cookie policy? «no» = false: le due pagine mostrano il riquadro
+  // «Testo da far verificare…» e lo step 8 non pubblica in produzione. Dopo l'ok del consulente diventa true.
+  PRIVACY_VERIFICATA: false,
 
   P1_NOME: P1_OK ? 'Edilnoma Building S.r.l.' : null,
   P1_RUOLO: P1_OK ? 'impresa di costruzioni: ville e complessi residenziali chiavi in mano' : null,

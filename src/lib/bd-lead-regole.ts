@@ -189,6 +189,7 @@ const facoltativo = (v: string | undefined, massimo: number) => testoPulito(v, m
 export function normalizza(d: DatiModulo, eventIdDiRiserva: string): Lead {
   const angolo = pulito(d.angolo)
   const eventId = pulito(d.event_id)
+  const consensoMarketing = ['si', 'sì', 'true', '1', 'on'].includes(pulito(d.consenso_marketing).toLowerCase())
   return {
     profilo: pulito(d.profilo),
     terreno: pulito(d.terreno),
@@ -204,10 +205,11 @@ export function normalizza(d: DatiModulo, eventIdDiRiserva: string): Lead {
     utm_medium: facoltativo(d.utm_medium, LIMITI.campoTecnico),
     utm_campaign: facoltativo(d.utm_campaign, LIMITI.campoTecnico),
     utm_content: facoltativo(d.utm_content, LIMITI.campoTecnico),
-    fbclid: facoltativo(d.fbclid, LIMITI.campoTecnico),
+    // fbclid identifica il clic su un annuncio di Meta: serve solo alla misurazione, quindi solo con il consenso (§10.4)
+    fbclid: consensoMarketing ? facoltativo(d.fbclid, LIMITI.campoTecnico) : null,
     pagina: facoltativo(d.pagina, LIMITI.campoTecnico),
     event_id: /^[\w-]{8,64}$/.test(eventId) ? eventId : eventIdDiRiserva,
-    consenso_marketing: ['si', 'sì', 'true', '1', 'on'].includes(pulito(d.consenso_marketing).toLowerCase()),
+    consenso_marketing: consensoMarketing,
   }
 }
 

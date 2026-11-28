@@ -17,16 +17,15 @@ import BdPerChi from './sections/BdPerChi.tsx'
 import BdRealizzazioni from './sections/BdRealizzazioni.tsx'
 import BdRuolo from './sections/BdRuolo.tsx'
 import BdSistema from './sections/BdSistema.tsx'
-import { salvaUtm } from './lib/bd-utm.ts'
 
 // Sezioni nell'ordine di §6. Realizzazioni e Partner compaiono solo con l'autorizzazione scritta dei partner (§2):
 // oggi P1_OK e P2_OK sono «no», quindi non ci sono. La BdQuota tra due sezioni porta il numero di quella che segue,
 // preso dall'elenco «ordine», così i numeri restano in fila anche quando una sezione condizionale non c'è.
 export default function App() {
   useEffect(() => {
-    // Dopo l'hydration: parametri della campagna, movimento e tracciamento (caricati a parte, fuori dal primo bundle).
+    // Dopo l'hydration: movimento e tracciamento (caricati a parte, fuori dal primo bundle). I parametri della campagna
+    // non si salvano: il modulo li legge dall'indirizzo al momento dell'invio (bd-utm).
     // bd-traccia non fa richieste a Meta senza il consenso «accettato» e senza META_PIXEL (§10 punto 4).
-    salvaUtm()
     void import('./lib/bd-motion.ts').then((modulo) => modulo.avviaMovimento())
     void import('./lib/bd-traccia.ts').then((modulo) => modulo.avviaTracciamento())
   }, [])

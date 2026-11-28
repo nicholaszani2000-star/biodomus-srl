@@ -24,7 +24,8 @@ export default function BdFooter() {
         <BdWordmark posizione="footer" />
         {/* Contatti di §8 su una riga che va a capo tra una voce e l'altra, mai dentro un link. Tra le voci lo spazio
             di una parola (0,28em), come quando erano testo continuo; -my-2.5 riporta il testo dov'era: i 10 px in più
-            sopra e sotto dei link finiscono nello spazio vuoto tra i blocchi del footer. */}
+            sopra e sotto dei link finiscono nello spazio vuoto tra i blocchi del footer. Il «·» sta nel ::before della voce
+            che segue (bd-footer__segue): va a capo con lei, quindi non chiude mai una riga. */}
         <p className="-my-2.5 flex flex-wrap items-center gap-x-[0.28em]">
           {canali ? (
             <>
@@ -32,21 +33,23 @@ export default function BdFooter() {
               <a className={LINK} href={canali.tel}>
                 {canali.telefono}
               </a>{' '}
-              <span aria-hidden="true">·</span>{' '}
               {canali.whatsapp ? (
                 <>
-                  <a className={LINK} href={canali.whatsapp} target="_blank" rel="noopener">
-                    {tt('footer.whatsapp')}
-                    <span className="bd-sr-only"> {tt('comuni.nuovaScheda')}</span>
-                  </a>{' '}
-                  <span aria-hidden="true">·</span>{' '}
+                  <span className="bd-footer__segue">
+                    <a className={LINK} href={canali.whatsapp} target="_blank" rel="noopener">
+                      {tt('footer.whatsapp')}
+                      <span className="bd-sr-only"> {tt('comuni.nuovaScheda')}</span>
+                    </a>
+                  </span>{' '}
                 </>
               ) : null}
             </>
           ) : null}
-          <a className={LINK} href={`mailto:${email}`}>
-            {email}
-          </a>
+          <span className={canali ? 'bd-footer__segue' : undefined}>
+            <a className={LINK} href={`mailto:${email}`}>
+              {email}
+            </a>
+          </span>
         </p>
 
         <div className="grid gap-1">

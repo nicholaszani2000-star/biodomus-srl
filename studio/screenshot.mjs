@@ -885,10 +885,14 @@ for (const ridotto of [false, true]) {
     const violazioniDopo = await violazioniDi(pagina)
     const init = chiamate.some((c) => c[0] === 'init' && c[1] === PIXEL_PROVA)
     const pageView = chiamate.some((c) => c[0] === 'track' && c[1] === 'PageView')
+    // Configurazione automatica spenta prima di init: niente clic sui pulsanti né metadati della pagina verso Meta
+    const posAutoConfig = chiamate.findIndex((c) => c[0] === 'set' && c[1] === 'autoConfig' && c[2] === false && c[3] === PIXEL_PROVA)
+    const posInit = chiamate.findIndex((c) => c[0] === 'init' && c[1] === PIXEL_PROVA)
+    const autoConfigPrima = posAutoConfig !== -1 && posAutoConfig < posInit
     esito(
-      bannerVisibile && primaEsterne.length === 0 && richiestaPixel !== null && init && pageView,
+      bannerVisibile && primaEsterne.length === 0 && richiestaPixel !== null && init && pageView && autoConfigPrima,
       `Pixel solo dopo «Accetta» ${etichetta}`,
-      `prima: ${richieste.length} richieste, esterne ${primaEsterne.length ? primaEsterne.join(', ') : 'nessuna'}; dopo «Accetta»: ${richiestaPixel ? 'fbevents.js richiesto' : 'fbevents.js MAI richiesto'}, init ${init ? 'sì' : 'no'}, PageView ${pageView ? 'sì' : 'no'}`,
+      `prima: ${richieste.length} richieste, esterne ${primaEsterne.length ? primaEsterne.join(', ') : 'nessuna'}; dopo «Accetta»: ${richiestaPixel ? 'fbevents.js richiesto' : 'fbevents.js MAI richiesto'}, autoConfig false ${autoConfigPrima ? 'prima di init' : 'MANCANTE o dopo init'}, init ${init ? 'sì' : 'no'}, PageView ${pageView ? 'sì' : 'no'}`,
     )
     esito(
       violazioniPrima.length === 0 && violazioniDopo.length === 0 && errori.length === 0,

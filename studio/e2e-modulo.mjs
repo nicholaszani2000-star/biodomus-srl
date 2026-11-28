@@ -7,6 +7,9 @@
 // Step 7: ogni prova parte con una scelta sui cookie già salvata (il banner non copre i clic); con «terreno» la scelta è
 // «accettato» e la riga ha consenso_marketing true, con gli altri angoli false. L'invio senza JavaScript arriva a
 // /grazie.html con stato 200.
+// Correzioni dello step 7: con /?a=terreno&utm_source=prova&utm_campaign=prova&fbclid=PROVA123 e nessuna scelta sui cookie
+// sessionStorage e localStorage restano vuoti e la riga ha gli utm ma non fbclid; dopo «Accetta» fbclid c'è; l'invio senza
+// JavaScript prende dal Referer gli utm ma non fbclid.
 // Screenshot di ogni passaggio e del successo in studio/report/e2e/ (escluso da git). Avvio: npm run e2e.
 
 import { chromium } from 'playwright'
@@ -105,7 +108,7 @@ async function nuovaPagina({ consenso = 'rifiutato', pixel = false, ...opzioni }
   // Scelta sui cookie già salvata (solo se manca): il banner non compare e consenso_marketing la segue
   await contesto.addInitScript((scelta) => {
     try {
-      if (!localStorage.getItem('bd-consenso')) localStorage.setItem('bd-consenso', JSON.stringify({ stato: scelta, data: Date.now() }))
+      if (scelta && !localStorage.getItem('bd-consenso')) localStorage.setItem('bd-consenso', JSON.stringify({ stato: scelta, data: Date.now() }))
     } catch {
       // niente
     }
@@ -436,6 +439,75 @@ for (const angolo of ['famiglia', 'terreno', 'investo']) {
     riga ? `angolo ${riga.angolo} e utm_source ${riga.utm_source} dal Referer, profilo ${riga.profilo}` : 'riga non trovata',
   )
   await contesto.close()
+}
+
+// ---------- correzioni dello step 7: parametri della campagna senza salvataggio, fbclid solo con il consenso ----------
+{
+  const INDIRIZZO = `${BASE}/?a=terreno&utm_source=prova&utm_campaign=prova&fbclid=PROVA123`
+  const memoria = (pagina) => pagina.evaluate(() => ({ sessione: sessionStorage.length, locale: localStorage.length }))
+  // Il modulo dell'angolo terreno parte con «Una casa» e «Sì» già scelti: passo 2, passo 3, invio
+  async function compilaEInvia(pagina, comune) {
+    const aperta = Date.now()
+    await pagina.getByRole('button', { name: 'Avanti' }).click()
+    await pagina.locator('#bd-m-comune').fill(comune)
+    await pagina.locator('label[for="bd-m-budget-fascia-1"]').click()
+    await pagina.locator('label[for="bd-m-tempistica-entro-6"]').click()
+    await pagina.getByRole('button', { name: 'Avanti' }).click()
+    await pagina.locator('#bd-m-nome').fill('Prova Parametri')
+    await pagina.locator('#bd-m-email').fill('prova.parametri@esempio.it')
+    await attendi(Math.max(0, 3300 - (Date.now() - aperta)))
+    await pagina.getByRole('button', { name: 'Invia la richiesta' }).click()
+    await pagina.locator('#bd-m-successo').waitFor({ timeout: 10000 })
+    await attendi(300)
+    return righe().find((r) => r.comune === comune)
+  }
+
+  // Nessuna scelta sui cookie: niente nel browser, utm sì, fbclid no
+  const { contesto, pagina, errori } = await nuovaPagina({ consenso: null })
+  await pagina.goto(INDIRIZZO, { waitUntil: 'networkidle' })
+  await attendi(600)
+  const primaDellInvio = await memoria(pagina)
+  const senzaScelta = await compilaEInvia(pagina, `Cislago ${Date.now().toString().slice(-5)}`)
+  const dopoLInvio = await memoria(pagina)
+  esito(
+    primaDellInvio.sessione === 0 && primaDellInvio.locale === 0 && dopoLInvio.sessione === 0 && dopoLInvio.locale === 0 &&
+      senzaScelta?.utm_source === 'prova' && senzaScelta?.utm_campaign === 'prova' && senzaScelta?.fbclid === null && senzaScelta?.consenso_marketing === false,
+    'parametri senza scelta sui cookie: niente nel browser, utm sì, fbclid no',
+    `sessionStorage ${primaDellInvio.sessione}→${dopoLInvio.sessione} voci, localStorage ${primaDellInvio.locale}→${dopoLInvio.locale}; riga: utm_source ${senzaScelta?.utm_source}, utm_campaign ${senzaScelta?.utm_campaign}, fbclid ${senzaScelta?.fbclid}`,
+  )
+
+  // «Accetta» dal banner, poi un nuovo invio dalla stessa pagina: fbclid c'è
+  await pagina.locator('.bd-banner').getByRole('button', { name: 'Accetta', exact: true }).click()
+  await attendi(300)
+  await pagina.goto(INDIRIZZO, { waitUntil: 'networkidle' })
+  await attendi(600)
+  const conConsenso = await compilaEInvia(pagina, `Marnate ${Date.now().toString().slice(-5)}`)
+  const memoriaDopo = await memoria(pagina)
+  esito(
+    conConsenso?.fbclid === 'PROVA123' && conConsenso?.utm_source === 'prova' && conConsenso?.consenso_marketing === true && memoriaDopo.sessione === 0 && errori.length === 0,
+    'parametri dopo «Accetta»: fbclid PROVA123',
+    `riga: fbclid ${conConsenso?.fbclid}, utm_source ${conConsenso?.utm_source}, consenso_marketing ${conConsenso?.consenso_marketing}; sessionStorage ${memoriaDopo.sessione} voci, localStorage solo la scelta (${memoriaDopo.locale})${errori.length ? `; errori: ${errori.join(' | ')}` : ''}`,
+  )
+  await contesto.close()
+
+  // Senza JavaScript: dal Referer gli utm, mai fbclid
+  const senzaJs = await nuovaPagina({ javaScriptEnabled: false })
+  await senzaJs.pagina.goto(INDIRIZZO, { waitUntil: 'load' })
+  const comune = `Carnago ${Date.now().toString().slice(-5)}`
+  await senzaJs.pagina.locator('label[for="bd-m-terreno-si"]').click()
+  await senzaJs.pagina.locator('#bd-m-comune').fill(comune)
+  await senzaJs.pagina.locator('label[for="bd-m-budget-fascia-1"]').click()
+  await senzaJs.pagina.locator('label[for="bd-m-tempistica-entro-6"]').click()
+  await senzaJs.pagina.locator('#bd-m-nome').fill('Prova Senza Js')
+  await senzaJs.pagina.locator('#bd-m-email').fill('prova.senzajs@esempio.it')
+  await Promise.all([senzaJs.pagina.waitForURL('**/grazie.html'), senzaJs.pagina.getByRole('button', { name: 'Invia la richiesta' }).click()])
+  const daReferer = righe().find((r) => r.comune === comune)
+  esito(
+    daReferer?.utm_source === 'prova' && daReferer?.utm_campaign === 'prova' && daReferer?.fbclid === null,
+    'senza JavaScript: dal Referer gli utm ma non fbclid',
+    `riga: utm_source ${daReferer?.utm_source}, utm_campaign ${daReferer?.utm_campaign}, fbclid ${daReferer?.fbclid}`,
+  )
+  await senzaJs.contesto.close()
 }
 
 await browser.close()

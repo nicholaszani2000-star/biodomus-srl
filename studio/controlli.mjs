@@ -1171,9 +1171,7 @@ controllo('informativa privacy (art. 13) e cookie policy: contenuti di §10, dat
   const problemi = []
   const privacy = testoVisibile(esiste('dist/privacy.html') ? leggi('dist/privacy.html') : '')
   const cookie = testoVisibile(esiste('dist/cookie.html') ? leggi('dist/cookie.html') : '')
-  const avviso = TESTI.pagine.avviso
   for (const [nome, testo] of [['privacy', privacy], ['cookie', cookie]]) {
-    if (!testo.includes(avviso)) problemi.push(`${nome}: manca «${avviso}»`)
     if (!/Ultimo aggiornamento: \d{1,2} \w+ \d{4}/.test(testo)) problemi.push(`${nome}: manca la data di aggiornamento`)
   }
   const attesiPrivacy = {
@@ -1195,6 +1193,21 @@ controllo('informativa privacy (art. 13) e cookie policy: contenuti di §10, dat
   for (const parola of ['localStorage', '_fbp', '_fbc', '90 giorni', '6 mesi', 'cambia la tua scelta']) {
     if (!cookie.includes(parola)) problemi.push(`cookie senza «${parola}»`)
   }
+  // Correzioni dello step 7: niente bd-utm né sessionStorage; utm sì, fbclid solo con il consenso; hash, non cifratura;
+  // contitolarità con Meta (art. 26) con il link al Controller Addendum
+  if (/bd-utm|sessionStorage/.test(cookie)) problemi.push('cookie policy con bd-utm o sessionStorage, che non esistono più')
+  const attesiCorrezioni = [
+    "i parametri della campagna da cui arrivi (utm) e, solo se accetti i cookie di marketing, l'identificativo del clic sull'annuncio (fbclid)",
+    'pseudonimizzati con una funzione di hash (SHA-256), che Meta confronta con i dati dei suoi utenti',
+    `${valoreDato('TITOLARE')} e Meta Platforms Ireland Limited sono contitolari del trattamento (articolo 26 del GDPR)`,
+    'Dopo la trasmissione Meta tratta i dati come titolare autonomo. Puoi esercitare i tuoi diritti anche nei confronti di Meta.',
+  ]
+  for (const frase of attesiCorrezioni) if (!privacy.includes(frase)) problemi.push(`privacy senza «${frase.slice(0, 50)}…»`)
+  if (/cifrati/.test(privacy)) problemi.push('privacy: «cifrati» (un hash non è una cifratura)')
+  const privacyHtml = esiste('dist/privacy.html') ? leggi('dist/privacy.html') : ''
+  for (const link of ['https://www.facebook.com/legal/controller_addendum', 'https://www.facebook.com/privacy/policy/']) {
+    if (!privacyHtml.includes(`href="${link}"`)) problemi.push(`privacy senza il link ${link}`)
+  }
   if (!/href="\/#gestisci-cookie"/.test(esiste('dist/cookie.html') ? leggi('dist/cookie.html') : '')) problemi.push('cookie senza il link che riapre la scelta')
   for (const file of ['privacy.html', 'cookie.html']) {
     const ambientali = testoVisibile(esiste(`dist/${file}`) ? leggi(`dist/${file}`) : '').replace(/Biodomus/g, '').match(PAROLE_AMBIENTALI)
@@ -1202,7 +1215,7 @@ controllo('informativa privacy (art. 13) e cookie policy: contenuti di §10, dat
   }
   return problemi.length
     ? { ok: false, nota: problemi.join('; ') }
-    : { ok: true, nota: 'titolare, finalità, basi giuridiche, impresa partner e fornitori, trasferimenti, 24 mesi, diritti, Garante; cookie tecnici e _fbp/_fbc a 90 giorni; riquadro e data in tutte e due' }
+    : { ok: true, nota: 'titolare, finalità, basi giuridiche, impresa partner e fornitori, trasferimenti, 24 mesi, diritti, Garante; fbclid solo con il consenso, hash (non cifratura), contitolarità con Meta e link al Controller Addendum; cookie tecnico e _fbp/_fbc a 90 giorni; data in tutte e due' }
 })
 
 controllo('Meta solo da bd-traccia.ts: nel sorgente e nel bundle nessun altro file contatta facebook (§10 punto 4)', () => {
@@ -1357,6 +1370,57 @@ controllo('banner dei cookie fuori dall\'HTML prerenderizzato, «Gestisci cookie
   if (!/useIdratato\(\)/.test(banner)) problemi.push('il banner non aspetta l\'hydration')
   if (!/'Escape'/.test(banner) || !/bd:apri-cookie/.test(banner)) problemi.push('il banner non si chiude con Esc o non si riapre da «Gestisci cookie»')
   return problemi.length ? { ok: false, nota: problemi.join('; ') } : { ok: true, nota: 'il banner si monta dopo l\'hydration (useIdratato), si riapre da «Gestisci cookie», Esc chiude' }
+})
+
+controllo('avviso «Testo da far verificare…» in dist se e solo se PRIVACY_VERIFICATA è «no» (§2)', () => {
+  const problemi = []
+  const valore = (DATI_OGGETTO.match(/\bPRIVACY_VERIFICATA:\s*(true|false)\b/) ?? [])[1]
+  if (!valore) return { ok: false, nota: 'PRIVACY_VERIFICATA manca in dati.ts' }
+  const verificata = valore === 'true'
+  const claude = leggi('CLAUDE.md')
+  const inClaude = (claude.match(/^- PRIVACY_VERIFICATA \([^)]*\): (sì|no)$/m) ?? [])[1]
+  if (!inClaude) problemi.push('PRIVACY_VERIFICATA manca in §2 di CLAUDE.md')
+  else if ((inClaude === 'sì') !== verificata) problemi.push(`CLAUDE.md dice «${inClaude}», dati.ts ${valore}`)
+  if (!/^- PRIVACY_VERIFICATA «no»: privacy e cookie policy mostrano il riquadro/m.test(claude)) problemi.push('manca la regola condizionale di PRIVACY_VERIFICATA in §2')
+  const avviso = TESTI.pagine.avviso
+  const testiDist = esiste('dist') ? fileSotto('dist', (n) => /\.(html|js|css|json|txt|xml)$/.test(n)) : []
+  const conAvviso = testiDist.filter((f) => leggi(f).includes(avviso))
+  const attesi = verificata ? [] : ['dist/privacy.html', 'dist/cookie.html']
+  const mancano = attesi.filter((f) => !conAvviso.includes(f))
+  const diTroppo = conAvviso.filter((f) => !attesi.includes(f))
+  if (mancano.length) problemi.push(`avviso assente in ${mancano.join(', ')}`)
+  if (diTroppo.length) problemi.push(`avviso in ${diTroppo.join(', ')}`)
+  return problemi.length
+    ? { ok: false, nota: problemi.join('; ') }
+    : { ok: true, nota: verificata ? 'PRIVACY_VERIFICATA «sì»: nessun riquadro in dist' : 'PRIVACY_VERIFICATA «no»: riquadro solo in privacy.html e cookie.html; §2 e dati.ts d\'accordo' }
+})
+
+controllo('parametri della campagna senza salvataggio nel browser: niente sessionStorage, fbclid solo con il consenso (§7, §10.4)', () => {
+  const problemi = []
+  const conSessione = fileSotto('src').filter((f) => leggi(f).includes('sessionStorage'))
+  if (conSessione.length) problemi.push(`sessionStorage in ${conSessione.join(', ')}`)
+  const conLocale = fileSotto('src', (n) => /\.(ts|tsx)$/.test(n)).filter((f) => !f.endsWith('src/lib/bd-consenso.ts') && /\blocalStorage\b/.test(leggi(f)))
+  if (conLocale.length) problemi.push(`localStorage fuori da bd-consenso.ts: ${conLocale.join(', ')}`)
+  const utm = leggi('src/lib/bd-utm.ts')
+  if (!/window\.location\.search/.test(utm) || !/consensoMarketing && fbclid/.test(utm)) problemi.push('bd-utm non legge l\'indirizzo o non lega fbclid al consenso')
+  const regole = leggi('src/lib/bd-lead-regole.ts')
+  if (!/fbclid: consensoMarketing \?/.test(regole)) problemi.push('normalizza() non scarta fbclid senza consenso')
+  const funzione = leggi('netlify/functions/bd-lead.mts')
+  const referer = (funzione.match(/function completaDaReferer[\s\S]*?\n}\n/) ?? [''])[0]
+  if (!referer) problemi.push('completaDaReferer non trovata in bd-lead.mts')
+  else if (/fbclid/.test(referer.replace(/\/\/[^\n]*|\/\*[\s\S]*?\*\//g, ''))) problemi.push('completaDaReferer prende fbclid dal Referer')
+  return problemi.length
+    ? { ok: false, nota: problemi.join('; ') }
+    : { ok: true, nota: 'utm_* letti dall\'indirizzo all\'invio, nessun sessionStorage in src, localStorage solo per la scelta sui cookie; fbclid solo con il consenso, mai dal Referer' }
+})
+
+controllo('Pixel con la configurazione automatica spenta prima di init (step 7)', () => {
+  const traccia = leggi('src/lib/bd-traccia.ts')
+  const autoConfig = traccia.indexOf("window.fbq('set', 'autoConfig', false, id)")
+  const init = traccia.indexOf("window.fbq('init', id)")
+  return autoConfig !== -1 && init !== -1 && autoConfig < init
+    ? { ok: true, nota: "fbq('set', 'autoConfig', false, id) prima di fbq('init', id); la prova con l'fbq finto è in screenshot.mjs" }
+    : { ok: false, nota: 'autoConfig false manca o arriva dopo init' }
 })
 
 // ---------- esito ----------

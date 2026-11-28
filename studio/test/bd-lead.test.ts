@@ -226,6 +226,32 @@ describe('BD_MOCK=1', () => {
     assert.equal(riga.pagina, 'https://biodomussrls.it/')
     assert.match(String(riga.event_id), /^[0-9a-f-]{36}$/, 'event_id generato dal server')
   })
+
+  test('senza JavaScript: dal Referer gli utm_* ma mai fbclid', async () => {
+    mock()
+    const { utm_source: _s, utm_campaign: _c, pagina: _p, ...campi } = campiValidi()
+    void [_s, _c, _p]
+    const r = await bdLead(
+      richiestaForm(
+        { ...campi, utm_source: '', pagina: '', avviato_il: '' },
+        { referer: 'https://biodomussrls.it/?a=terreno&utm_source=prova&utm_campaign=prova&fbclid=PROVA123' },
+      ),
+    )
+    assert.equal(r.status, 303)
+    const [riga] = righeMock()
+    assert.equal(riga.utm_source, 'prova')
+    assert.equal(riga.utm_campaign, 'prova')
+    assert.equal(riga.fbclid, null)
+  })
+
+  test('fbclid solo con il consenso di marketing (§10.4)', async () => {
+    mock()
+    await bdLead(richiestaJson({ ...campiValidi(), fbclid: 'PROVA123', consenso_marketing: 'no' }))
+    await bdLead(richiestaJson({ ...campiValidi(), event_id: 'evento-9876543210', fbclid: 'PROVA123', consenso_marketing: 'si' }))
+    const [senza, con] = righeMock()
+    assert.equal(senza.fbclid, null, 'senza consenso fbclid si scarta')
+    assert.equal(con.fbclid, 'PROVA123', 'con il consenso fbclid resta')
+  })
 })
 
 describe('servizi reali (fetch simulato)', () => {

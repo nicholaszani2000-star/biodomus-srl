@@ -1948,6 +1948,19 @@ html[data-angolo='investo'] .bd-v-investo {
 /* ---------- Step 7: banner dei cookie e pagine statiche (privacy, cookie, grazie, 404) ---------- */
 
 @layer components {
+  /* Contatti del footer: il separatore «·» sta prima della voce che segue e va a capo con lei (mai a fine riga).
+     Il testo alternativo vuoto lo tiene fuori dai lettori di schermo; i browser che non lo capiscono usano la riga prima. */
+  .bd-footer__segue {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .bd-footer__segue::before {
+    content: '·';
+    content: '·' / '';
+    margin-right: 0.28em;
+  }
+
   /* Con il banner aperto la pagina ha in fondo uno spazio alto quanto lui (--bd-banner-h, scritto da BdBannerCookie):
      l'ultima riga del footer, con «Gestisci cookie», si può sempre raggiungere e toccare. Nessuno spostamento visibile. */
   body {

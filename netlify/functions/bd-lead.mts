@@ -70,12 +70,14 @@ export function leggiCampi(corpo: string, tipo: string): DatiModulo {
 /**
  * Senza JavaScript UTM e pagina arrivano vuoti e l'angolo vale quello dell'HTML prerenderizzato (famiglia):
  * si ricavano dalla pagina di provenienza (Referer, stessa origine). L'invio con JavaScript ha sempre avviato_il.
+ * Dal Referer solo gli utm_*, mai fbclid: senza JavaScript non c'è un consenso di marketing (§10.4).
+ * In ogni caso normalizza() scarta fbclid quando consenso_marketing è falso.
  */
 function completaDaReferer(campi: DatiModulo, referer: string | null): void {
   if (!referer) return
   try {
     const url = new URL(referer)
-    for (const chiave of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'fbclid'] as const) {
+    for (const chiave of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'] as const) {
       if (!campi[chiave] && url.searchParams.get(chiave)) campi[chiave] = url.searchParams.get(chiave) ?? undefined
     }
     const angoloUrl = url.searchParams.get('a')

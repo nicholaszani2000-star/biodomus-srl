@@ -299,7 +299,7 @@
           [
             "i dati del progetto: per cosa ci contatti, se hai già il terreno, comune o zona, budget indicativo e quando vorresti iniziare;",
             "i tuoi contatti: nome e cognome, email e, se li scrivi, telefono e messaggio;",
-            "i dati della richiesta: data e ora, la pagina da cui scrivi e, se arrivi da un annuncio, i parametri della campagna (per esempio utm_source e fbclid)."
+            "i dati della richiesta: data e ora, la pagina da cui scrivi e, se arrivi da un annuncio, i parametri della campagna da cui arrivi (utm) e, solo se accetti i cookie di marketing, l'identificativo del clic sull'annuncio (fbclid)."
           ],
           "Se accetti i cookie di marketing, il pixel di Meta raccoglie anche i dati descritti nella [cookie policy](/cookie.html).",
           "Come ogni sito, il servizio che lo ospita tratta dati tecnici delle visite, come l'indirizzo IP e il tipo di browser, per farlo funzionare e proteggerlo."
@@ -336,7 +336,8 @@
             "Supabase: conserva le richieste in un database in una regione dell'Unione europea;",
             "Brevo (Sendinblue SAS, Francia): invia a noi la richiesta e a te l'email di conferma."
           ],
-          "Solo se accetti i cookie di marketing, Meta Platforms Ireland Limited riceve l'evento della richiesta per misurare le campagne, con email e telefono cifrati (hash SHA-256). Meta li tratta secondo la sua [informativa](https://www.facebook.com/privacy/policy/).",
+          "Solo se accetti i cookie di marketing, Meta Platforms Ireland Limited riceve l'evento della richiesta per misurare le campagne, con email e telefono pseudonimizzati con una funzione di hash (SHA-256), che Meta confronta con i dati dei suoi utenti. Meta li tratta secondo la sua [informativa](https://www.facebook.com/privacy/policy/).",
+          "Per la raccolta e la trasmissione a Meta di questi dati, {TITOLARE} e Meta Platforms Ireland Limited sono contitolari del trattamento (articolo 26 del GDPR), secondo il [Controller Addendum](https://www.facebook.com/legal/controller_addendum) dei termini Meta Business Tools. Dopo la trasmissione Meta tratta i dati come titolare autonomo. Puoi esercitare i tuoi diritti anche nei confronti di Meta.",
           "I tuoi dati non vengono pubblicati né venduti."
         ]
       },
@@ -395,12 +396,11 @@
     "intro": "I cookie sono piccoli file che un sito salva nel tuo browser. Qui trovi quali usa questo sito, insieme agli strumenti simili come la memoria del browser.",
     "sezioni": [
       {
-        "titolo": "Strumenti tecnici: sempre attivi",
+        "titolo": "Strumento tecnico: sempre attivo",
         "contenuto": [
-          "Servono a far funzionare il sito e non richiedono il consenso. Nessuno è un cookie di terze parti.",
+          "Serve a far funzionare il sito e non richiede il consenso. Non è un cookie di terze parti.",
           [
-            "bd-consenso, nella memoria del browser (localStorage): ricorda la tua scelta sui cookie per 6 mesi;",
-            "bd-utm, nella memoria della scheda (sessionStorage): ricorda i parametri della campagna da cui arrivi (utm e fbclid) finché chiudi la scheda, per allegarli alla richiesta di preventivo se la invii."
+            "bd-consenso, nella memoria del browser (localStorage): ricorda la tua scelta sui cookie per 6 mesi."
           ]
         ]
       },

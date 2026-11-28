@@ -1,39 +1,22 @@
-// Parametri della campagna (CLAUDE.md §7): utm_* e fbclid salvati in sessionStorage alla prima visita
-// della sessione, così restano anche se la persona naviga o ricarica prima di compilare il modulo.
+// Parametri della campagna (CLAUDE.md §7): letti dall'indirizzo al momento dell'invio, senza salvare nulla nel browser.
+// Salvarli nella memoria del browser senza consenso non è strettamente necessario (art. 122 del Codice privacy), e non serve:
+// la landing è una pagina sola, quindi i parametri restano nell'indirizzo mentre la persona scorre e compila.
+// fbclid identifica il clic su un annuncio di Meta e serve solo alla misurazione: solo con il consenso «accettato» (§10.4).
 
-const CHIAVI = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'fbclid'] as const
-const ARCHIVIO = 'bd-utm'
+const UTM = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'] as const
+const MASSIMO = 200
 
-export type ChiaveUtm = (typeof CHIAVI)[number]
-export type Utm = Partial<Record<ChiaveUtm, string>>
+export type ChiaveParametro = (typeof UTM)[number] | 'fbclid'
+export type Parametri = Partial<Record<ChiaveParametro, string>>
 
-export function salvaUtm(): void {
-  try {
-    if (window.sessionStorage.getItem(ARCHIVIO) !== null) return
-    const parametri = new URLSearchParams(window.location.search)
-    const utm: Utm = {}
-    for (const chiave of CHIAVI) {
-      const valore = parametri.get(chiave)
-      if (valore) utm[chiave] = valore.slice(0, 200)
-    }
-    window.sessionStorage.setItem(ARCHIVIO, JSON.stringify(utm))
-  } catch {
-    // sessionStorage non disponibile: il modulo leggerà i parametri direttamente dall'URL.
+export function leggiParametri(consensoMarketing: boolean): Parametri {
+  const indirizzo = new URLSearchParams(window.location.search)
+  const parametri: Parametri = {}
+  for (const chiave of UTM) {
+    const valore = indirizzo.get(chiave)
+    if (valore) parametri[chiave] = valore.slice(0, MASSIMO)
   }
-}
-
-export function leggiUtm(): Utm {
-  try {
-    const salvato = window.sessionStorage.getItem(ARCHIVIO)
-    if (salvato) return JSON.parse(salvato) as Utm
-  } catch {
-    // ripiego sotto
-  }
-  const parametri = new URLSearchParams(window.location.search)
-  const utm: Utm = {}
-  for (const chiave of CHIAVI) {
-    const valore = parametri.get(chiave)
-    if (valore) utm[chiave] = valore.slice(0, 200)
-  }
-  return utm
+  const fbclid = indirizzo.get('fbclid')
+  if (consensoMarketing && fbclid) parametri.fbclid = fbclid.slice(0, MASSIMO)
+  return parametri
 }

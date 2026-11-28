@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { dati } from '../content/dati.ts'
 import { riempi, risolvi, tt } from '../content/bd-testi.ts'
 import testi from '../content/testi.json'
 
@@ -77,16 +78,20 @@ function Blocchi({ contenuto }: { contenuto: Blocco[] }) {
 /**
  * Informativa privacy (art. 13 GDPR, §10 punto 3) e cookie policy (§10 punto 4): i testi stanno in testi.json,
  * divisi in sezioni con un titolo e un «contenuto» (stringa = paragrafo, elenco = voci puntate, «tabella» = tabella).
- * In testa il riquadro di avviso: il testo va fatto verificare a un consulente privacy prima della pubblicazione.
+ * In testa il riquadro di avviso finché PRIVACY_VERIFICATA è «no» (§2): il testo va fatto verificare a un consulente
+ * privacy prima della pubblicazione. Con «sì» il riquadro sparisce.
  */
 export default function BdDocumento({ pagina }: { pagina: 'privacy' | 'cookie' }) {
   const documento = testi[pagina]
   const sezioni = documento.sezioni as { titolo: string; contenuto: Blocco[] }[]
+  const verificata: boolean = dati.PRIVACY_VERIFICATA
   return (
     <article className="bd-documento">
-      <p className="bd-avviso" role="note">
-        {tt('pagine.avviso')}
-      </p>
+      {verificata ? null : (
+        <p className="bd-avviso" role="note">
+          {tt('pagine.avviso')}
+        </p>
+      )}
       <h1>{tt(`${pagina}.titolo`)}</h1>
       <p className="bd-documento__data">{riempi(tt('pagine.aggiornamento'), { data: documento.aggiornamento })}</p>
       <p className="bd-documento__intro">{tt(`${pagina}.intro`)}</p>

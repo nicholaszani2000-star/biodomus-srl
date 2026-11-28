@@ -41,8 +41,8 @@ src/
   assets/              immagini ottimizzate, svg, loghi autorizzati
 netlify/functions/     bd-lead.mts (modulo) e bd-keepalive.mts (Supabase sveglio)
 supabase/migrations/   SQL della tabella dei contatti
-scripts/               prerender.mjs
-public/                favicon, og-image, robots.txt, sitemap.xml, grazie.html, privacy.html, cookie.html
+scripts/               prerender.mjs: home prerenderizzata, pagine grazie, privacy, cookie e 404, robots.txt, sitemap.xml e hash della CSP
+public/                favicon, icone, og-image, site.webmanifest
 studio/                foto originali, script, anteprima simulata, controlli, report
 ```
 
@@ -86,6 +86,7 @@ Dati legali
 - PEC: biodomus@cgn.legalmail.it
 - RUOLO_LEGALE: da definire con il commercialista
 - COSTO_SERVIZIO: Il primo incontro conoscitivo è gratuito e senza impegno. Il cliente non sostiene costi per il servizio di consulenza: l'eventuale compenso viene riconosciuto direttamente dall'azienda partner, secondo accordi preventivamente definiti.
+- PRIVACY_VERIFICATA (il consulente privacy ha approvato privacy e cookie policy): no
 
 Partner
 - P1_NOME: Edilnoma Building S.r.l.
@@ -135,6 +136,7 @@ Regole condizionali
 - Unità sempre: m², mesi, €, «classe energetica A4». Numeri in formato italiano: 250.000 €.
 - Niente valori U, decibel, classi sismiche o prezzi al m² se non arrivano per iscritto dai partner.
 - Fasce di budget del modulo, calcolate da BUDGET_MIN: «meno di BUDGET_MIN», «da BUDGET_MIN a BUDGET_MIN + 100.000 €», «da BUDGET_MIN + 100.000 € a BUDGET_MIN + 250.000 €», «oltre BUDGET_MIN + 250.000 €», «non lo so ancora».
+- PRIVACY_VERIFICATA «no»: privacy e cookie policy mostrano il riquadro «Testo da far verificare…» e lo step 8 non pubblica in produzione.
 
 ## §3 Regole d'oro
 
@@ -160,21 +162,20 @@ File da creare, uno per riga:
 - vite.config.ts — plugin React e Tailwind (@tailwindcss/vite), target es2020.
 - src/main.tsx — hydrateRoot se #root ha contenuto, altrimenti createRoot. Movimento e tracciamento partono dopo l'hydration.
 - src/entry-server.tsx — render() con renderToString per il prerender.
-- scripts/prerender.mjs — dopo `vite build` e `vite build --ssr src/entry-server.tsx --outDir dist-ssr`, inserisce l'HTML renderizzato in dist/index.html.
+- scripts/prerender.mjs — dopo `vite build` e `vite build --ssr src/entry-server.tsx --outDir dist-ssr`, inserisce l'HTML renderizzato in dist/index.html. Genera anche grazie.html, privacy.html, cookie.html e 404.html da testi.json e dati.ts, robots.txt e sitemap.xml, e scrive in netlify.toml gli hash sha256 dello script e degli stili inline per la CSP.
 - src/App.tsx — sezioni nell'ordine di §6.
 - src/content/testi.json, src/content/dati.ts, src/content/bd-testi.ts (risolve i segnaposti {CHIAVE}), src/content/immagini.json (manifesto delle immagini).
 - src/styles/bd-tokens.css, src/styles/bd-base.css.
 - src/lib/bd-motion.ts — Lenis e ScrollTrigger sincronizzati, gsap.matchMedia per la riduzione del movimento. Solo nel browser.
 - src/lib/bd-consenso.ts — consenso cookie in localStorage con try/catch, scadenza 6 mesi, evento al cambio.
-- src/lib/bd-traccia.ts — carica il Pixel solo con consenso. track('Lead', {}, {eventID}) dopo l'invio del modulo; track('Contact') al clic su «Chiama» o «Scrivi su WhatsApp», senza dati personali. Senza consenso non fa nulla.
+- src/lib/bd-traccia.ts — carica il Pixel solo con consenso, con fbq('set', 'autoConfig', false, id) prima di init. track('Lead', {}, {eventID}) dopo l'invio del modulo; track('Contact') al clic su un link tel: o wa.me, senza dati personali. Senza consenso non fa nulla.
 - src/lib/bd-angolo.ts — legge ?a= e data-angolo.
-- src/lib/bd-utm.ts — salva utm_* e fbclid in sessionStorage alla prima visita.
+- src/lib/bd-utm.ts — legge utm_* dall'indirizzo al momento dell'invio, senza salvare nulla nel browser; fbclid solo con il consenso di marketing.
 - src/components/ — BdHeader, BdFooter, BdCta, BdBarraMobile, BdSezione, BdQuota (linea di quota), BdWordmark, BdBannerCookie, BdParete (la sezione in prospettiva, SVG inline con prefisso per istanza), BdIllustrazione (illustrazioni AI sfumate di §2), BdPercorso (il percorso del cantiere in «Come funziona»).
 - src/sections/ — BdHero, BdPerChi, BdComeFunziona, BdRuolo, BdSistema, BdRealizzazioni, BdPartner, BdModulo, BdFaq, BdChiusura.
 - netlify/functions/bd-lead.mts — risponde a POST /api/lead (export const config = { path: "/api/lead" }). Accetta JSON e form-urlencoded. Validazione, honeypot, tempo minimo di compilazione 3 secondi, corpo massimo 10 kB. Quattro passaggi, che partono insieme e non si bloccano a vicenda: 1) email a EMAIL_LEAD con Brevo; 2) email di conferma al cliente; 3) riga su Supabase via REST con la chiave segreta, solo nell'header apikey (le chiavi sb_secret_… non sono JWT: in Authorization vengono rifiutate); 4) evento Lead all'API Conversioni solo se il cliente ha accettato i cookie di marketing. Un passaggio che fallisce va nei log. Se falliscono sia l'email sia Supabase risponde 502 e la pagina mostra l'email pubblica come ripiego. Risposta JSON {ok, id}; se la richiesta non chiede JSON (invio senza JavaScript) risponde 303 verso /grazie.html. Con BD_MOCK=1 non chiama servizi esterni e scrive il contatto in studio/report/lead-mock.jsonl.
 - netlify/functions/bd-keepalive.mts — schedule "@daily": una lettura sulla tabella dei contatti, così il progetto Supabase Free non va in pausa.
 - supabase/migrations/001_bd_leads.sql — tabella bd_leads: id uuid, creato_il, profilo, terreno, comune, budget, tempistica, nome, email, telefono, messaggio, angolo, utm_source, utm_medium, utm_campaign, utm_content, fbclid, pagina, consenso_marketing, stato (default «nuovo»). RLS attiva e nessuna policy per anon: scrive solo la funzione.
-- public/grazie.html, public/privacy.html, public/cookie.html, public/404.html — HTML statico con lo stesso stile.
 - netlify.toml — build "npm run build", publish "dist", functions "netlify/functions", header di sicurezza (Content-Security-Policy, X-Content-Type-Options, Referrer-Policy strict-origin-when-cross-origin, Permissions-Policy), cache lunga su /assets/*.
 - .env.example — SUPABASE_URL, SUPABASE_SECRET_KEY, BREVO_API_KEY, BREVO_MITTENTE, EMAIL_LEAD, META_PIXEL_ID, META_CAPI_TOKEN, META_TEST_EVENT_CODE, BD_MOCK.
 - studio/ — controlli.mjs, anteprima-server.mts, screenshot.mjs, immagini.mjs, report/.
@@ -242,7 +243,7 @@ CTA: 6 punti (header, hero, card di BdPerChi, dopo BdComeFunziona, dopo BdRealiz
 
 Parametro URL ?a= con valori famiglia, terreno, investo. Valore assente o sconosciuto: famiglia.
 Senza sfarfallio: tutte le varianti di titolo e sottotitolo sono nell'HTML prerenderizzato, con classi bd-v-famiglia, bd-v-terreno, bd-v-investo. Lo script inline nel head, prima del CSS, imposta document.documentElement.dataset.angolo; il CSS mostra solo la variante attiva. Nessuna modifica al DOM prima dell'hydration. Senza JavaScript si vede famiglia.
-Angolo, utm_source, utm_medium, utm_campaign, utm_content e fbclid entrano nel modulo come campi nascosti e nella tabella. L'angolo preseleziona anche la risposta 1 del modulo.
+Angolo, utm_source, utm_medium, utm_campaign e utm_content entrano nel modulo come campi nascosti e nella tabella; fbclid solo con il consenso di marketing. Nessuno di questi valori si salva nel browser: si leggono dall'indirizzo al momento dell'invio. L'angolo preseleziona anche la risposta 1 del modulo.
 
 Titoli per angolo (in testi.json):
 - famiglia — H1: «La casa che vuoi, con un solo referente dal progetto alle chiavi.» Sottotitolo: «{BRAND} ti mette in contatto con l'impresa adatta in {ZONA} e segue il tuo progetto passo per passo.»

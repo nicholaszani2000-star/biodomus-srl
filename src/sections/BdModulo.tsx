@@ -18,7 +18,7 @@ import {
   type DatiModulo,
   type Errori,
 } from '../lib/bd-lead-regole.ts'
-import { leggiUtm } from '../lib/bd-utm.ts'
+import { leggiParametri } from '../lib/bd-utm.ts'
 
 type Passo = 1 | 2 | 3
 type Stato = 'modulo' | 'invio' | 'successo' | 'errore'
@@ -261,7 +261,9 @@ export default function BdModulo() {
 
     eventId.current ??= nuovoEventId()
     const honeypot = formRef.current ? new FormData(formRef.current).get(CAMPO_HONEYPOT) : null
-    const utm = Object.entries(leggiUtm()).filter((voce): voce is [string, string] => typeof voce[1] === 'string')
+    // Parametri della campagna letti ora dall'indirizzo (niente memoria nel browser); fbclid solo con il consenso «accettato»
+    const consensoMarketing = leggiConsenso() === 'accettato'
+    const utm = Object.entries(leggiParametri(consensoMarketing)).filter((voce): voce is [string, string] => typeof voce[1] === 'string')
     const corpo: Record<string, string> = {
       ...valori(),
       ...Object.fromEntries(utm),
@@ -270,7 +272,7 @@ export default function BdModulo() {
       pagina: `${window.location.origin}${window.location.pathname}`,
       event_id: eventId.current,
       avviato_il: String(avviatoIl.current),
-      consenso_marketing: leggiConsenso() === 'accettato' ? 'si' : 'no',
+      consenso_marketing: consensoMarketing ? 'si' : 'no',
       [CAMPO_HONEYPOT]: typeof honeypot === 'string' ? honeypot : '',
     }
 

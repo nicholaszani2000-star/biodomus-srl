@@ -6,6 +6,8 @@
 // - codice base: lo stub fbq con coda, fbevents.js da https://connect.facebook.net/en_US/fbevents.js,
 //   poi fbq('init', id) e fbq('track', 'PageView'). Qui è lo stesso codice senza script inline (la CSP lo vieta);
 // - consenso: fbq('consent', 'revoke') e fbq('consent', 'grant');
+// - configurazione automatica («Automatic configuration»), attiva di default: manda a Meta i clic sui pulsanti e i metadati
+//   della pagina. Si spegne con fbq('set', 'autoConfig', false, id) prima di init: gli eventi restano PageView, Lead e Contact;
 // - «Lead» e «Contact» sono eventi standard; eventID nel Pixel ed event_id nell'API Conversioni deduplicano l'evento.
 
 import { dati } from '../content/dati.ts'
@@ -42,7 +44,7 @@ function idPixel(): string | null {
   return id?.trim() ? id.trim() : null
 }
 
-/** Il codice base di Meta, scritto come modulo: stub con la coda, script asincrono, init e PageView. */
+/** Il codice base di Meta, scritto come modulo: stub con la coda, script asincrono, autoConfig spento, init e PageView. */
 function caricaPixel(id: string): void {
   if (!window.fbq) {
     const fbq = function (...argomenti: unknown[]) {
@@ -60,6 +62,7 @@ function caricaPixel(id: string): void {
     script.src = SCRIPT_PIXEL
     document.head.appendChild(script)
   }
+  window.fbq('set', 'autoConfig', false, id)
   window.fbq('init', id)
   window.fbq('track', 'PageView')
   caricato = true
