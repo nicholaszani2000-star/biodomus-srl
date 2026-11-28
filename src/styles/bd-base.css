@@ -1,0 +1,2192 @@
+/* Base della pagina (CLAUDE.md §5 e §9): font self-hosted, griglia da tavola tecnica,
+   focus visibile, accessibilità, varianti per angolo (§7), componenti condivisi.
+   Il reset vero è il preflight di Tailwind (importato prima di questo file). */
+
+/* ---------- Font: solo sottoinsieme latin, self-hosted da @fontsource-variable ---------- */
+
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url('../../node_modules/@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-wght-normal.woff2')
+    format('woff2-variations');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F,
+    U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('../../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F,
+    U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* ---------- Base ---------- */
+
+@layer base {
+  html {
+    scroll-padding-top: calc(var(--bd-header-h) + 16px);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--bd-fondo);
+    background-image:
+      linear-gradient(var(--bd-griglia) 1px, transparent 1px),
+      linear-gradient(90deg, var(--bd-griglia) 1px, transparent 1px);
+    background-size: 32px 32px;
+    color: var(--bd-testo);
+    font-family: var(--bd-font-testo);
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--bd-font-titoli);
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+    color: var(--bd-testo);
+  }
+
+  h1 {
+    font-size: clamp(2.5rem, 6vw + 1rem, 5.25rem);
+    font-weight: 750;
+    line-height: 1.02;
+  }
+
+  h2 {
+    font-size: clamp(1.9rem, 3.5vw + 1rem, 3.25rem);
+    font-weight: 700;
+    line-height: 1.05;
+  }
+
+  h3 {
+    font-size: 1.375rem;
+    font-weight: 650;
+    line-height: 1.2;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  a {
+    color: var(--bd-accento);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--bd-accento);
+    outline-offset: 3px;
+    border-radius: var(--bd-raggio-tecnico);
+  }
+
+  [tabindex='-1']:focus {
+    outline: none;
+  }
+}
+
+/* ---------- Varianti per angolo (§7): solo CSS, nessuna modifica al DOM ---------- */
+
+.bd-v {
+  display: none;
+}
+
+html:not([data-angolo]) .bd-v-famiglia,
+html[data-angolo='famiglia'] .bd-v-famiglia,
+html[data-angolo='terreno'] .bd-v-terreno,
+html[data-angolo='investo'] .bd-v-investo {
+  display: block;
+}
+
+/* Titolo dell'hero da 1024 px: nascosto prima del primo disegno (classe dallo script nel head), poi rivelato per righe.
+   Ripiego: se il JavaScript non arriva in tempo, compare da solo e a 0,8 s è leggibile (§5: niente blocca la lettura di più). */
+.bd-rivela [data-bd-rivela] {
+  opacity: 0;
+  animation: bd-mostra 0.2s ease 0.6s forwards;
+}
+
+@keyframes bd-mostra {
+  to {
+    opacity: 1;
+  }
+}
+
+/* ---------- Componenti condivisi ---------- */
+
+@layer components {
+  .bd-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .bd-salta {
+    position: absolute;
+    left: 16px;
+    top: -100px;
+    z-index: 100;
+    padding: 12px 18px;
+    border-radius: 999px;
+    background: var(--bd-accento);
+    color: var(--bd-su-accento);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .bd-salta:focus {
+    top: 12px;
+  }
+
+  .bd-wrap {
+    width: min(100% - 2 * var(--bd-gutter), 1200px);
+    margin-inline: auto;
+  }
+
+  .bd-sezione {
+    padding-block: 96px;
+  }
+
+  @media (min-width: 1024px) {
+    .bd-sezione {
+      padding-block: 160px;
+    }
+  }
+
+  .bd-misura {
+    max-width: 65ch;
+  }
+
+  .bd-occhiello {
+    font-family: var(--bd-font-testo);
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--bd-testo-2);
+  }
+
+  .bd-piccolo {
+    font-size: 0.875rem;
+    color: var(--bd-testo-2);
+  }
+
+  /* CTA (§5): primaria a pillola piena, 56 px; secondaria con bordo. */
+  .bd-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 56px;
+    padding: 0 28px;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 1rem;
+    line-height: 1.2;
+    text-decoration: none;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      border-color 0.2s ease;
+  }
+
+  .bd-cta svg {
+    flex: none;
+    transition: transform 0.2s ease;
+  }
+
+  .bd-cta:hover svg {
+    transform: translateX(4px);
+  }
+
+  .bd-cta--primaria {
+    background: var(--bd-accento);
+    color: var(--bd-su-accento);
+    border: 1.5px solid var(--bd-accento);
+  }
+
+  .bd-cta--primaria:hover {
+    background: var(--bd-accento-hover);
+    border-color: var(--bd-accento-hover);
+  }
+
+  .bd-cta--secondaria {
+    background: transparent;
+    color: var(--bd-accento);
+    border: 1.5px solid var(--bd-accento);
+  }
+
+  .bd-cta--secondaria:hover {
+    background: var(--bd-carta);
+  }
+
+  .bd-cta--compatta {
+    min-height: 44px;
+    padding: 0 18px;
+    font-size: 0.9375rem;
+  }
+
+  /* Linea di quota (§5): rovere, solo grafica. */
+  .bd-quota {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 24px;
+    color: var(--bd-dettaglio);
+  }
+
+  .bd-quota svg {
+    width: 100%;
+    height: 24px;
+    overflow: visible;
+  }
+
+  .bd-quota path {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.25;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .bd-quota__numero {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0 10px;
+    background: var(--bd-fondo);
+    color: var(--bd-testo-2);
+    font-family: var(--bd-font-titoli);
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Wordmark: il nome in Bricolage Grotesque con la sezione in miniatura. */
+  .bd-wordmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--bd-font-titoli);
+    font-size: 1.375rem;
+    font-weight: 750;
+    letter-spacing: -0.02em;
+    color: var(--bd-testo);
+    text-decoration: none;
+  }
+
+  .bd-wordmark svg {
+    flex: none;
+  }
+
+  /* Logo del kit (§2): altezze fisse, larghezza dalle proporzioni; width e height sono nell'HTML. */
+  .bd-logo,
+  .bd-logo img {
+    display: block;
+    width: auto;
+    max-width: none;
+    height: 44px;
+  }
+
+  .bd-logo--footer {
+    height: 48px;
+  }
+
+  @media (min-width: 1024px) {
+    .bd-logo--header,
+    .bd-logo--header img {
+      height: 34px;
+    }
+  }
+}
+
+/* ---------- Modulo di preventivo (§6.9) ---------- */
+
+@layer components {
+  .bd-m {
+    display: grid;
+    gap: 32px;
+  }
+
+  @media (min-width: 1024px) {
+    .bd-m {
+      grid-template-columns: 5fr 7fr;
+      gap: 64px;
+      align-items: start;
+    }
+
+    .bd-m-intro {
+      position: sticky;
+      top: calc(var(--bd-header-h) + 32px);
+    }
+  }
+
+  .bd-m-intro {
+    display: grid;
+    gap: 16px;
+    max-width: 65ch;
+  }
+
+  .bd-m-scheda {
+    border: 1px solid var(--bd-linea);
+    border-radius: var(--bd-raggio-card);
+    background: var(--bd-carta);
+    padding: 24px 16px;
+  }
+
+  @media (min-width: 640px) {
+    .bd-m-scheda {
+      padding: 40px;
+    }
+  }
+
+  .bd-m-form {
+    display: grid;
+    gap: 24px;
+  }
+
+  /* Avanzamento: tre tacche come una linea di quota (dettaglio grafico, aria-hidden) */
+  .bd-m-avanzamento {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .bd-m-tacca {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--bd-linea);
+    transition: background-color 0.2s ease;
+  }
+
+  .bd-m-tacca--fatta {
+    background: var(--bd-dettaglio);
+  }
+
+  .bd-m-passo {
+    display: grid;
+    gap: 24px;
+  }
+
+  .bd-m-titolo {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+  }
+
+  .bd-m-contatore {
+    font-family: var(--bd-font-testo);
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--bd-testo-2);
+  }
+
+  .bd-m-gruppo {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .bd-m-domanda,
+  .bd-m-etichetta {
+    padding: 0;
+    font-weight: 600;
+    color: var(--bd-testo);
+  }
+
+  .bd-m-domanda {
+    margin-bottom: 12px;
+  }
+
+  .bd-m-facoltativo {
+    font-weight: 400;
+    color: var(--bd-testo-2);
+  }
+
+  .bd-m-suggerimento {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--bd-testo-2);
+  }
+
+  .bd-m-scelte {
+    display: grid;
+    gap: 8px;
+  }
+
+  .bd-m-scelte--brevi {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (min-width: 640px) {
+    .bd-m-gruppo:has(input[name='terreno']) .bd-m-scelte {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  /* Scelta a card: la label intera è l'area di tocco (≥ 56 px); il radio vero resta nel flusso. */
+  .bd-m-scelta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 56px;
+    padding: 12px 16px;
+    border: 1.5px solid var(--bd-linea);
+    border-radius: 14px;
+    background: var(--bd-campo);
+    color: var(--bd-testo);
+    line-height: 1.35;
+    cursor: pointer;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .bd-m-scelta:hover {
+    border-color: var(--bd-bordo-campo);
+  }
+
+  .bd-m-scelta:has(input:checked) {
+    border-color: var(--bd-accento);
+    box-shadow: inset 0 0 0 1px var(--bd-accento);
+  }
+
+  .bd-m-scelta:has(input:focus-visible) {
+    outline: 2px solid var(--bd-accento);
+    outline-offset: 3px;
+  }
+
+  .bd-m-scelta input {
+    flex: none;
+    display: grid;
+    place-content: center;
+    width: 22px;
+    height: 22px;
+    margin: 0;
+    border: 1.5px solid var(--bd-bordo-campo);
+    border-radius: 50%;
+    background: var(--bd-campo);
+    appearance: none;
+    cursor: pointer;
+  }
+
+  .bd-m-scelta input::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--bd-accento);
+    transform: scale(0);
+    transition: transform 0.15s ease;
+  }
+
+  .bd-m-scelta input:checked {
+    border-color: var(--bd-accento);
+  }
+
+  .bd-m-scelta input:checked::before {
+    transform: scale(1);
+  }
+
+  .bd-m-scelta input:focus-visible {
+    outline: none;
+  }
+
+  .bd-m-gruppo:has([aria-invalid='true']) .bd-m-scelta {
+    border-color: var(--bd-errore);
+  }
+
+  .bd-m-campo {
+    display: grid;
+    gap: 8px;
+  }
+
+  .bd-m-input {
+    width: 100%;
+    min-height: 52px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--bd-bordo-campo);
+    border-radius: 12px;
+    background: var(--bd-campo);
+    color: var(--bd-testo);
+    font: inherit;
+    font-size: 1.0625rem; /* ≥ 16 px: niente zoom automatico su iOS */
+  }
+
+  .bd-m-input::placeholder {
+    color: var(--bd-testo-2);
+    opacity: 1;
+  }
+
+  .bd-m-input:focus-visible {
+    border-color: var(--bd-accento);
+    outline: 2px solid var(--bd-accento);
+    outline-offset: 2px;
+  }
+
+  .bd-m-input[aria-invalid='true'] {
+    border-color: var(--bd-errore);
+  }
+
+  .bd-m-area {
+    min-height: 120px;
+    resize: vertical;
+  }
+
+  .bd-m-errore {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--bd-errore);
+  }
+
+  .bd-m-errore::before {
+    content: '!';
+    content: '!' / ''; /* decorativo: i lettori di schermo non lo leggono */
+    flex: none;
+    display: inline-grid;
+    place-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--bd-errore);
+    color: var(--bd-campo);
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+    transform: translateY(2px);
+  }
+
+  .bd-m-riepilogo:empty {
+    display: none;
+  }
+
+  .bd-m-riepilogo-box {
+    display: grid;
+    gap: 8px;
+    padding: 16px;
+    border: 1.5px solid var(--bd-errore);
+    border-radius: 12px;
+    color: var(--bd-errore);
+  }
+
+  .bd-m-riepilogo-box ul {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+    padding-left: 20px;
+    list-style: disc;
+  }
+
+  .bd-m-riepilogo-box a {
+    color: var(--bd-errore);
+  }
+
+  .bd-m-errore-invio {
+    margin: 0;
+    padding: 16px;
+    border: 1.5px solid var(--bd-errore);
+    border-radius: 12px;
+    color: var(--bd-testo);
+  }
+
+  .bd-m-privacy {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--bd-testo-2);
+  }
+
+  .bd-m-pulsanti {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .bd-m-pulsanti .bd-cta {
+    flex: 1 1 auto;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .bd-m-pulsanti .bd-cta:disabled {
+    cursor: progress;
+    opacity: 0.75;
+  }
+
+  @media (min-width: 640px) {
+    .bd-m-pulsanti .bd-cta {
+      flex: 0 0 auto;
+    }
+  }
+
+  .bd-m-successo {
+    display: grid;
+    gap: 16px;
+    justify-items: start;
+    font-size: 1.125rem;
+    font-weight: 500;
+  }
+
+  .bd-m-successo svg {
+    color: var(--bd-ok);
+  }
+
+  /* Honeypot: fuori dallo schermo (non display:none, che alcuni bot riconoscono) */
+  .bd-hp {
+    position: absolute;
+    left: -10000px;
+    top: auto;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+}
+
+/* ---------- Riduzione del movimento ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .bd-cta,
+  .bd-cta svg {
+    transition: none;
+  }
+
+  .bd-cta:hover svg {
+    transform: none;
+  }
+}
+
+/* ---------- Step 4: tema scuro per sezione, header, hero, «Per chi è», barra mobile ---------- */
+
+@layer components {
+  /* Una sezione con .bd-tema-scuro prende i token scuri (bd-tokens.css) e qui il suo fondo con la griglia. */
+  section.bd-tema-scuro {
+    background-color: var(--bd-fondo);
+    background-image:
+      linear-gradient(var(--bd-griglia) 1px, transparent 1px),
+      linear-gradient(90deg, var(--bd-griglia) 1px, transparent 1px);
+    background-size: 32px 32px;
+    color: var(--bd-testo);
+    color-scheme: dark;
+  }
+
+  /* Header: colori e loghi passano tra scuro e chiaro in 200 ms, senza spostare nulla (§6.1). */
+  .bd-header {
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      color 0.2s ease;
+  }
+
+  .bd-js .bd-header--scuro {
+    color-scheme: dark;
+  }
+
+  .bd-logo-doppio {
+    display: grid;
+  }
+
+  .bd-logo-doppio > .bd-logo {
+    grid-area: 1 / 1;
+    transition: opacity 0.2s ease;
+  }
+
+  .bd-logo-doppio > .bd-logo--negativo,
+  .bd-js .bd-header--scuro .bd-logo-doppio > .bd-logo--positivo {
+    opacity: 0;
+  }
+
+  .bd-js .bd-header--scuro .bd-logo-doppio > .bd-logo--negativo {
+    opacity: 1;
+  }
+
+  /* Linea di quota dopo una sezione scura: staccata dal bordo */
+  section.bd-tema-scuro + .bd-wrap {
+    margin-top: 40px;
+  }
+
+  /* Hero */
+  /* In basso niente padding: l'hero finisce con l'illustrazione che sfuma nel chiaro della pagina */
+  .bd-hero {
+    padding-block: 28px 0;
+  }
+
+  .bd-hero__griglia {
+    display: grid;
+    gap: 36px;
+    align-items: center;
+  }
+
+  .bd-hero__testo {
+    display: grid;
+    gap: 20px;
+    justify-items: start;
+    min-width: 0;
+  }
+
+  .bd-occhiello--linea {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .bd-occhiello--linea::before {
+    content: '';
+    flex: none;
+    width: 24px;
+    height: 2px;
+    background: var(--bd-dettaglio);
+  }
+
+  .bd-hero__sottotitolo {
+    color: var(--bd-testo-2);
+    font-size: 1.0625rem;
+  }
+
+  .bd-hero__azioni {
+    display: grid;
+    gap: 12px;
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  .bd-hero__fatti {
+    display: grid;
+    gap: 10px;
+    margin: 4px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    line-height: 1.45;
+  }
+
+  .bd-hero__fatti li {
+    display: flex;
+    gap: 12px;
+    align-items: baseline;
+  }
+
+  .bd-hero__fatti li::before {
+    content: '';
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border: 2px solid var(--bd-dettaglio);
+    transform: translateY(-1px) rotate(45deg);
+  }
+
+  .bd-hero__visuale {
+    display: grid;
+    gap: 6px;
+    justify-items: center;
+    min-width: 0;
+  }
+
+  .bd-hero__visuale figcaption {
+    text-align: center;
+  }
+
+  .bd-parete {
+    width: 100%;
+  }
+
+  .bd-parete svg {
+    display: block;
+    width: 100%;
+    max-width: 520px;
+    height: auto;
+    margin-inline: auto;
+    overflow: visible;
+  }
+
+  /* Con JavaScript la parete parte staccata e bd-motion la ricompone scorrendo; senza resta composta, con le quote.
+     Con la riduzione del movimento la ricompone il CSS dentro l'SVG. */
+  .bd-js [data-bd-parete] svg {
+    --bd-esplodi: 1;
+  }
+
+  @media (min-width: 640px) {
+    .bd-hero__azioni {
+      display: flex;
+      flex-wrap: wrap;
+      width: auto;
+    }
+
+    .bd-hero__sottotitolo {
+      font-size: 1.1875rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .bd-hero {
+      padding-block: 48px 0;
+    }
+
+    .bd-hero__griglia {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      gap: 56px;
+    }
+
+    .bd-hero__testo {
+      gap: 24px;
+    }
+  }
+
+  /* «Per chi è» */
+  .bd-perchi__titolo {
+    margin: 0 0 40px;
+  }
+
+  .bd-card-griglia {
+    display: grid;
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .bd-card {
+    display: grid;
+    grid-template-rows: auto auto 1fr auto;
+    gap: 14px;
+    align-content: start;
+    padding: 28px 24px 24px;
+    border: 1px solid var(--bd-linea);
+    border-radius: var(--bd-raggio-card);
+    background: var(--bd-carta);
+  }
+
+  .bd-card .bd-cta {
+    justify-self: start;
+    margin-top: 6px;
+  }
+
+  .bd-card__icona {
+    display: inline-grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border: 1px solid var(--bd-linea);
+    border-radius: 14px;
+    background: var(--bd-fondo);
+    color: var(--bd-dettaglio);
+  }
+
+  .bd-card__icona svg {
+    width: 26px;
+    height: 26px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  @media (min-width: 768px) {
+    .bd-card-griglia {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 24px;
+    }
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .bd-card {
+      transition: box-shadow 0.3s ease;
+    }
+
+    .bd-card:hover {
+      box-shadow: 0 22px 44px -28px rgb(31 35 38 / 0.45);
+    }
+  }
+
+  /* Barra mobile: si nasconde di colpo, compare dal basso in 200 ms */
+  .bd-barra-mobile {
+    visibility: hidden;
+    transform: translateY(110%);
+  }
+
+  .bd-barra-mobile--vista {
+    visibility: visible;
+    transform: none;
+    transition: transform 0.2s ease-out;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bd-header,
+  .bd-logo-doppio > .bd-logo,
+  .bd-barra-mobile--vista {
+    transition: none;
+  }
+}
+
+/* ---------- Illustrazioni AI sfumate (§2: sempre con la dicitura «Illustrazione», mai presentate come case costruite) ---------- */
+
+@layer components {
+  .bd-illustrazione {
+    position: relative;
+    margin: 0;
+  }
+
+  /* Niente bordi: l'immagine si dissolve nel fondo in alto e in basso, da 768 px anche ai lati */
+  .bd-illustrazione__cornice {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 3 / 2;
+    max-width: 1200px;
+    margin-inline: auto;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 26%, #000 66%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, #000 26%, #000 66%, transparent 100%);
+  }
+
+  .bd-illustrazione__cornice picture {
+    display: block;
+    height: 100%;
+  }
+
+  .bd-illustrazione__img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .bd-illustrazione__nota {
+    max-width: 1200px;
+    margin: 4px auto 0;
+    padding-inline: 16px;
+    color: var(--bd-testo-2);
+    font-size: 0.875rem;
+    text-align: right;
+  }
+
+  /* In fondo all'hero: sotto l'immagine la pagina passa dallo scuro dell'hero al chiaro delle sezioni */
+  .bd-illustrazione--verso-chiaro {
+    margin-top: 8px;
+    padding-bottom: 12px;
+    background-image: linear-gradient(to bottom, transparent 0%, transparent 42%, var(--bd-fondo-chiaro) 92%);
+  }
+
+  .bd-illustrazione--verso-chiaro .bd-illustrazione__nota {
+    color: var(--bd-testo-2-chiaro);
+  }
+
+  /* Subito prima del modulo: meno spazio sopra il titolo «Richiedi un preventivo» */
+  .bd-illustrazione--chiaro + .bd-sezione {
+    padding-top: 24px;
+  }
+
+  .bd-illustrazione--villa-dal-disegno .bd-illustrazione__img {
+    object-position: 30% 50%;
+  }
+
+  .bd-illustrazione--villa-tramonto .bd-illustrazione__img {
+    object-position: 58% 50%;
+  }
+
+  @media (min-width: 768px) {
+    .bd-illustrazione__cornice {
+      -webkit-mask-image:
+        linear-gradient(to bottom, transparent 0%, #000 26%, #000 66%, transparent 100%),
+        linear-gradient(to right, transparent 0%, #000 14%, #000 86%, transparent 100%);
+      -webkit-mask-composite: source-in;
+      mask-image:
+        linear-gradient(to bottom, transparent 0%, #000 26%, #000 66%, transparent 100%),
+        linear-gradient(to right, transparent 0%, #000 14%, #000 86%, transparent 100%);
+      mask-composite: intersect;
+    }
+
+    .bd-illustrazione--villa-dal-disegno .bd-illustrazione__cornice {
+      aspect-ratio: 1200 / 381;
+    }
+
+    .bd-illustrazione--villa-tramonto .bd-illustrazione__cornice {
+      aspect-ratio: 5 / 2;
+    }
+
+    .bd-illustrazione--chiaro + .bd-sezione {
+      padding-top: 40px;
+    }
+  }
+}
+
+/* ---------- Step 5: «Come funziona», «Un solo referente», «Com'è fatta la casa» ---------- */
+
+@layer components {
+  /* Testa di sezione: titolo, introduzione, CTA in fondo */
+  .bd-sezione__titolo {
+    margin: 0 0 16px;
+    max-width: 22ch;
+  }
+
+  .bd-sezione__intro {
+    max-width: 65ch;
+    margin: 0 0 40px;
+    color: var(--bd-testo-2);
+    font-size: 1.125rem;
+  }
+
+  .bd-sezione__cta {
+    margin-top: 40px;
+  }
+
+  @media (min-width: 1024px) {
+    .bd-sezione__intro {
+      margin-bottom: 56px;
+    }
+
+    .bd-sezione__cta {
+      margin-top: 56px;
+    }
+  }
+
+  /* «Come funziona»: catena di quote con i numeri dentro la linea, come nella BdQuota.
+     --bd-traccia va da 0 a 1 mentre scorri (bd-motion); senza JavaScript e con la riduzione del movimento vale 1. */
+  .bd-passaggi {
+    --bd-traccia: 1;
+    --bd-asse: 24px; /* su mobile: asse della linea verticale, al centro della colonna dei numeri */
+    position: relative;
+    display: grid;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .bd-passaggi::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--bd-asse) - 0.625px);
+    width: 1.25px;
+    background: var(--bd-dettaglio);
+    transform: scaleY(var(--bd-traccia));
+    transform-origin: top;
+  }
+
+  /* Tratti obliqui a 45° all'inizio di ogni passaggio e in fondo alla catena, come le quote da tavola tecnica */
+  .bd-passaggi::after,
+  .bd-passaggio::before {
+    content: '';
+    position: absolute;
+    left: calc(var(--bd-asse) - 7px);
+    width: 14px;
+    height: 1.25px;
+    background: var(--bd-dettaglio);
+    transform: rotate(-45deg);
+  }
+
+  .bd-passaggi::after {
+    bottom: 0;
+  }
+
+  .bd-passaggio::before {
+    top: 0;
+  }
+
+  .bd-passaggio {
+    position: relative;
+    display: grid;
+    gap: 12px;
+    align-content: start;
+    justify-items: start;
+    padding: 18px 0 44px 64px;
+  }
+
+  .bd-passaggio:last-child {
+    padding-bottom: 24px;
+  }
+
+  .bd-passaggio__numero {
+    position: absolute;
+    top: 27px;
+    left: 0;
+    width: calc(var(--bd-asse) * 2);
+    padding-block: 6px;
+    background: var(--bd-fondo);
+    color: var(--bd-testo-2);
+    font-family: var(--bd-font-titoli);
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.04em;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+  }
+
+  .bd-passaggio__icona {
+    display: inline-grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--bd-linea);
+    border-radius: 14px;
+    background: var(--bd-carta);
+  }
+
+  .bd-passaggio__icona svg {
+    width: 24px;
+    height: 24px;
+    stroke: var(--bd-dettaglio);
+  }
+
+  .bd-passaggio__titolo {
+    margin: 4px 0 0;
+  }
+
+  .bd-passaggio__testo {
+    margin: 0;
+    max-width: 46ch;
+    color: var(--bd-testo-2);
+  }
+
+  @media (min-width: 1024px) {
+    .bd-passaggi {
+      --bd-quota-y: 13px; /* da 1024 px: altezza della linea orizzontale, al centro dei numeri */
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .bd-passaggi::before {
+      top: calc(var(--bd-quota-y) - 0.625px);
+      bottom: auto;
+      left: 0;
+      right: 0;
+      width: auto;
+      height: 1.25px;
+      transform: scaleX(var(--bd-traccia));
+      transform-origin: left;
+    }
+
+    .bd-passaggi::after,
+    .bd-passaggio::before {
+      top: calc(var(--bd-quota-y) - 0.625px);
+      bottom: auto;
+      left: -7px;
+    }
+
+    .bd-passaggi::after {
+      left: auto;
+      right: -7px;
+    }
+
+    .bd-passaggio,
+    .bd-passaggio:last-child {
+      gap: 14px;
+      padding: 52px 32px 0 0;
+    }
+
+    .bd-passaggio__numero {
+      top: 0;
+      left: 14px;
+      width: auto;
+      padding: 6px 10px;
+    }
+  }
+
+  /* «Un solo referente»: tre colonne con elenchi veri e il riquadro del costo */
+  .bd-ruolo__colonne {
+    display: grid;
+    gap: 16px;
+  }
+
+  .bd-ruolo__colonna {
+    padding: 24px;
+    border: 1px solid var(--bd-linea);
+    border-radius: var(--bd-raggio-card);
+    background: var(--bd-carta);
+  }
+
+  /* Biodomus: una barretta di rovere sul bordo alto, dettaglio grafico */
+  .bd-ruolo__colonna--noi {
+    position: relative;
+  }
+
+  .bd-ruolo__colonna--noi::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: 24px;
+    width: 48px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--bd-dettaglio);
+  }
+
+  .bd-ruolo__titolo {
+    margin: 0 0 14px;
+  }
+
+  .bd-elenco {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .bd-elenco li {
+    position: relative;
+    padding-left: 24px;
+  }
+
+  /* Trattino a pixel interi: con top in em cadrebbe a metà pixel e ogni riga avrebbe uno spessore diverso */
+  .bd-elenco li::before {
+    content: '';
+    position: absolute;
+    top: 13px;
+    left: 2px;
+    width: 12px;
+    height: 2px;
+    background: var(--bd-dettaglio);
+  }
+
+  .bd-ruolo__costo {
+    margin-top: 24px;
+    padding: 24px;
+    border: 1.5px solid var(--bd-accento);
+    border-radius: var(--bd-raggio-card);
+    background: var(--bd-carta);
+  }
+
+  .bd-ruolo__costo p {
+    max-width: 65ch;
+  }
+
+  @media (min-width: 1024px) {
+    .bd-ruolo__colonne {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 24px;
+    }
+
+    .bd-ruolo__colonna {
+      padding: 32px;
+    }
+
+    .bd-ruolo__colonna--noi::before {
+      left: 32px;
+    }
+
+    .bd-ruolo__costo {
+      display: grid;
+      grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+      gap: 32px;
+      align-items: baseline;
+      padding: 32px 40px;
+    }
+
+    .bd-ruolo__costo .bd-ruolo__titolo {
+      margin: 0;
+    }
+  }
+
+  /* «Com'è fatta la casa»: la parete grande (chiara) e i pulsanti degli strati accanto o sotto */
+  .bd-sistema__griglia {
+    display: grid;
+    gap: 32px;
+  }
+
+  .bd-sistema__disegno,
+  .bd-sistema__strati {
+    display: grid;
+    gap: 16px;
+    align-content: start;
+    min-width: 0;
+  }
+
+  .bd-sistema__figura {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+  }
+
+  .bd-sistema__figura figcaption {
+    text-align: center;
+  }
+
+  .bd-sistema__tela {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .bd-js .bd-sistema__tela .bd-strato {
+    cursor: pointer;
+  }
+
+  .bd-sistema__fatti {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-weight: 500;
+  }
+
+  .bd-strati {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .bd-strati__voce {
+    border: 1px solid var(--bd-linea);
+    border-radius: 14px;
+    background: var(--bd-carta);
+    transition: border-color 0.2s ease;
+  }
+
+  .bd-strati__voce:has([aria-expanded='true']) {
+    border-color: var(--bd-accento);
+  }
+
+  .bd-strati__intestazione {
+    margin: 0;
+    font-size: inherit;
+    letter-spacing: normal;
+  }
+
+  .bd-strati__pulsante {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    width: 100%;
+    min-height: 56px;
+    padding: 12px 16px;
+    border: 0;
+    border-radius: 14px;
+    background: transparent;
+    color: var(--bd-testo);
+    font-family: var(--bd-font-testo);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    line-height: 1.3;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .bd-strati__numero {
+    display: inline-grid;
+    flex: none;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border: 1.5px solid var(--bd-dettaglio);
+    border-radius: 50%;
+    color: var(--bd-testo-2);
+    font-family: var(--bd-font-titoli);
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .bd-strati__nome {
+    flex: 1;
+  }
+
+  .bd-strati__freccia {
+    flex: none;
+    color: var(--bd-testo-2);
+    transition: transform 0.2s ease;
+  }
+
+  .bd-strati__pulsante[aria-expanded='true'] .bd-strati__freccia {
+    transform: rotate(180deg);
+  }
+
+  .bd-strati__riquadro {
+    padding: 0 16px 16px 56px;
+    color: var(--bd-testo-2);
+  }
+
+  /* Colonne allineate in alto: aprendo un riquadro si allunga solo l'elenco, il disegno e i pulsanti sopra restano fermi */
+  @media (min-width: 1024px) {
+    .bd-sistema__griglia {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      gap: 56px;
+      align-items: start;
+    }
+  }
+}
+
+/* I riquadri si aprono con una dissolvenza di 200 ms; con la riduzione del movimento si aprono e basta */
+@media (prefers-reduced-motion: no-preference) {
+  .bd-strati__riquadro:not([hidden]) {
+    animation: bd-apri 0.2s ease-out;
+  }
+}
+
+@keyframes bd-apri {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+/* Il disegno di «Com'è fatta la casa». Queste regole stanno fuori dai layer: devono vincere sullo <style> dentro l'SVG,
+   che non è stratificato (una regola in @layer perde sempre contro una non stratificata, qualunque sia la specificità). */
+
+/* Leggibilità a 390 px: retini e bordi dei tondini almeno 1 px a schermo (il disegno è largo almeno 301 px) */
+.bd-parete--sistema .bdss-retino,
+.bd-parete--sistema .bdss-tondino {
+  stroke-width: 1;
+}
+
+/* Lo strato del riquadro aperto si vede nel disegno: esce di 10 unità dalla parete, bordo rovere, facce appena tinte.
+   Gli altri restano pieni: con l'opacità gli strati sovrapposti diventerebbero trasparenti. «translate» si somma
+   al transform dello stacco (--bd-esplodi) senza toccarlo. */
+.bd-sistema__tela .bd-strato {
+  transition: translate 0.25s ease;
+}
+
+.bd-sistema__tela[data-strato-attivo='1'] .bd-strato-1,
+.bd-sistema__tela[data-strato-attivo='2'] .bd-strato-2,
+.bd-sistema__tela[data-strato-attivo='3'] .bd-strato-3,
+.bd-sistema__tela[data-strato-attivo='4'] .bd-strato-4 {
+  translate: 0 -10px;
+}
+
+.bd-sistema__tela[data-strato-attivo='1'] .bd-strato-1 .bdss-l,
+.bd-sistema__tela[data-strato-attivo='2'] .bd-strato-2 .bdss-l,
+.bd-sistema__tela[data-strato-attivo='3'] .bd-strato-3 .bdss-l,
+.bd-sistema__tela[data-strato-attivo='4'] .bd-strato-4 .bdss-l {
+  stroke: var(--bd-dettaglio);
+  stroke-width: 2;
+}
+
+.bd-sistema__tela[data-strato-attivo='1'] .bd-strato-1 .bdss-pieno,
+.bd-sistema__tela[data-strato-attivo='2'] .bd-strato-2 .bdss-pieno,
+.bd-sistema__tela[data-strato-attivo='3'] .bd-strato-3 .bdss-pieno,
+.bd-sistema__tela[data-strato-attivo='4'] .bd-strato-4 .bdss-pieno {
+  fill: color-mix(in srgb, var(--bd-dettaglio) 16%, var(--bd-carta));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bd-strati__voce,
+  .bd-strati__freccia,
+  .bd-sistema__tela .bd-strato {
+    transition: none;
+  }
+}
+
+/* ---------- Il percorso del cantiere in «Come funziona» (§2: illustrazioni AI, sempre dichiarate) ---------- */
+
+@layer components {
+  .bd-percorso {
+    margin-top: 56px;
+  }
+
+  .bd-percorso__titolo {
+    margin: 0 0 16px;
+  }
+
+  .bd-percorso__figura {
+    margin: 0;
+  }
+
+  /* Mobile: striscia a tutta larghezza che si scorre di lato; i bordi sfumano nella pagina */
+  .bd-percorso__scorri {
+    margin-inline: -16px;
+    padding-inline: 16px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 16px;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 40px), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 40px), transparent 100%);
+  }
+
+  .bd-percorso__scorri::-webkit-scrollbar {
+    display: none;
+  }
+
+  .bd-percorso__scorri:focus-visible {
+    outline: 2px solid var(--bd-accento);
+    outline-offset: 3px;
+  }
+
+  .bd-percorso__elenco {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: min(64vw, 260px);
+    gap: 12px;
+    margin: 0;
+    padding: 0 0 4px;
+    list-style: none;
+  }
+
+  .bd-percorso__fase {
+    display: grid;
+    gap: 10px;
+    align-content: start;
+    scroll-snap-align: start;
+  }
+
+  /* Il fondo dell'immagine si dissolve nella pagina, come le ville */
+  .bd-percorso__immagine {
+    display: block;
+    aspect-ratio: 2 / 3;
+    overflow: hidden;
+    border-radius: 20px 20px 0 0;
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 70%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 0%, #000 70%, transparent 100%);
+  }
+
+  .bd-percorso__immagine picture,
+  .bd-percorso__immagine img {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .bd-percorso__immagine img {
+    object-fit: cover;
+  }
+
+  .bd-percorso__etichetta {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    margin-top: -36px;
+    padding-inline: 4px;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    line-height: 1.35;
+  }
+
+  .bd-percorso__numero {
+    flex: none;
+    color: var(--bd-testo-2);
+    font-size: 0.875rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bd-percorso__nota {
+    margin-top: 16px;
+    color: var(--bd-testo-2);
+    font-size: 0.875rem;
+  }
+
+  @media (min-width: 1024px) {
+    .bd-percorso {
+      margin-top: 72px;
+    }
+
+    .bd-percorso__scorri {
+      margin-inline: 0;
+      padding-inline: 0;
+      overflow: visible;
+      -webkit-mask-image: none;
+      mask-image: none;
+    }
+
+    .bd-percorso__elenco {
+      grid-auto-flow: row;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 16px;
+    }
+  }
+}
+
+/* ---------- Step 6: «Realizzazioni», «Partner», FAQ, «Chiusura» ---------- */
+
+@layer components {
+  /* Realizzazioni (solo con P1_OK «sì»): su mobile si scorre di lato con lo snap, da 1024 px griglia a 3 colonne */
+  .bd-real__scorri {
+    margin-inline: calc(-1 * var(--bd-gutter));
+    padding-inline: var(--bd-gutter);
+    scroll-padding-inline: var(--bd-gutter);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .bd-real__scorri::-webkit-scrollbar {
+    display: none;
+  }
+
+  .bd-real__elenco {
+    display: grid;
+    grid-auto-columns: 82%;
+    grid-auto-flow: column;
+    gap: 16px;
+    margin: 0;
+    padding: 0 0 4px;
+    list-style: none;
+  }
+
+  .bd-real__card {
+    display: grid;
+    gap: 6px;
+    align-content: start;
+    overflow: hidden;
+    padding-bottom: 20px;
+    border: 1px solid var(--bd-linea);
+    border-radius: var(--bd-raggio-card);
+    background: var(--bd-carta);
+    scroll-snap-align: start;
+  }
+
+  .bd-real__media {
+    position: relative;
+    margin: 0 0 10px;
+    aspect-ratio: 4 / 3;
+    background: var(--bd-fondo);
+  }
+
+  .bd-real__media img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .bd-real__media .bd-real__illustrazione {
+    padding: 16px;
+    object-fit: contain;
+  }
+
+  .bd-real__dicitura {
+    position: absolute;
+    bottom: 10px;
+    left: 12px;
+    padding: 2px 8px;
+    border-radius: var(--bd-raggio-tecnico);
+    background: var(--bd-carta);
+    color: var(--bd-testo-2);
+    font-size: 0.875rem;
+  }
+
+  .bd-real__card > :not(.bd-real__media) {
+    margin: 0;
+    padding-inline: 20px;
+  }
+
+  .bd-real__dati {
+    color: var(--bd-testo-2);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bd-real__indice {
+    margin: 12px 0 0;
+    color: var(--bd-testo-2);
+    font-family: var(--bd-font-titoli);
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+  }
+
+  .bd-real__nota {
+    margin: 16px 0 0;
+  }
+
+  @media (min-width: 1024px) {
+    .bd-real__scorri {
+      margin-inline: 0;
+      padding-inline: 0;
+      overflow: visible;
+    }
+
+    .bd-real__elenco {
+      grid-auto-flow: row;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 24px;
+    }
+
+    .bd-real__indice {
+      display: none;
+    }
+  }
+
+  /* Partner (solo con autorizzazione «sì») */
+  .bd-partner__elenco {
+    display: grid;
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .bd-partner__voce {
+    display: grid;
+    gap: 10px;
+    align-content: start;
+    padding: 28px 24px;
+    border: 1px solid var(--bd-linea);
+    border-radius: var(--bd-raggio-card);
+    background: var(--bd-carta);
+  }
+
+  .bd-partner__logo {
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+  }
+
+  .bd-partner__logo img {
+    width: auto;
+    max-width: 100%;
+    height: 40px;
+  }
+
+  .bd-partner__nome,
+  .bd-partner__ruolo {
+    margin: 0;
+  }
+
+  .bd-partner__ruolo {
+    color: var(--bd-testo-2);
+  }
+
+  .bd-partner__link {
+    display: inline-flex;
+    align-items: center;
+    justify-self: start;
+    min-height: 44px;
+    font-weight: 600;
+  }
+
+  @media (min-width: 768px) {
+    .bd-partner__elenco {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+    }
+  }
+
+  /* FAQ: righe da tavola tecnica, una linea sopra e una sotto ogni domanda */
+  .bd-faq__elenco {
+    max-width: 880px;
+    border-top: 1px solid var(--bd-linea);
+  }
+
+  .bd-faq__voce {
+    border-bottom: 1px solid var(--bd-linea);
+  }
+
+  .bd-faq__intestazione {
+    margin: 0;
+    font-size: inherit;
+    letter-spacing: normal;
+  }
+
+  .bd-faq__domanda {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 64px;
+    padding: 16px 0;
+    border: 0;
+    background: transparent;
+    color: var(--bd-testo);
+    font-family: var(--bd-font-titoli);
+    font-size: 1.125rem;
+    font-weight: 650;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    text-align: left;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  summary.bd-faq__domanda::-webkit-details-marker {
+    display: none;
+  }
+
+  .bd-faq__freccia {
+    flex: none;
+    color: var(--bd-testo-2);
+    transition: transform 0.2s ease;
+  }
+
+  .bd-faq__domanda[aria-expanded='true'] .bd-faq__freccia,
+  details[open] > .bd-faq__domanda .bd-faq__freccia {
+    transform: rotate(180deg);
+  }
+
+  .bd-faq__risposta {
+    max-width: 65ch;
+    padding: 0 36px 20px 0;
+    color: var(--bd-testo-2);
+  }
+
+  /* Da 1024 px titolo a sinistra e domande a destra, come una tavola con il cartiglio */
+  @media (min-width: 1024px) {
+    .bd-faq > .bd-wrap {
+      display: grid;
+      grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+      gap: 56px;
+      align-items: start;
+    }
+
+    .bd-faq .bd-sezione__titolo {
+      position: sticky;
+      top: calc(var(--bd-header-h) + 32px);
+    }
+
+    .bd-faq__domanda {
+      font-size: 1.25rem;
+    }
+  }
+
+  /* Chiusura: una tavola con la griglia da tavolo tecnico e la parete piccola in chiaro */
+  .bd-chiusura__tavola {
+    display: grid;
+    gap: 28px;
+    align-items: center;
+    padding: 32px 20px;
+    border: 1px solid var(--bd-linea);
+    border-radius: var(--bd-raggio-card);
+    background-color: var(--bd-carta);
+    background-image:
+      linear-gradient(var(--bd-griglia) 1px, transparent 1px),
+      linear-gradient(90deg, var(--bd-griglia) 1px, transparent 1px);
+    background-position: -1px -1px;
+    background-size: 32px 32px;
+  }
+
+  .bd-chiusura__testo {
+    display: grid;
+    gap: 16px;
+    justify-items: start;
+  }
+
+  .bd-chiusura__testo .bd-sezione__titolo {
+    margin: 0;
+  }
+
+  .bd-chiusura__frase {
+    max-width: 40ch;
+    margin: 0;
+    color: var(--bd-testo-2);
+    font-size: 1.125rem;
+  }
+
+  .bd-chiusura__canali {
+    display: grid;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .bd-chiusura__pulsanti {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  /* Su mobile il disegno sta sopra il testo; da 1024 px a destra */
+  .bd-chiusura__disegno {
+    display: grid;
+    order: -1;
+    gap: 4px;
+    justify-items: center;
+    margin: 0;
+  }
+
+  .bd-parete--chiusura svg {
+    max-width: 280px;
+  }
+
+  @media (min-width: 1024px) {
+    .bd-chiusura__tavola {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      gap: 48px;
+      padding: 64px;
+    }
+
+    .bd-chiusura__disegno {
+      order: 0;
+    }
+
+    .bd-parete--chiusura svg {
+      max-width: 340px;
+    }
+  }
+}
+
+/* Riquadri delle FAQ: dissolvenza di 200 ms; con la riduzione del movimento si aprono e basta */
+@media (prefers-reduced-motion: no-preference) {
+  .bd-faq__risposta:not([hidden]) {
+    animation: bd-apri 0.2s ease-out;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bd-faq__freccia {
+    transition: none;
+  }
+}
+
+/* ---------- Step 7: banner dei cookie e pagine statiche (privacy, cookie, grazie, 404) ---------- */
+
+@layer components {
+  /* Contatti del footer: il separatore «·» sta prima della voce che segue e va a capo con lei (mai a fine riga).
+     Il testo alternativo vuoto lo tiene fuori dai lettori di schermo; i browser che non lo capiscono usano la riga prima. */
+  .bd-footer__segue {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .bd-footer__segue::before {
+    content: '·';
+    content: '·' / '';
+    margin-right: 0.28em;
+  }
+
+  /* Con il banner aperto la pagina ha in fondo uno spazio alto quanto lui (--bd-banner-h, scritto da BdBannerCookie):
+     l'ultima riga del footer, con «Gestisci cookie», si può sempre raggiungere e toccare. Nessuno spostamento visibile. */
+  body {
+    padding-bottom: var(--bd-banner-h, 0px);
+  }
+
+  /* Banner dei cookie (§8, §10 punto 4): in basso, testo piccolo (non diventa l'elemento LCP).
+     «Rifiuta» e «Accetta» con la stessa misura e lo stesso aspetto; la X in alto a destra vale come rifiuto. */
+  .bd-banner {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 50;
+    display: grid;
+    gap: 10px;
+    padding: 14px var(--bd-gutter) max(14px, env(safe-area-inset-bottom));
+    border-top: 1px solid var(--bd-linea);
+    background: var(--bd-carta);
+    color: var(--bd-testo);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    box-shadow: 0 -16px 32px -28px rgb(31 35 38 / 0.5);
+  }
+
+  .bd-banner__testo {
+    max-width: 60ch;
+    margin: 0;
+    padding-right: 40px;
+  }
+
+  .bd-banner__stato {
+    color: var(--bd-testo-2);
+  }
+
+  .bd-banner__azioni {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+    align-items: center;
+  }
+
+  .bd-banner__link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding-right: 4px;
+    white-space: nowrap;
+  }
+
+  .bd-banner__scelta {
+    min-height: 44px;
+    padding: 0 12px;
+    border: 1.5px solid var(--bd-accento);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--bd-accento);
+    font: inherit;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+
+  .bd-banner__scelta:hover {
+    background: var(--bd-fondo);
+  }
+
+  .bd-banner__chiudi {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--bd-testo-2);
+    cursor: pointer;
+  }
+
+  .bd-banner__chiudi:hover {
+    color: var(--bd-testo);
+  }
+
+  /* Da 768 px una barra bassa a tutta larghezza, allineata al contenuto: testo a sinistra, scelte a destra.
+     Resta sotto la CTA dell'hero (a 1440 × 900 la CTA finisce a 757 px, la barra comincia dopo gli 820). */
+  @media (min-width: 768px) {
+    .bd-banner {
+      --bd-margine: max(var(--bd-gutter), calc((100% - 1200px) / 2));
+      grid-template-columns: minmax(0, 1fr) auto;
+      column-gap: 24px;
+      align-items: center;
+      padding: 12px calc(var(--bd-margine) + 48px) 12px var(--bd-margine);
+    }
+
+    .bd-banner__testo {
+      padding-right: 0;
+    }
+
+    .bd-banner__azioni {
+      grid-template-columns: auto 140px 140px;
+    }
+
+    .bd-banner__chiudi {
+      top: 50%;
+      right: calc(var(--bd-margine) - 6px);
+      transform: translateY(-50%);
+    }
+  }
+
+  /* Pagine statiche: testata con il logo, contenuto, piede con i dati legali */
+  .bd-pagina__testata {
+    padding-block: 14px;
+    border-bottom: 1px solid var(--bd-linea);
+  }
+
+  .bd-pagina {
+    padding-block: 48px 96px;
+  }
+
+  @media (min-width: 1024px) {
+    .bd-pagina {
+      padding-block: 72px 128px;
+    }
+  }
+
+  /* Riquadro di avviso: testi da far verificare, dati mancanti */
+  .bd-avviso {
+    padding: 12px 16px;
+    border: 1px solid var(--bd-linea);
+    border-left: 4px solid var(--bd-accento);
+    border-radius: var(--bd-raggio-tecnico);
+    background: var(--bd-carta);
+    color: var(--bd-testo);
+    font-weight: 600;
+  }
+
+  /* Informativa privacy e cookie policy: righe di 65 caratteri, titoli in scala */
+  .bd-documento {
+    max-width: 760px;
+  }
+
+  .bd-documento > .bd-avviso {
+    margin: 0 0 32px;
+  }
+
+  .bd-documento h1 {
+    margin: 0 0 8px;
+    font-size: clamp(2.25rem, 4vw + 1rem, 3.5rem);
+  }
+
+  .bd-documento h2 {
+    margin: 40px 0 12px;
+    font-size: 1.375rem;
+    font-weight: 650;
+    line-height: 1.2;
+  }
+
+  .bd-documento p,
+  .bd-documento ul {
+    max-width: 65ch;
+    margin: 0 0 12px;
+  }
+
+  .bd-documento ul {
+    padding-left: 1.25em;
+    list-style: disc;
+  }
+
+  .bd-documento li + li {
+    margin-top: 6px;
+  }
+
+  .bd-documento li::marker {
+    color: var(--bd-dettaglio);
+  }
+
+  .bd-documento__data {
+    color: var(--bd-testo-2);
+    font-size: 0.875rem;
+  }
+
+  .bd-documento__intro {
+    font-size: 1.125rem;
+  }
+
+  .bd-documento__tabella {
+    width: 100%;
+    max-width: 65ch;
+    margin: 4px 0 16px;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+  }
+
+  .bd-documento__tabella th,
+  .bd-documento__tabella td {
+    padding: 10px 12px 10px 0;
+    border-bottom: 1px solid var(--bd-linea);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .bd-documento__tabella thead th {
+    color: var(--bd-testo-2);
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .bd-documento code {
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+    font-size: 0.875em;
+  }
+}
+
+/* Il banner entra con una dissolvenza di 200 ms; con la riduzione del movimento compare e basta */
+@media (prefers-reduced-motion: no-preference) {
+  .bd-banner {
+    animation: bd-banner-entra 0.2s ease-out;
+  }
+}
+
+@keyframes bd-banner-entra {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}

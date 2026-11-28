@@ -1,0 +1,250 @@
+{
+  "nota": "Generato da studio/immagini.mjs (npm run immagini). Alt, credito e «dove» si cambiano lì, non qui.",
+  "logo": {
+    "impilato": {
+      "file": "src/assets/svg/bd-logo.svg",
+      "width": 1272,
+      "height": 494
+    },
+    "orizzontale": {
+      "file": "src/assets/svg/bd-logo-orizzontale.svg",
+      "width": 1971.1,
+      "height": 262.1
+    },
+    "impilatoNegativo": {
+      "file": "src/assets/svg/bd-logo-negativo.svg",
+      "width": 1272,
+      "height": 494
+    },
+    "orizzontaleNegativo": {
+      "file": "src/assets/svg/bd-logo-orizzontale-negativo.svg",
+      "width": 1971.1,
+      "height": 262.1
+    }
+  },
+  "immagini": [
+    {
+      "id": "sezione",
+      "tipo": "illustrazione",
+      "file": "src/assets/svg/bd-sezione.svg",
+      "formati": [
+        "svg"
+      ],
+      "larghezze": [
+        301
+      ],
+      "width": 301,
+      "height": 272,
+      "alt": "Disegno in sezione della parete: strato isolante esterno, calcestruzzo armato con i tondini d'acciaio, strato isolante interno e intonaco.",
+      "credito": "Illustrazione",
+      "dicitura": "Illustrazione schematica, non in scala.",
+      "dove": "BdSistema, disegno grande con gli strati bd-strato-1…4 che si aprono al tocco; BdHero, la sezione animata",
+      "autorizzazione": "non serve: disegno originale del progetto"
+    },
+    {
+      "id": "assonometria",
+      "tipo": "illustrazione",
+      "file": "src/assets/svg/bd-assonometria.svg",
+      "formati": [
+        "svg"
+      ],
+      "larghezze": [
+        400
+      ],
+      "width": 400,
+      "height": 360,
+      "alt": "Assonometria schematica di una casa moderna su due piani, con vetrate, serramenti antracite e rivestimento in legno.",
+      "credito": "Illustrazione",
+      "dicitura": "Illustrazione",
+      "dove": "ripiego per BdRealizzazioni se mancano foto autorizzate; oggi non usata",
+      "autorizzazione": "non serve: disegno originale del progetto"
+    },
+    {
+      "id": "pianta",
+      "tipo": "illustrazione",
+      "file": "src/assets/svg/bd-pianta.svg",
+      "formati": [
+        "svg"
+      ],
+      "larghezze": [
+        412
+      ],
+      "width": 412,
+      "height": 316,
+      "alt": "Pianta schematica di una casa su un piano, con muri, porte, finestre e quote.",
+      "credito": "Illustrazione",
+      "dicitura": "Illustrazione",
+      "dove": "BdRealizzazioni, al posto delle foto finché P1_OK è «no» (oggi la sezione è nascosta)",
+      "autorizzazione": "non serve: disegno originale del progetto"
+    },
+    {
+      "id": "villa-dal-disegno",
+      "tipo": "illustrazione-ai",
+      "file": "src/assets/illustrazioni/bd-villa-dal-disegno",
+      "formati": [
+        "avif",
+        "webp"
+      ],
+      "larghezze": [
+        672,
+        1200
+      ],
+      "width": 1200,
+      "height": 381,
+      "varianti": {
+        "mobile": {
+          "larghezza": 672,
+          "width": 672,
+          "height": 448
+        },
+        "largo": {
+          "larghezza": 1200,
+          "width": 1200,
+          "height": 381
+        }
+      },
+      "alt": "Illustrazione: una villa moderna al tramonto che a sinistra è ancora un disegno di linee e a destra è già finita.",
+      "credito": "Illustrazione generata con l'AI, non è una casa costruita",
+      "dicitura": "Illustrazione",
+      "dove": "BdHero, in fondo: la casa che nasce dal disegno, sfumata dal fondo scuro dell'hero al chiaro della pagina",
+      "autorizzazione": "scelta di Niko del 23 novembre 2026 (CLAUDE.md §2)"
+    },
+    {
+      "id": "villa-tramonto",
+      "tipo": "illustrazione-ai",
+      "file": "src/assets/illustrazioni/bd-villa-tramonto",
+      "formati": [
+        "avif",
+        "webp"
+      ],
+      "larghezze": [
+        640,
+        1052
+      ],
+      "width": 1052,
+      "height": 478,
+      "varianti": {
+        "mobile": {
+          "larghezza": 640,
+          "width": 640,
+          "height": 291
+        },
+        "largo": {
+          "larghezza": 1052,
+          "width": 1052,
+          "height": 478
+        }
+      },
+      "alt": "Illustrazione: una villa moderna su due piani al tramonto, con le luci accese e una piscina davanti.",
+      "credito": "Illustrazione generata con l'AI, non è una casa costruita",
+      "dicitura": "Illustrazione",
+      "dove": "subito prima del modulo (#preventivo): la casa finita, sfumata nel fondo chiaro",
+      "autorizzazione": "scelta di Niko del 23 novembre 2026 (CLAUDE.md §2)"
+    },
+    {
+      "id": "percorso-1-progetto",
+      "tipo": "illustrazione-ai",
+      "gruppo": "percorso",
+      "fase": 1,
+      "file": "src/assets/illustrazioni/bd-percorso-1-progetto",
+      "formati": [
+        "avif",
+        "webp"
+      ],
+      "larghezze": [
+        332
+      ],
+      "width": 332,
+      "height": 498,
+      "alt": "Illustrazione: il progetto della casa sul tavolo, con le piante stampate, un metro e il portatile.",
+      "credito": "Illustrazione generata con l'AI, non è una casa costruita",
+      "dicitura": "Illustrazione",
+      "dove": "BdComeFunziona: il percorso del cantiere, dal progetto alla casa finita",
+      "autorizzazione": "scelta di Niko del 25 novembre 2026 (CLAUDE.md §2)"
+    },
+    {
+      "id": "percorso-2-fondazioni",
+      "tipo": "illustrazione-ai",
+      "gruppo": "percorso",
+      "fase": 2,
+      "file": "src/assets/illustrazioni/bd-percorso-2-fondazioni",
+      "formati": [
+        "avif",
+        "webp"
+      ],
+      "larghezze": [
+        332
+      ],
+      "width": 332,
+      "height": 498,
+      "alt": "Illustrazione: lo scavo con le fondazioni in calcestruzzo, i ferri d'armatura e le casseforme di legno.",
+      "credito": "Illustrazione generata con l'AI, non è una casa costruita",
+      "dicitura": "Illustrazione",
+      "dove": "BdComeFunziona: il percorso del cantiere, dal progetto alla casa finita",
+      "autorizzazione": "scelta di Niko del 25 novembre 2026 (CLAUDE.md §2)"
+    },
+    {
+      "id": "percorso-3-casseri",
+      "tipo": "illustrazione-ai",
+      "gruppo": "percorso",
+      "fase": 3,
+      "file": "src/assets/illustrazioni/bd-percorso-3-casseri",
+      "formati": [
+        "avif",
+        "webp"
+      ],
+      "larghezze": [
+        332
+      ],
+      "width": 332,
+      "height": 498,
+      "alt": "Illustrazione: le pareti fatte di casseri isolanti bianchi, con i ferri d'armatura e il calcestruzzo gettato dentro.",
+      "credito": "Illustrazione generata con l'AI, non è una casa costruita",
+      "dicitura": "Illustrazione",
+      "dove": "BdComeFunziona: il percorso del cantiere, dal progetto alla casa finita",
+      "autorizzazione": "riquadro rifatto con i casseri isolanti, scelta di Niko del 25 novembre 2026 (CLAUDE.md §2)"
+    },
+    {
+      "id": "percorso-4-impianti",
+      "tipo": "illustrazione-ai",
+      "gruppo": "percorso",
+      "fase": 4,
+      "file": "src/assets/illustrazioni/bd-percorso-4-impianti",
+      "formati": [
+        "avif",
+        "webp"
+      ],
+      "larghezze": [
+        332
+      ],
+      "width": 332,
+      "height": 498,
+      "alt": "Illustrazione: l'interno al grezzo, con i tubi del riscaldamento a pavimento stesi sull'isolante.",
+      "credito": "Illustrazione generata con l'AI, non è una casa costruita",
+      "dicitura": "Illustrazione",
+      "dove": "BdComeFunziona: il percorso del cantiere, dal progetto alla casa finita",
+      "autorizzazione": "scelta di Niko del 25 novembre 2026 (CLAUDE.md §2)"
+    },
+    {
+      "id": "percorso-5-casa-finita",
+      "tipo": "illustrazione-ai",
+      "gruppo": "percorso",
+      "fase": 5,
+      "file": "src/assets/illustrazioni/bd-percorso-5-casa-finita",
+      "formati": [
+        "avif",
+        "webp"
+      ],
+      "larghezze": [
+        332
+      ],
+      "width": 332,
+      "height": 498,
+      "alt": "Illustrazione: la casa finita, bianca, con il giardino davanti.",
+      "credito": "Illustrazione generata con l'AI, non è una casa costruita",
+      "dicitura": "Illustrazione",
+      "dove": "BdComeFunziona: il percorso del cantiere, dal progetto alla casa finita",
+      "autorizzazione": "scelta di Niko del 25 novembre 2026 (CLAUDE.md §2)"
+    }
+  ]
+}

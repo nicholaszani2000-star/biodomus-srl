@@ -1,0 +1,518 @@
+{
+  "meta": {
+    "titolo": "{BRAND} · Costruisci casa con un solo referente",
+    "descrizione": "Costruzione di case in {ZONA}: {BRAND} ti mette in contatto con l'impresa adatta e ti segue fino alle chiavi."
+  },
+  "comuni": {
+    "saltaAlContenuto": "Vai al contenuto",
+    "tornaInizio": "{BRAND}, torna all'inizio",
+    "illustrazione": "Illustrazione",
+    "nuovaScheda": "(si apre in una nuova scheda)"
+  },
+  "header": {
+    "linkComeFunziona": "Come funziona",
+    "cta": "Richiedi un preventivo"
+  },
+  "hero": {
+    "occhiello": "Costruzione di case in {ZONA}",
+    "angoli": {
+      "famiglia": {
+        "titolo": "La casa che vuoi, con un solo referente dal progetto alle chiavi.",
+        "sottotitolo": "{BRAND} ti mette in contatto con l'impresa adatta in {ZONA} e segue il tuo progetto passo per passo."
+      },
+      "terreno": {
+        "titolo": "Hai il terreno. Ora serve chi lo trasforma in casa.",
+        "sottotitolo": "Raccontaci lotto e idea: {BRAND} porta il progetto all'impresa partner e ti segue fino alla consegna."
+      },
+      "investo": {
+        "titolo": "Costruire per investire, con un solo interlocutore.",
+        "sottotitolo": "Villette e piccoli complessi in {ZONA}: {BRAND} coordina impresa, tempi e cantiere."
+      }
+    },
+    "ctaPrimaria": "Richiedi un preventivo",
+    "ctaSecondaria": "Come funziona",
+    "sottoCta": "Ti risponde {REFERENTE}, {TEMPO_RISPOSTA}.",
+    "fatti": {
+      "tempi": "Consegna: {TEMPI}",
+      "classe": "Classe energetica {CLASSE} nelle ultime realizzazioni",
+      "sistema": "{SISTEMA_BREVE}"
+    },
+    "parete": {
+      "titolo": "Parete in prospettiva: isolante esterno, calcestruzzo armato, isolante interno, intonaco",
+      "nota": "Illustrazione schematica, non in scala."
+    },
+    "fattiTitolo": "In breve"
+  },
+  "illustrazioni": {
+    "dicitura": "Illustrazione"
+  },
+  "perChi": {
+    "titolo": "Per chi è {BRAND}",
+    "card": [
+      {
+        "profilo": "casa",
+        "titolo": "Vuoi costruire casa",
+        "testo": "Hai un'idea e un budget. Ti aiutiamo a capire cosa si può fare, dove e con chi.",
+        "cta": "Parti dal tuo progetto"
+      },
+      {
+        "profilo": "terreno",
+        "titolo": "Hai già il terreno",
+        "testo": "Portaci i dati del lotto: verifichiamo con l'impresa cosa si può costruire e a che costo.",
+        "cta": "Parti dal terreno"
+      },
+      {
+        "profilo": "investimento",
+        "titolo": "Vuoi investire",
+        "testo": "Villette o piccoli complessi residenziali: un solo interlocutore per impresa, tempi e cantiere.",
+        "cta": "Parliamo del progetto"
+      }
+    ]
+  },
+  "comeFunziona": {
+    "titolo": "Come funziona",
+    "intro": "Quattro passaggi. In ognuno sai chi fa cosa.",
+    "passaggi": [
+      {
+        "titolo": "Ci racconti il progetto",
+        "testo": "Compili il modulo. {REFERENTE} ti richiama, ascolta idea, zona, terreno e budget e ti dice con franchezza cosa è realistico."
+      },
+      {
+        "titolo": "Progetto e preventivo",
+        "testo": "L'impresa partner prepara progetto e preventivo dettagliato. Puoi anche partire dal progetto del tuo tecnico. {REFERENTE} li rivede con te, voce per voce."
+      },
+      {
+        "titolo": "Contratto e permessi",
+        "testo": "Firmi il contratto con l'impresa. Si avviano le pratiche per il permesso di costruire."
+      },
+      {
+        "titolo": "Cantiere e chiavi",
+        "testo": "{REFERENTE} resta il tuo riferimento durante il cantiere, fino alla consegna.",
+        "tempi": "Tempi indicativi: {TEMPI}."
+      }
+    ],
+    "percorso": {
+      "titolo": "Il cantiere, fase per fase",
+      "regione": "Le fasi del cantiere: scorri di lato",
+      "fasi": ["Progetto", "Fondazioni", "Pareti in casseri isolanti", "Impianti", "Casa finita"],
+      "nota": "Illustrazioni: le fasi di un cantiere tipo, non foto di case costruite."
+    },
+    "cta": "Richiedi un preventivo"
+  },
+  "ruolo": {
+    "titolo": "Un solo referente, dall'inizio alla fine",
+    "testo": "{BRAND} non è un'impresa di costruzioni. Sceglie l'impresa, coordina il lavoro e ti segue. Parli con una persona sola, non con dieci.",
+    "colonne": [
+      {
+        "titolo": "Cosa fa {BRAND}",
+        "voci": [
+          "Ascolta il progetto",
+          "Lo porta all'impresa adatta",
+          "Rivede con te preventivo e contratto",
+          "Segue tempi e cantiere"
+        ]
+      },
+      {
+        "titolo": "Cosa fa l'impresa",
+        "voci": [
+          "Progetta e costruisce",
+          "Firma il contratto con te e ne risponde"
+        ]
+      },
+      {
+        "titolo": "Cosa fai tu",
+        "voci": [
+          "Decidi",
+          "Firmi",
+          "Entri in casa"
+        ]
+      }
+    ],
+    "costoTitolo": "Quanto costa il servizio",
+    "costoTesto": "{COSTO_SERVIZIO}"
+  },
+  "sistema": {
+    "titolo": "Com'è fatta la casa, dentro le pareti",
+    "testo": "{SISTEMA}. Struttura e isolamento nascono insieme.",
+    "strati": [
+      {
+        "titolo": "Strato isolante esterno",
+        "testo": "Il cassero isolante resta nella parete e fa da isolamento."
+      },
+      {
+        "titolo": "Calcestruzzo armato",
+        "testo": "La struttura che porta la casa, con l'armatura in acciaio dentro il getto."
+      },
+      {
+        "titolo": "Strato isolante interno",
+        "testo": "Chiude l'isolamento verso l'interno."
+      },
+      {
+        "titolo": "Intonaco e finiture",
+        "testo": "Quello che vedi e tocchi ogni giorno."
+      }
+    ],
+    "fatti": {
+      "classe": "Classe energetica {CLASSE} nelle ultime realizzazioni di {P1_NOME}",
+      "garanzia": "{GARANZIA}"
+    },
+    "nota": "Illustrazione schematica, non in scala.",
+    "disegno": "Parete in prospettiva, quattro strati da fuori a dentro: isolante esterno, calcestruzzo armato con l'armatura in acciaio, isolante interno, intonaco",
+    "stratiTitolo": "Gli strati, da fuori a dentro",
+    "cta": "Richiedi un preventivo"
+  },
+  "realizzazioni": {
+    "titolo": "Alcune case realizzate da {P1_NOME}",
+    "superficie": "{mq} m²",
+    "classe": "classe {classe}",
+    "realizzataDa": "Realizzata da {P1_NOME}",
+    "nota": "Foto e dati forniti da {P1_NOME}.",
+    "cta": "Voglio una casa così",
+    "regione": "Elenco delle case realizzate",
+    "indice": "{n} di {totale}",
+    "illustrazioneAlt": "Illustrazione: assonometria schematica di una casa, al posto della foto che non c'è"
+  },
+  "partner": {
+    "titolo": "Le aziende con cui lavoriamo",
+    "titoloUno": "L'azienda con cui lavoriamo",
+    "link": "Sito ufficiale"
+  },
+  "modulo": {
+    "titolo": "Richiedi un preventivo",
+    "intro": "Tre passaggi, un minuto. Ti risponde {REFERENTE}, {TEMPO_RISPOSTA}.",
+    "avanzamento": "Passo {passo} di 3",
+    "passo1": {
+      "titolo": "Il progetto",
+      "domandaProfilo": "Per cosa ci contatti?",
+      "profili": {
+        "casa": "Una casa per me o per la mia famiglia",
+        "investimento": "Un investimento (villette, piccoli complessi)",
+        "altro": "Altro"
+      },
+      "domandaTerreno": "Hai già il terreno?",
+      "terreno": {
+        "si": "Sì",
+        "cerco": "Lo sto cercando",
+        "no": "No"
+      }
+    },
+    "passo2": {
+      "titolo": "Dove e quando",
+      "comune": "Comune o zona",
+      "comuneSuggerimento": "Seguiamo progetti in {ZONA}.",
+      "budget": "Budget indicativo",
+      "budgetSuggerimento": "Serve solo a capire cosa è realistico. Non ti vincola.",
+      "tempistica": "Quando vorresti iniziare?",
+      "tempistiche": {
+        "entro-6": "Entro 6 mesi",
+        "6-12": "Tra 6 e 12 mesi",
+        "oltre-12": "Oltre 12 mesi",
+        "valuto": "Sto solo valutando"
+      }
+    },
+    "passo3": {
+      "titolo": "I tuoi contatti",
+      "nome": "Nome e cognome",
+      "email": "Email",
+      "telefono": "Telefono",
+      "telefonoSuggerimento": "Se lo lasci ti chiamiamo: si fa prima.",
+      "messaggio": "Messaggio",
+      "messaggioSegnaposto": "Superficie, stile, domande…",
+      "facoltativo": "facoltativo",
+      "privacy": "Usiamo questi dati solo per risponderti e preparare il preventivo con l'impresa partner. Dettagli nell'",
+      "privacyLink": "informativa privacy",
+      "privacyFine": "."
+    },
+    "pulsanti": {
+      "avanti": "Avanti",
+      "indietro": "Indietro",
+      "invia": "Invia la richiesta",
+      "invio": "Invio in corso…"
+    },
+    "errori": {
+      "nome": "Scrivi il tuo nome e cognome",
+      "email": "Controlla l'email: sembra incompleta",
+      "telefono": "Il telefono deve avere almeno 9 cifre",
+      "scelta": "Scegli una risposta",
+      "comune": "Scrivi il comune o la zona",
+      "riepilogo": "Controlla questi campi:"
+    },
+    "successo": "Richiesta ricevuta. {REFERENTE} ti scrive {TEMPO_RISPOSTA}. Ti abbiamo mandato una copia via email: controlla anche lo spam.",
+    "erroreInvio": "Non siamo riusciti a inviare la richiesta. Riprova tra un minuto oppure scrivi a {EMAIL_PUBBLICA}.",
+    "email": {
+      "oggettoReferente": "Nuova richiesta · {profilo} · {comune} · {budget}",
+      "oggettoCliente": "Abbiamo ricevuto la tua richiesta · {BRAND}",
+      "corpoCliente": "Ciao {nome}, grazie per averci scritto. {REFERENTE} ti risponde {TEMPO_RISPOSTA}. Ecco cosa ci hai inviato: {riepilogo}. Per aggiungere qualcosa rispondi a questa email.",
+      "titoloReferente": "Nuova richiesta dal sito",
+      "etichette": {
+        "angolo": "Angolo della campagna",
+        "pagina": "Pagina",
+        "consenso": "Consenso ai cookie di marketing",
+        "dataOra": "Data e ora",
+        "codice": "Codice richiesta",
+        "si": "sì",
+        "no": "no",
+        "vuoto": "—"
+      }
+    },
+    "senzaJs": {
+      "titoloErrore": "Alcuni campi vanno corretti",
+      "torna": "Torna al modulo",
+      "tornaSito": "Torna al sito"
+    }
+  },
+  "grazie": {
+    "metaTitolo": "Richiesta ricevuta · {BRAND}",
+    "titolo": "Grazie per averci scritto."
+  },
+  "pagine": {
+    "tornaSitoEtichetta": "{BRAND}: torna alla pagina principale",
+    "aggiornamento": "Ultimo aggiornamento: {data}",
+    "avviso": "Testo da far verificare a un consulente privacy prima della pubblicazione.",
+    "datiMancanti": "Mancano i dati del titolare: questa pagina non è pronta per la pubblicazione.",
+    "navLegale": "Pagine legali",
+    "tabella": {
+      "nome": "Nome",
+      "scopo": "A cosa serve",
+      "durata": "Durata"
+    }
+  },
+  "privacy": {
+    "metaTitolo": "Informativa privacy · {BRAND}",
+    "metaDescrizione": "Come {BRAND} usa i dati del modulo di preventivo: chi li tratta, perché, per quanto tempo e quali sono i tuoi diritti.",
+    "titolo": "Informativa privacy",
+    "aggiornamento": "27 novembre 2026",
+    "intro": "Qui trovi come trattiamo i dati che ci lasci quando chiedi un preventivo su questo sito, come chiede l'articolo 13 del Regolamento europeo 2016/679 (GDPR).",
+    "sezioni": [
+      {
+        "titolo": "Chi è il titolare",
+        "contenuto": [
+          "Il titolare del trattamento è {TITOLARE}, {FORMA}, con sede in {SEDE}, partita IVA {PIVA}.",
+          "Per qualsiasi domanda sui tuoi dati scrivi a [{EMAIL_PUBBLICA}](mailto:{EMAIL_PUBBLICA}).",
+          "Indirizzo PEC: {PEC}."
+        ]
+      },
+      {
+        "titolo": "Quali dati raccogliamo",
+        "contenuto": [
+          "Quando compili il modulo di preventivo raccogliamo:",
+          [
+            "i dati del progetto: per cosa ci contatti, se hai già il terreno, comune o zona, budget indicativo e quando vorresti iniziare;",
+            "i tuoi contatti: nome e cognome, email e, se li scrivi, telefono e messaggio;",
+            "i dati della richiesta: data e ora, la pagina da cui scrivi e, se arrivi da un annuncio, i parametri della campagna da cui arrivi (utm) e, solo se accetti i cookie di marketing, l'identificativo del clic sull'annuncio (fbclid)."
+          ],
+          "Se accetti i cookie di marketing, il pixel di Meta raccoglie anche i dati descritti nella [cookie policy](/cookie.html).",
+          "Come ogni sito, il servizio che lo ospita tratta dati tecnici delle visite, come l'indirizzo IP e il tipo di browser, per farlo funzionare e proteggerlo."
+        ]
+      },
+      {
+        "titolo": "Perché li usiamo e su quale base",
+        "contenuto": [
+          [
+            "Per rispondere alla tua richiesta e preparare il preventivo con l'impresa partner. La base giuridica sono le misure precontrattuali che chiedi tu (articolo 6, paragrafo 1, lettera b del GDPR).",
+            "Per misurare i risultati delle campagne su Facebook e Instagram, solo se accetti i cookie di marketing. La base giuridica è il tuo consenso (articolo 6, paragrafo 1, lettera a), che puoi revocare quando vuoi.",
+            "Per far funzionare il sito e proteggerlo, con i dati tecnici delle visite. La base giuridica è il nostro legittimo interesse alla sicurezza del sito (articolo 6, paragrafo 1, lettera f)."
+          ],
+          "Non usiamo i tuoi dati per newsletter o promozioni e non li vendiamo a nessuno."
+        ]
+      },
+      {
+        "titolo": "Se non ci dai i dati",
+        "contenuto": [
+          "I campi obbligatori del modulo servono per risponderti: senza, non possiamo preparare il preventivo. Telefono e messaggio sono facoltativi."
+        ]
+      },
+      {
+        "titolo": "A chi li comunichiamo",
+        "contenuto": [
+          "Per preparare il preventivo i tuoi dati li riceve:",
+          [
+            "l'impresa partner che costruisce: l'impresa di costruzioni che prepara progetto e preventivo e con cui, se decidi di andare avanti, firmi il contratto;",
+            "l'impresa partner che produce il sistema costruttivo (casseri isolanti per pareti e solai), solo se serve per il preventivo."
+          ],
+          "Li trattano per nostro conto, come responsabili del trattamento, questi fornitori:",
+          [
+            "Netlify (Netlify, Inc., Stati Uniti): ospita il sito e la funzione che riceve il modulo;",
+            "Supabase: conserva le richieste in un database in una regione dell'Unione europea;",
+            "Brevo (Sendinblue SAS, Francia): invia a noi la richiesta e a te l'email di conferma."
+          ],
+          "Solo se accetti i cookie di marketing, Meta Platforms Ireland Limited riceve l'evento della richiesta per misurare le campagne, con email e telefono pseudonimizzati con una funzione di hash (SHA-256), che Meta confronta con i dati dei suoi utenti. Meta li tratta secondo la sua [informativa](https://www.facebook.com/privacy/policy/).",
+          "Per la raccolta e la trasmissione a Meta di questi dati, {TITOLARE} e Meta Platforms Ireland Limited sono contitolari del trattamento (articolo 26 del GDPR), secondo il [Controller Addendum](https://www.facebook.com/legal/controller_addendum) dei termini Meta Business Tools. Dopo la trasmissione Meta tratta i dati come titolare autonomo. Puoi esercitare i tuoi diritti anche nei confronti di Meta.",
+          "I tuoi dati non vengono pubblicati né venduti."
+        ]
+      },
+      {
+        "titolo": "Trasferimenti fuori dall'Unione europea",
+        "contenuto": [
+          [
+            "Netlify ha sede negli Stati Uniti: aderisce al Data Privacy Framework UE-USA, che la Commissione europea ha riconosciuto adeguato, e il suo accordo sul trattamento dei dati include le clausole contrattuali standard.",
+            "Supabase conserva le richieste in una regione dell'Unione europea; se tratta dati negli Stati Uniti o a Singapore usa le clausole contrattuali standard approvate dalla Commissione europea.",
+            "Meta trasferisce dati negli Stati Uniti sulla base del Data Privacy Framework UE-USA."
+          ],
+          "Per ogni altro trasferimento fuori dall'Unione europea i fornitori usano le garanzie previste dagli articoli 45 e 46 del GDPR."
+        ]
+      },
+      {
+        "titolo": "Per quanto tempo li conserviamo",
+        "contenuto": [
+          "Conserviamo la richiesta per 24 mesi dall'ultimo contatto con te, poi la cancelliamo.",
+          "Le durate dei cookie di marketing sono nella [cookie policy](/cookie.html)."
+        ]
+      },
+      {
+        "titolo": "I tuoi diritti",
+        "contenuto": [
+          "Puoi chiedere in ogni momento di:",
+          [
+            "sapere quali dati abbiamo e averne una copia (accesso);",
+            "correggerli (rettifica) o cancellarli (cancellazione);",
+            "limitarne l'uso (limitazione);",
+            "riceverli in un formato leggibile da un computer (portabilità);",
+            "opporti al trattamento basato sul nostro legittimo interesse (opposizione);",
+            "revocare il consenso ai cookie di marketing, senza effetti su quello che è stato fatto prima della revoca."
+          ],
+          "Scrivi a [{EMAIL_PUBBLICA}](mailto:{EMAIL_PUBBLICA}): ti rispondiamo entro un mese."
+        ]
+      },
+      {
+        "titolo": "Reclamo",
+        "contenuto": [
+          "Se pensi che i tuoi dati siano trattati in modo non corretto, puoi fare reclamo al [Garante per la protezione dei dati personali](https://www.garanteprivacy.it/)."
+        ]
+      },
+      {
+        "titolo": "Decisioni automatiche",
+        "contenuto": [
+          "Non prendiamo decisioni automatiche e non facciamo profilazione con i dati del modulo."
+        ]
+      }
+    ]
+  },
+  "cookie": {
+    "metaTitolo": "Cookie policy · {BRAND}",
+    "metaDescrizione": "Quali cookie e strumenti simili usa il sito di {BRAND}, a cosa servono, quanto durano e come cambiare la tua scelta.",
+    "titolo": "Cookie policy",
+    "aggiornamento": "27 novembre 2026",
+    "intro": "I cookie sono piccoli file che un sito salva nel tuo browser. Qui trovi quali usa questo sito, insieme agli strumenti simili come la memoria del browser.",
+    "sezioni": [
+      {
+        "titolo": "Strumento tecnico: sempre attivo",
+        "contenuto": [
+          "Serve a far funzionare il sito e non richiede il consenso. Non è un cookie di terze parti.",
+          [
+            "bd-consenso, nella memoria del browser (localStorage): ricorda la tua scelta sui cookie per 6 mesi."
+          ]
+        ]
+      },
+      {
+        "titolo": "Cookie di marketing: solo con il tuo consenso",
+        "contenuto": [
+          "Se accetti, il sito carica il pixel di Meta (Meta Platforms Ireland Limited) per misurare quante richieste arrivano dalle campagne su Facebook e Instagram. Se rifiuti o chiudi il banner, il pixel non viene caricato e il browser non contatta Meta.",
+          "Il pixel salva sul nostro dominio questi cookie:",
+          {
+            "tabella": [
+              {
+                "nome": "_fbp",
+                "scopo": "riconosce il browser tra una visita e l'altra per misurare le campagne e la pubblicità",
+                "durata": "90 giorni"
+              },
+              {
+                "nome": "_fbc",
+                "scopo": "conserva l'identificativo del clic su un annuncio (fbclid) quando arrivi da Facebook o Instagram",
+                "durata": "90 giorni"
+              }
+            ]
+          },
+          "Meta può usare anche i propri cookie sul dominio facebook.com, come spiega la sua [cookie policy](https://www.facebook.com/privacy/policies/cookies/).",
+          "Con il consenso, quando invii il modulo mandiamo a Meta l'evento della richiesta anche dal nostro server (API Conversioni), come spiega l'[informativa privacy](/privacy.html)."
+        ]
+      },
+      {
+        "titolo": "Come cambiare la tua scelta",
+        "contenuto": [
+          "Puoi cambiare idea quando vuoi con «Gestisci cookie», in fondo alla pagina principale, oppure da qui: [cambia la tua scelta](/#gestisci-cookie).",
+          "Se revochi il consenso, il sito smette di mandare eventi a Meta e cancella i cookie _fbp e _fbc dal nostro dominio.",
+          "La scelta vale 6 mesi, poi te la chiediamo di nuovo. Puoi anche cancellare cookie e dati dei siti dalle impostazioni del browser."
+        ]
+      }
+    ]
+  },
+  "pagina404": {
+    "metaTitolo": "Pagina non trovata · {BRAND}",
+    "titolo": "Questa pagina non c'è.",
+    "testo": "Forse l'indirizzo è cambiato o contiene un errore. Puoi tornare alla pagina principale o chiedere subito un preventivo.",
+    "home": "Torna alla pagina principale",
+    "modulo": "Richiedi un preventivo"
+  },
+  "faq": {
+    "titolo": "Domande frequenti",
+    "voci": [
+      {
+        "domanda": "Quanto costa costruire una casa?",
+        "risposta": "Dipende da superficie, finiture, terreno e impianti. Nel modulo indichi un budget indicativo: alla prima chiamata ti diciamo se è realistico per quello che vuoi."
+      },
+      {
+        "domanda": "Quanto tempo serve?",
+        "risposta": "I tempi indicati dall'impresa partner sono {TEMPI}. Prima ci sono progetto e permessi, che dipendono anche dal Comune."
+      },
+      {
+        "domanda": "Devo avere già il terreno?",
+        "risposta": "No. Scrivici anche senza: partiamo da zona e budget."
+      },
+      {
+        "domanda": "Con chi firmo il contratto?",
+        "risposta": "Con l'impresa che costruisce. {BRAND} ti affianca nella lettura di preventivo e contratto e resta il tuo riferimento."
+      },
+      {
+        "domanda": "Quanto costa il servizio di {BRAND}?",
+        "risposta": "{COSTO_SERVIZIO}"
+      },
+      {
+        "domanda": "Posso portare il progetto del mio architetto?",
+        "risposta": "Sì. L'impresa partner può partire da un progetto già fatto o prepararne uno con te."
+      },
+      {
+        "domanda": "In che zona lavorate?",
+        "risposta": "{ZONA}. Se sei fuori zona scrivici lo stesso: ti diciamo se possiamo aiutarti."
+      },
+      {
+        "domanda": "Com'è fatta la struttura?",
+        "risposta": "{SISTEMA}."
+      }
+    ]
+  },
+  "chiusura": {
+    "titolo": "Parliamo della tua casa.",
+    "testo": "Tre passaggi, un minuto. Ti risponde {REFERENTE}, {TEMPO_RISPOSTA}.",
+    "cta": "Richiedi un preventivo",
+    "secondariDomanda": "Preferisci parlarne subito?",
+    "chiama": "Chiama {TELEFONO}",
+    "whatsapp": "Scrivi su WhatsApp"
+  },
+  "footer": {
+    "contattiTelefonoWhatsapp": "Telefono e WhatsApp",
+    "contattiTelefono": "Telefono",
+    "whatsapp": "Scrivi su WhatsApp",
+    "legale": "{TITOLARE} · {FORMA} · Sede: {SEDE} · P.IVA {PIVA}",
+    "rea": "REA {REA}",
+    "capitale": "Capitale sociale {CAPITALE}",
+    "pec": "PEC {PEC}",
+    "ruolo": "{BRAND} non esegue lavori edili: progettazione e costruzione sono affidate e contrattualizzate con l'impresa partner.",
+    "privacy": "Privacy",
+    "cookie": "Cookie",
+    "gestisciCookie": "Gestisci cookie"
+  },
+  "bannerCookie": {
+    "testo": "Usiamo cookie tecnici per far funzionare il sito. Con il tuo consenso usiamo anche il pixel di Meta per misurare le campagne.",
+    "rifiuta": "Rifiuta",
+    "accetta": "Accetta",
+    "chiudi": "Chiudi e rifiuta",
+    "policy": "Cookie policy",
+    "etichetta": "Scelta sui cookie",
+    "statoAccettato": "Oggi i cookie di marketing sono accettati.",
+    "statoRifiutato": "Oggi i cookie di marketing sono rifiutati."
+  },
+  "barraMobile": {
+    "cta": "Richiedi un preventivo"
+  }
+}

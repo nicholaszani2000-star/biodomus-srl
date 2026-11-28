@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- Angolo della campagna (CLAUDE.md §7): prima del CSS, così non c'è sfarfallio.
+         bd-js dice al CSS che il JavaScript c'è: header scuro sopra l'hero e parete staccata, pronta a ricomporsi.
+         Senza JavaScript header chiaro e parete già composta, con le quote.
+         Da 1024 px e senza riduzione del movimento aggiunge bd-rivela: il titolo dell'hero parte nascosto
+         e bd-motion lo rivela per righe; se il JavaScript non arriva in tempo, il CSS lo mostra entro 0,8 s. -->
+    <script>(function(){var d=document.documentElement;d.classList.add('bd-js');try{var a=new URLSearchParams(window.location.search).get('a');d.dataset.angolo=(a==='terreno'||a==='investo')?a:'famiglia';}catch(e){d.dataset.angolo='famiglia';}try{if(window.matchMedia('(min-width: 1024px) and (prefers-reduced-motion: no-preference)').matches)d.classList.add('bd-rivela');}catch(e){}})();</script>
+    <title>Biodomus</title>
+    <!--bd-head-->
+    <!-- Favicon e icone dal kit del logo (studio/originali/biodomus-asset/LEGGIMI.md) -->
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+  </head>
+  <body>
+    <div id="root"><!--bd-app--></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

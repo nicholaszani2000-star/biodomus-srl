@@ -1,0 +1,753 @@
+{
+  "progetto": "Biodomus",
+  "creato_il": "2026-11-17",
+  "note": [
+    "Colori del logo: positivo #1F2326 + #4F8F17, negativo #ECEBE8 + #8DC21E.",
+    "Il verde resta dentro il logo: non è un colore dell’interfaccia (CLAUDE.md §5).",
+    "Scritta del logo: Michroma (SIL Open Font License 1.1) ingrassata e allargata come l’originale.",
+    "Tutte le immagini raster sono senza metadati (niente EXIF né GPS)."
+  ],
+  "file": [
+    {
+      "file": "anteprima.jpg",
+      "uso": "tutte le immagini del kit in una pagina",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 1200,
+      "altezza": 2400,
+      "kB": 310.9
+    },
+    {
+      "file": "condivisione/og-image-scuro.jpg",
+      "uso": "alternativa scura all’anteprima dei link",
+      "fondo": "scuro",
+      "sul_sito": false,
+      "larghezza": 1200,
+      "altezza": 630,
+      "kB": 68.8
+    },
+    {
+      "file": "condivisione/og-image.jpg",
+      "uso": "public/og-image.jpg: anteprima dei link (Open Graph)",
+      "fondo": "chiaro",
+      "sul_sito": true,
+      "larghezza": 1200,
+      "altezza": 630,
+      "kB": 65.0
+    },
+    {
+      "file": "condivisione/profilo-social-3d.jpg",
+      "uso": "foto profilo Facebook e Instagram, versione 3D",
+      "fondo": "scuro",
+      "sul_sito": false,
+      "larghezza": 1080,
+      "altezza": 1080,
+      "kB": 29.6
+    },
+    {
+      "file": "condivisione/profilo-social.jpg",
+      "uso": "foto profilo Facebook e Instagram",
+      "fondo": "scuro",
+      "sul_sito": false,
+      "larghezza": 1080,
+      "altezza": 1080,
+      "kB": 22.4
+    },
+    {
+      "file": "favicon/apple-touch-icon.png",
+      "uso": "public/: icona su iPhone",
+      "fondo": "qualsiasi",
+      "sul_sito": true,
+      "larghezza": 180,
+      "altezza": 180,
+      "kB": 3.9
+    },
+    {
+      "file": "favicon/favicon.ico",
+      "uso": "public/: icona della scheda del browser",
+      "fondo": "qualsiasi",
+      "sul_sito": true,
+      "larghezza": 48,
+      "altezza": 48,
+      "kB": 3.4
+    },
+    {
+      "file": "favicon/favicon.svg",
+      "uso": "public/: icona della scheda del browser",
+      "fondo": "qualsiasi",
+      "sul_sito": true,
+      "larghezza": 64.0,
+      "altezza": 64.0,
+      "kB": 0.6
+    },
+    {
+      "file": "favicon/icona-512-maskable.png",
+      "uso": "public/: icona Android adattiva (site.webmanifest)",
+      "fondo": "qualsiasi",
+      "sul_sito": true,
+      "larghezza": 512,
+      "altezza": 512,
+      "kB": 9.4
+    },
+    {
+      "file": "favicon/icona-512.png",
+      "uso": "public/: icona 512 (site.webmanifest); la 192 si ricava da questa",
+      "fondo": "qualsiasi",
+      "sul_sito": true,
+      "larghezza": 512,
+      "altezza": 512,
+      "kB": 11.3
+    },
+    {
+      "file": "illustrazioni/percorso/percorso-1-progetto.avif",
+      "uso": "Illustrazione AI senza scritte né loghi: in pagina solo con la dicitura «Illustrazione» (§10.9); il brief oggi non la prevede",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 333,
+      "altezza": 498,
+      "kB": 11.7,
+      "dicitura": "Illustrazione"
+    },
+    {
+      "file": "illustrazioni/percorso/percorso-1-progetto.jpg",
+      "uso": "Illustrazione AI senza scritte né loghi: in pagina solo con la dicitura «Illustrazione» (§10.9); il brief oggi non la prevede",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 333,
+      "altezza": 498,
+      "kB": 26.8,
+      "dicitura": "Illustrazione"
+    },
+    {
+      "file": "illustrazioni/percorso/percorso-1-progetto.webp",
+      "uso": "Illustrazione AI senza scritte né loghi: in pagina solo con la dicitura «Illustrazione» (§10.9); il brief oggi non la prevede",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 333,
+      "altezza": 498,
+      "kB": 20.2,
+      "dicitura": "Illustrazione"
+    },
+    {
+      "file": "illustrazioni/percorso/percorso-2-fondazioni.avif",
+      "uso": "Illustrazione AI senza scritte né loghi: in pagina solo con la dicitura «Illustrazione» (§10.9); il brief oggi non la prevede",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 326,
+      "altezza": 498,
+      "kB": 22.7,
+      "dicitura": "Illustrazione"
+    },
+    {
+      "file": "illustrazioni/percorso/percorso-2-fondazioni.jpg",
+      "uso": "Illustrazione AI senza scritte né loghi: in pagina solo con la dicitura «Illustrazione» (§10.9); il brief oggi non la prevede",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 326,
+      "altezza": 498,
+      "kB": 44.8,
+      "dicitura": "Illustrazione"
+    },
+    {
+      "file": "illustrazioni/percorso/percorso-2-fondazioni.webp",
+      "uso": "Illustrazione AI senza scritte né loghi: in pagina solo con la dicitura «Illustrazione» (§10.9); il brief oggi non la prevede",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 326,
+      "altezza": 498,
+      "kB": 43.6,
+      "dicitura": "Illustrazione"
+    },
+    {
+      "file": "illustrazioni/percorso/percorso-3-struttura.avif",
+      "uso": "Illustrazione AI · muri in laterizio: NON è il sistema costruttivo di §2, non usarla per descrivere la casa",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 330,
+      "altezza": 498,
+      "kB": 20.8,
+      "dicitura": "Illustrazione"
+    },
+    {
+      "file": "illustrazioni/percorso/percorso-3-struttura.jpg",
+      "uso": "Illustrazione AI · muri in laterizio: NON è il sistema costruttivo di §2, non usarla per descrivere la casa",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 330,
+      "altezza": 498,
+      "kB": 41.6,
+      "dicitura": "Illustrazione"
+    },
+    {
+      "file": "illustrazioni/percorso/percorso-3-struttura.webp",
+      "uso": "Illustrazione AI · muri in laterizio: NON è il sistema costruttivo di §2, non usarla per descrivere la casa",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 330,
+      "altezza": 498,
+      "kB": 36.9,
+      "dicitura": "Illustrazione"
+    },
+    {
+      "file": "illustrazioni/percorso/percorso-4-impianti.avif",
+      "uso": "Illustrazione AI senza scritte né loghi: in pagina solo con la dicitura «Illustrazione» (§10.9); il brief oggi non la prevede",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 328,
+      "altezza": 498,
+      "kB": 14.1,
+      "dicitura": "Illustrazione"
+    },
+    {
+      "file": "illustrazioni/percorso/percorso-4-impianti.jpg",
+      "uso": "Illustrazione AI senza scritte né loghi: in pagina solo con la dicitura «Illustrazione» (§10.9); il brief oggi non la prevede",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 328,
+      "altezza": 498,
+      "kB": 34.7,
+      "dicitura": "Illustrazione"
+    },
+    {
+      "file": "illustrazioni/percorso/percorso-4-impianti.webp",
+      "uso": "Illustrazione AI senza scritte né loghi: in pagina solo con la dicitura «Illustrazione» (§10.9); il brief oggi non la prevede",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 328,
+      "altezza": 498,
+      "kB": 29.5,
+      "dicitura": "Illustrazione"
+    },
+    {
+      "file": "illustrazioni/percorso/percorso-5-casa-finita.avif",
+      "uso": "Illustrazione AI senza scritte né loghi: in pagina solo con la dicitura «Illustrazione» (§10.9); il brief oggi non la prevede",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 333,
+      "altezza": 498,
+      "kB": 14.9,
+      "dicitura": "Illustrazione"
+    },
+    {
+      "file": "illustrazioni/percorso/percorso-5-casa-finita.jpg",
+      "uso": "Illustrazione AI senza scritte né loghi: in pagina solo con la dicitura «Illustrazione» (§10.9); il brief oggi non la prevede",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 333,
+      "altezza": 498,
+      "kB": 31.4,
+      "dicitura": "Illustrazione"
+    },
+    {
+      "file": "illustrazioni/percorso/percorso-5-casa-finita.webp",
+      "uso": "Illustrazione AI senza scritte né loghi: in pagina solo con la dicitura «Illustrazione» (§10.9); il brief oggi non la prevede",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 333,
+      "altezza": 498,
+      "kB": 26.1,
+      "dicitura": "Illustrazione"
+    },
+    {
+      "file": "illustrazioni/villa-dal-disegno-672.avif",
+      "uso": "Illustrazione AI senza scritte né loghi: in pagina solo con la dicitura «Illustrazione» (§10.9); il brief oggi non la prevede",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 672,
+      "altezza": 448,
+      "kB": 23.4,
+      "dicitura": "Illustrazione"
+    },
+    {
+      "file": "illustrazioni/villa-dal-disegno-672.jpg",
+      "uso": "Illustrazione AI senza scritte né loghi: in pagina solo con la dicitura «Illustrazione» (§10.9); il brief oggi non la prevede",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 672,
+      "altezza": 448,
+      "kB": 52.6,
+      "dicitura": "Illustrazione"
+    },
+    {
+      "file": "illustrazioni/villa-dal-disegno-672.webp",
+      "uso": "Illustrazione AI senza scritte né loghi: in pagina solo con la dicitura «Illustrazione» (§10.9); il brief oggi non la prevede",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 672,
+      "altezza": 448,
+      "kB": 40.2,
+      "dicitura": "Illustrazione"
+    },
+    {
+      "file": "illustrazioni/villa-dal-disegno-panoramica-1200.avif",
+      "uso": "Illustrazione AI senza scritte né loghi: in pagina solo con la dicitura «Illustrazione» (§10.9); il brief oggi non la prevede",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 1200,
+      "altezza": 381,
+      "kB": 32.4,
+      "dicitura": "Illustrazione"
+    },
+    {
+      "file": "illustrazioni/villa-dal-disegno-panoramica-1200.jpg",
+      "uso": "Illustrazione AI senza scritte né loghi: in pagina solo con la dicitura «Illustrazione» (§10.9); il brief oggi non la prevede",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 1200,
+      "altezza": 381,
+      "kB": 74.0,
+      "dicitura": "Illustrazione"
+    },
+    {
+      "file": "illustrazioni/villa-dal-disegno-panoramica-1200.webp",
+      "uso": "Illustrazione AI senza scritte né loghi: in pagina solo con la dicitura «Illustrazione» (§10.9); il brief oggi non la prevede",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 1200,
+      "altezza": 381,
+      "kB": 54.7,
+      "dicitura": "Illustrazione"
+    },
+    {
+      "file": "illustrazioni/villa-dal-disegno-panoramica-640.avif",
+      "uso": "Illustrazione AI senza scritte né loghi: in pagina solo con la dicitura «Illustrazione» (§10.9); il brief oggi non la prevede",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 640,
+      "altezza": 203,
+      "kB": 13.4,
+      "dicitura": "Illustrazione"
+    },
+    {
+      "file": "illustrazioni/villa-dal-disegno-panoramica-640.jpg",
+      "uso": "Illustrazione AI senza scritte né loghi: in pagina solo con la dicitura «Illustrazione» (§10.9); il brief oggi non la prevede",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 640,
+      "altezza": 203,
+      "kB": 27.4,
+      "dicitura": "Illustrazione"
+    },
+    {
+      "file": "illustrazioni/villa-dal-disegno-panoramica-640.webp",
+      "uso": "Illustrazione AI senza scritte né loghi: in pagina solo con la dicitura «Illustrazione» (§10.9); il brief oggi non la prevede",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 640,
+      "altezza": 203,
+      "kB": 22.4,
+      "dicitura": "Illustrazione"
+    },
+    {
+      "file": "illustrazioni/villa-tramonto-1052.avif",
+      "uso": "Illustrazione AI senza scritte né loghi: in pagina solo con la dicitura «Illustrazione» (§10.9); il brief oggi non la prevede",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 1052,
+      "altezza": 478,
+      "kB": 50.3,
+      "dicitura": "Illustrazione"
+    },
+    {
+      "file": "illustrazioni/villa-tramonto-1052.jpg",
+      "uso": "Illustrazione AI senza scritte né loghi: in pagina solo con la dicitura «Illustrazione» (§10.9); il brief oggi non la prevede",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 1052,
+      "altezza": 478,
+      "kB": 108.4,
+      "dicitura": "Illustrazione"
+    },
+    {
+      "file": "illustrazioni/villa-tramonto-1052.webp",
+      "uso": "Illustrazione AI senza scritte né loghi: in pagina solo con la dicitura «Illustrazione» (§10.9); il brief oggi non la prevede",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 1052,
+      "altezza": 478,
+      "kB": 89.3,
+      "dicitura": "Illustrazione"
+    },
+    {
+      "file": "illustrazioni/villa-tramonto-640.avif",
+      "uso": "Illustrazione AI senza scritte né loghi: in pagina solo con la dicitura «Illustrazione» (§10.9); il brief oggi non la prevede",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 640,
+      "altezza": 291,
+      "kB": 25.1,
+      "dicitura": "Illustrazione"
+    },
+    {
+      "file": "illustrazioni/villa-tramonto-640.jpg",
+      "uso": "Illustrazione AI senza scritte né loghi: in pagina solo con la dicitura «Illustrazione» (§10.9); il brief oggi non la prevede",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 640,
+      "altezza": 291,
+      "kB": 49.1,
+      "dicitura": "Illustrazione"
+    },
+    {
+      "file": "illustrazioni/villa-tramonto-640.webp",
+      "uso": "Illustrazione AI senza scritte né loghi: in pagina solo con la dicitura «Illustrazione» (§10.9); il brief oggi non la prevede",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 640,
+      "altezza": 291,
+      "kB": 44.8,
+      "dicitura": "Illustrazione"
+    },
+    {
+      "file": "logo/3d/biodomus-logo-3d-originale-completo-su-nero.png",
+      "uso": "originale ripulito CON il payoff «COSTRUZIONI • CASE SU MISURA»: non usarlo sul sito né nelle inserzioni (CLAUDE.md §10.2)",
+      "fondo": "scuro",
+      "sul_sito": false,
+      "larghezza": 1316,
+      "altezza": 670,
+      "kB": 447.3
+    },
+    {
+      "file": "logo/3d/biodomus-logo-3d-originale-completo-trasparente.png",
+      "uso": "originale ripulito CON il payoff «COSTRUZIONI • CASE SU MISURA»: non usarlo sul sito né nelle inserzioni (CLAUDE.md §10.2)",
+      "fondo": "scuro",
+      "sul_sito": false,
+      "larghezza": 1316,
+      "altezza": 670,
+      "kB": 603.5
+    },
+    {
+      "file": "logo/3d/biodomus-logo-3d-originale-su-nero.png",
+      "uso": "originale ripulito senza payoff, trasparente o su nero: solo fondi scuri",
+      "fondo": "scuro",
+      "sul_sito": false,
+      "larghezza": 1316,
+      "altezza": 540,
+      "kB": 383.3
+    },
+    {
+      "file": "logo/3d/biodomus-logo-3d-originale-trasparente-1200.avif",
+      "uso": "originale ripulito senza payoff, trasparente o su nero: solo fondi scuri",
+      "fondo": "scuro",
+      "sul_sito": false,
+      "larghezza": 1200,
+      "altezza": 492,
+      "kB": 63.2
+    },
+    {
+      "file": "logo/3d/biodomus-logo-3d-originale-trasparente-1200.webp",
+      "uso": "originale ripulito senza payoff, trasparente o su nero: solo fondi scuri",
+      "fondo": "scuro",
+      "sul_sito": false,
+      "larghezza": 1200,
+      "altezza": 492,
+      "kB": 131.4
+    },
+    {
+      "file": "logo/3d/biodomus-logo-3d-originale-trasparente-640.avif",
+      "uso": "originale ripulito senza payoff, trasparente o su nero: solo fondi scuri",
+      "fondo": "scuro",
+      "sul_sito": false,
+      "larghezza": 640,
+      "altezza": 263,
+      "kB": 24.4
+    },
+    {
+      "file": "logo/3d/biodomus-logo-3d-originale-trasparente-640.webp",
+      "uso": "originale ripulito senza payoff, trasparente o su nero: solo fondi scuri",
+      "fondo": "scuro",
+      "sul_sito": false,
+      "larghezza": 640,
+      "altezza": 263,
+      "kB": 60.8
+    },
+    {
+      "file": "logo/3d/biodomus-logo-3d-originale-trasparente.png",
+      "uso": "originale ripulito senza payoff, trasparente o su nero: solo fondi scuri",
+      "fondo": "scuro",
+      "sul_sito": false,
+      "larghezza": 1316,
+      "altezza": 540,
+      "kB": 524.4
+    },
+    {
+      "file": "logo/png/biodomus-logo-3d-1200.webp",
+      "uso": "effetto 3D in PNG o WebP trasparente: social, presentazioni",
+      "fondo": "scuro",
+      "sul_sito": false,
+      "larghezza": 1200,
+      "altezza": 497,
+      "kB": 91.8
+    },
+    {
+      "file": "logo/png/biodomus-logo-3d-1600.png",
+      "uso": "effetto 3D in PNG o WebP trasparente: social, presentazioni",
+      "fondo": "scuro",
+      "sul_sito": false,
+      "larghezza": 1600,
+      "altezza": 663,
+      "kB": 343.4
+    },
+    {
+      "file": "logo/png/biodomus-logo-negativo-1200.png",
+      "uso": "documenti, email e social su fondo scuro",
+      "fondo": "scuro",
+      "sul_sito": false,
+      "larghezza": 1200,
+      "altezza": 467,
+      "kB": 43.5
+    },
+    {
+      "file": "logo/png/biodomus-logo-orizzontale-negativo-1600.png",
+      "uso": "documenti, email e social su fondo scuro",
+      "fondo": "scuro",
+      "sul_sito": false,
+      "larghezza": 1600,
+      "altezza": 213,
+      "kB": 32.3
+    },
+    {
+      "file": "logo/png/biodomus-logo-orizzontale-positivo-1600.png",
+      "uso": "documenti, email e social su fondo chiaro",
+      "fondo": "chiaro",
+      "sul_sito": false,
+      "larghezza": 1600,
+      "altezza": 213,
+      "kB": 32.7
+    },
+    {
+      "file": "logo/png/biodomus-logo-positivo-1200.png",
+      "uso": "documenti, email e social su fondo chiaro",
+      "fondo": "chiaro",
+      "sul_sito": false,
+      "larghezza": 1200,
+      "altezza": 467,
+      "kB": 44.1
+    },
+    {
+      "file": "logo/png/biodomus-marchio-3d-1200.png",
+      "uso": "effetto 3D in PNG o WebP trasparente: social, presentazioni",
+      "fondo": "scuro",
+      "sul_sito": false,
+      "larghezza": 1200,
+      "altezza": 523,
+      "kB": 180.5
+    },
+    {
+      "file": "logo/png/biodomus-marchio-negativo-1024.png",
+      "uso": "documenti, email e social su fondo scuro",
+      "fondo": "scuro",
+      "sul_sito": false,
+      "larghezza": 1024,
+      "altezza": 410,
+      "kB": 26.6
+    },
+    {
+      "file": "logo/png/biodomus-marchio-positivo-1024.png",
+      "uso": "documenti, email e social su fondo chiaro",
+      "fondo": "chiaro",
+      "sul_sito": false,
+      "larghezza": 1024,
+      "altezza": 410,
+      "kB": 27.1
+    },
+    {
+      "file": "logo/svg/biodomus-logo-3d.svg",
+      "uso": "effetto 3D: social, presentazioni, sezioni scure",
+      "fondo": "scuro",
+      "sul_sito": false,
+      "larghezza": 1200.0,
+      "altezza": 496.6,
+      "kB": 11.2
+    },
+    {
+      "file": "logo/svg/biodomus-logo-mono-chiaro.svg",
+      "uso": "a un colore su foto o fondi scuri",
+      "fondo": "scuro",
+      "sul_sito": false,
+      "larghezza": 636.0,
+      "altezza": 247.0,
+      "kB": 9.1
+    },
+    {
+      "file": "logo/svg/biodomus-logo-mono-scuro.svg",
+      "uso": "stampa a un colore, documenti",
+      "fondo": "chiaro",
+      "sul_sito": false,
+      "larghezza": 636.0,
+      "altezza": 247.0,
+      "kB": 9.1
+    },
+    {
+      "file": "logo/svg/biodomus-logo-negativo.svg",
+      "uso": "fondi scuri: social, documenti, eventuali sezioni scure",
+      "fondo": "scuro",
+      "sul_sito": false,
+      "larghezza": 636.0,
+      "altezza": 247.0,
+      "kB": 9.1
+    },
+    {
+      "file": "logo/svg/biodomus-logo-orizzontale-mono-chiaro.svg",
+      "uso": "a un colore su foto o fondi scuri",
+      "fondo": "scuro",
+      "sul_sito": false,
+      "larghezza": 760.0,
+      "altezza": 101.0,
+      "kB": 9.1
+    },
+    {
+      "file": "logo/svg/biodomus-logo-orizzontale-mono-scuro.svg",
+      "uso": "stampa a un colore, documenti",
+      "fondo": "chiaro",
+      "sul_sito": false,
+      "larghezza": 760.0,
+      "altezza": 101.0,
+      "kB": 9.1
+    },
+    {
+      "file": "logo/svg/biodomus-logo-orizzontale-negativo.svg",
+      "uso": "fondi scuri: social, documenti, eventuali sezioni scure",
+      "fondo": "scuro",
+      "sul_sito": false,
+      "larghezza": 760.0,
+      "altezza": 101.0,
+      "kB": 9.1
+    },
+    {
+      "file": "logo/svg/biodomus-logo-orizzontale-positivo.svg",
+      "uso": "header da 1024 px (alto 34 px)",
+      "fondo": "chiaro",
+      "sul_sito": true,
+      "larghezza": 760.0,
+      "altezza": 101.0,
+      "kB": 9.1
+    },
+    {
+      "file": "logo/svg/biodomus-logo-positivo.svg",
+      "uso": "header fino a 1023 px (alto 44 px) e footer",
+      "fondo": "chiaro",
+      "sul_sito": true,
+      "larghezza": 636.0,
+      "altezza": 247.0,
+      "kB": 9.1
+    },
+    {
+      "file": "logo/svg/biodomus-marchio-3d.svg",
+      "uso": "effetto 3D: social, presentazioni, sezioni scure",
+      "fondo": "scuro",
+      "sul_sito": false,
+      "larghezza": 900.0,
+      "altezza": 391.6,
+      "kB": 2.7
+    },
+    {
+      "file": "logo/svg/biodomus-marchio-mono-chiaro.svg",
+      "uso": "a un colore su foto o fondi scuri",
+      "fondo": "scuro",
+      "sul_sito": false,
+      "larghezza": 450.0,
+      "altezza": 180.0,
+      "kB": 0.5
+    },
+    {
+      "file": "logo/svg/biodomus-marchio-mono-scuro.svg",
+      "uso": "stampa a un colore, documenti",
+      "fondo": "chiaro",
+      "sul_sito": false,
+      "larghezza": 450.0,
+      "altezza": 180.0,
+      "kB": 0.5
+    },
+    {
+      "file": "logo/svg/biodomus-marchio-negativo.svg",
+      "uso": "fondi scuri: social, documenti, eventuali sezioni scure",
+      "fondo": "scuro",
+      "sul_sito": false,
+      "larghezza": 450.0,
+      "altezza": 180.0,
+      "kB": 0.5
+    },
+    {
+      "file": "logo/svg/biodomus-marchio-positivo.svg",
+      "uso": "fondi chiari",
+      "fondo": "chiaro",
+      "sul_sito": false,
+      "larghezza": 450.0,
+      "altezza": 180.0,
+      "kB": 0.5
+    },
+    {
+      "file": "logo/svg/biodomus-scritta-mono-chiaro.svg",
+      "uso": "a un colore su foto o fondi scuri",
+      "fondo": "scuro",
+      "sul_sito": false,
+      "larghezza": 635.0,
+      "altezza": 65.0,
+      "kB": 8.7
+    },
+    {
+      "file": "logo/svg/biodomus-scritta-mono-scuro.svg",
+      "uso": "stampa a un colore, documenti",
+      "fondo": "chiaro",
+      "sul_sito": false,
+      "larghezza": 635.0,
+      "altezza": 65.0,
+      "kB": 8.7
+    },
+    {
+      "file": "logo/svg/biodomus-scritta-negativo.svg",
+      "uso": "fondi scuri: social, documenti, eventuali sezioni scure",
+      "fondo": "scuro",
+      "sul_sito": false,
+      "larghezza": 635.0,
+      "altezza": 65.0,
+      "kB": 8.7
+    },
+    {
+      "file": "logo/svg/biodomus-scritta-positivo.svg",
+      "uso": "fondi chiari",
+      "fondo": "chiaro",
+      "sul_sito": false,
+      "larghezza": 635.0,
+      "altezza": 65.0,
+      "kB": 8.7
+    },
+    {
+      "file": "originali/biodomus-banner-originale.png",
+      "uso": "immagine ricevuta, intatta: contiene testi e simboli non conformi al brief (vedi LEGGIMI.md)",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 1672,
+      "altezza": 941,
+      "kB": 2251.9
+    },
+    {
+      "file": "originali/biodomus-logo-originale.png",
+      "uso": "immagine ricevuta, intatta: contiene testi e simboli non conformi al brief (vedi LEGGIMI.md)",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 1536,
+      "altezza": 1024,
+      "kB": 1806.7
+    },
+    {
+      "file": "originali/biodomus-percorso-originale.png",
+      "uso": "immagine ricevuta, intatta: contiene testi e simboli non conformi al brief (vedi LEGGIMI.md)",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 1672,
+      "altezza": 941,
+      "kB": 2500.9
+    },
+    {
+      "file": "originali/biodomus-villa-insegna-originale.png",
+      "uso": "immagine ricevuta, intatta: contiene testi e simboli non conformi al brief (vedi LEGGIMI.md)",
+      "fondo": "qualsiasi",
+      "sul_sito": false,
+      "larghezza": 1672,
+      "altezza": 941,
+      "kB": 2429.5
+    }
+  ]
+}

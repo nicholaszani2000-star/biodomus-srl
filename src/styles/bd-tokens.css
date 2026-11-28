@@ -1,0 +1,72 @@
+/* Token del design system (CLAUDE.md §5).
+   STILE «Cemento» = palette chiara su :root. «Grafite» = palette scura su tutta la pagina, attivata da
+   data-stile="grafite" sull'elemento html (lo scrive il prerender leggendo dati.ts).
+   STILE «Misto» = palette chiara su :root e palette scura solo dentro .bd-tema-scuro (l'hero) e nell'header sopra l'hero
+   (.bd-header--scuro, solo con .bd-js: senza JavaScript l'header resta chiaro).
+   --bd-accento deve coincidere con COLORE_ACCENTO di §2: lo verifica studio/controlli.mjs.
+   --bd-dettaglio: icone, numeri, linee di quota, sottolineature (rovere sul chiaro, lime del logo sullo scuro), mai testo.
+   --bd-tondino: i tondini dell'armatura nei disegni (ruggine sul chiaro, lime del logo sullo scuro).
+   --bd-fondo-chiaro e --bd-testo-2-chiaro non cambiano nel tema scuro: servono all'illustrazione in fondo all'hero,
+   dove la pagina passa dallo scuro al chiaro. */
+
+:root {
+  --bd-fondo: #edece8; /* intonaco grigio */
+  --bd-fondo-chiaro: #edece8;
+  --bd-testo-2-chiaro: #595e62;
+  --bd-carta: #f8f7f5; /* card */
+  --bd-testo: #1f2326; /* grafite */
+  --bd-testo-2: #595e62;
+  --bd-linea: #d3d1cc; /* solo bordi e griglia */
+  --bd-accento: #383E42; /* antracite dei serramenti: pulsanti e link */
+  --bd-accento-hover: #262b2e;
+  --bd-su-accento: #ffffff; /* testo sui pulsanti: 10,8:1 */
+  --bd-legno: #a87b4f; /* rovere: solo dettagli grafici, mai testo */
+  --bd-ruggine: #b4542d; /* solo disegni */
+  --bd-dettaglio: var(--bd-legno);
+  --bd-tondino: var(--bd-ruggine);
+  --bd-ok: #4f6b58;
+  --bd-errore: #9b2c1f; /* errori del modulo: 6,4:1 sul fondo, 7,1:1 sulla carta */
+  --bd-campo: #ffffff; /* fondo dei campi del modulo */
+  --bd-bordo-campo: #7d8285; /* bordo dei campi: 3,6:1 sulla carta, 3,9:1 sul bianco (WCAG 1.4.11) */
+  --bd-griglia: color-mix(in srgb, var(--bd-linea) 60%, transparent);
+
+  --bd-font-titoli: 'Bricolage Grotesque', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --bd-font-testo: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --bd-raggio-tecnico: 4px;
+  --bd-raggio-card: 20px;
+  --bd-header-h: 64px;
+  --bd-gutter: 16px;
+
+  color-scheme: light;
+}
+
+html[data-stile='grafite'],
+.bd-tema-scuro,
+.bd-js .bd-header--scuro {
+  --bd-fondo: #1a1c1e;
+  --bd-carta: #232629;
+  --bd-testo: #ecebe8;
+  --bd-testo-2: #a9adb0;
+  --bd-linea: #3a3e42;
+  --bd-accento: #e4e1da;
+  --bd-accento-hover: #ffffff;
+  --bd-su-accento: #1a1c1e; /* 13,1:1 */
+  --bd-legno: #c49a6c;
+  --bd-ruggine: #e08a62;
+  --bd-dettaglio: #8DC21E; /* lime del logo: 8,0:1 sul fondo scuro, solo grafica (§2, §5) */
+  --bd-tondino: #8DC21E;
+  --bd-ok: #9db5a3;
+  --bd-errore: #f2a091; /* 8,3:1 sul fondo scuro */
+  --bd-campo: #1a1c1e;
+  --bd-bordo-campo: #8a8f93;
+  --bd-griglia: color-mix(in srgb, var(--bd-linea) 70%, transparent);
+
+  color-scheme: dark;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --bd-gutter: 24px;
+  }
+}

@@ -11,3 +11,31 @@ dist-ssr
 # Studio: file temporanei e screenshot
 studio/.tmp
 studio/report/screenshot/
+studio/report/e2e/
+studio/report/lighthouse/
+
+# Dallo scaffold Vite
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Anteprima del modulo: contatti finti della prova (BD_MOCK=1)
+studio/report/lead-mock*

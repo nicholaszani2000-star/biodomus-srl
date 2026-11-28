@@ -1,3 +1,5 @@
+> Copia di riferimento. La fonte dei dati è §2 di CLAUDE.md: se cambia un dato, si aggiorna prima lì.
+
 # Dati aziendali
 
 | Campo | Valore |
@@ -7,10 +9,13 @@
 | CAP e città | 21013 Gallarate (VA) |
 | Partita IVA | 04059520124 |
 | Codice SDI | USAL8PV |
+| REA | VA-398965 |
+| Capitale sociale | 5.000 € |
 | PEC | biodomus@cgn.legalmail.it |
 | Email | biodomus2025@libero.it |
 | Cellulare e WhatsApp | +39 349 2391107 |
 | Link WhatsApp | https://wa.me/393492391107 |
+| Dominio | biodomussrls.it |
 
 ## Versione da copiare
 

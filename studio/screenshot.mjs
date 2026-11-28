@@ -1,0 +1,1131 @@
+// Screenshot dell'anteprima (CLAUDE.md §13): 390 × 844 e 1440 × 900 per ogni angolo (?a=famiglia, terreno, investo).
+// Se l'anteprima non è già avviata, la avvia da solo e la chiude alla fine.
+// Browser, in ordine: Chromium di Playwright (PLAYWRIGHT_BROWSERS_PATH), Chromium o Chrome di sistema; senza browser salta.
+// Controlla: errori di console, scroll orizzontale a 390 px, variante giusta del titolo per angolo, primo schermo,
+// le due illustrazioni sfumate (ritaglio giusto per la larghezza, AVIF, dicitura «Illustrazione» visibile),
+// logo e tema dell'header, la parete che si ricompone scorrendo, la barra mobile, una sola CTA primaria per schermata,
+// la riduzione del movimento a 390 e 1440 px. Dallo step 5: «Com'è fatta la casa» con lo strato 2 aperto (screenshot),
+// il tocco sullo strato nel disegno, la leggibilità a 390 px (tratti ≥ 1 px, testi ≥ 14 px, niente scroll orizzontale).
+// Dallo step 6: la pagina intera a 390 e 1440 px (angolo famiglia), la FAQ con una domanda aperta (una per volta, anche da
+// tastiera; senza JavaScript <details>), «Chiusura» (parete ricomposta in fondo alla pagina, canali secondari più piccoli
+// della CTA ma con 44 px di tocco), il ritmo verticale delle sezioni e le quote numerate in fila. Correzioni dello step 6:
+// ogni link e pulsante di «Chiusura» e del footer almeno 44 × 44 px e su una riga sola (§9).
+// Dallo step 7: nessuna richiesta esterna senza consenso, il Pixel (di prova) solo dopo «Accetta», «Contact» sui quattro
+// link di contatto, la revoca, il banner (misure, tastiera, Esc, X, «Gestisci cookie», barra mobile sopra, LCP nell'hero),
+// zero violazioni della CSP di netlify.toml (applicata dall'anteprima) sulla landing e su privacy, cookie, grazie e 404.
+// Le prove degli step precedenti partono con una scelta sui cookie già salvata, così il banner non copre clic e foto.
+// Screenshot in studio/report/screenshot/ (escluso da git), riepilogo in studio/report/screenshot/riepilogo.json.
+
+import { chromium } from 'playwright'
+import { spawn, execSync } from 'node:child_process'
+import { mkdirSync, writeFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
+const USCITA = join(ROOT, 'studio', 'report', 'screenshot')
+const PORTA = Number(process.env.PORTA ?? 4321)
+const BASE = `http://localhost:${PORTA}`
+const ANGOLI = ['famiglia', 'terreno', 'investo']
+const VISTE = [
+  { nome: 'mobile', width: 390, height: 844 },
+  { nome: 'desktop', width: 1440, height: 900 },
+]
+
+mkdirSync(USCITA, { recursive: true })
+
+async function anteprimaAttiva() {
+  try {
+    return (await fetch(`${BASE}/`)).ok
+  } catch {
+    return false
+  }
+}
+
+let server = null
+if (!(await anteprimaAttiva())) {
+  const tsx = createRequire(import.meta.url).resolve('tsx/cli')
+  server = spawn(process.execPath, [tsx, join(ROOT, 'studio', 'anteprima-server.mts')], {
+    cwd: ROOT,
+    env: { ...process.env, PORTA: String(PORTA) },
+    stdio: 'ignore',
+  })
+  for (let i = 0; i < 50 && !(await anteprimaAttiva()); i++) await new Promise((r) => setTimeout(r, 200))
+  if (!(await anteprimaAttiva())) {
+    server.kill()
+    console.error('KO  anteprima — il server non è partito su', BASE)
+    process.exit(1)
+  }
+}
+
+async function apriBrowser() {
+  try {
+    return { browser: await chromium.launch(), origine: 'Chromium di Playwright' }
+  } catch {
+    for (const nome of ['chromium', 'chromium-browser', 'google-chrome', 'google-chrome-stable']) {
+      try {
+        const percorso = execSync(`command -v ${nome}`, { encoding: 'utf8' }).trim()
+        if (percorso) return { browser: await chromium.launch({ executablePath: percorso }), origine: percorso }
+      } catch {
+        // prova il prossimo
+      }
+    }
+  }
+  return { browser: null, origine: null }
+}
+
+const { browser, origine } = await apriBrowser()
+if (!browser) {
+  console.log('SALTATO  screenshot — nessun browser disponibile nell\'ambiente (scritto nel report)')
+  server?.kill()
+  process.exit(0)
+}
+
+// Dallo step 7 il banner dei cookie compare a ogni contesto nuovo: le prove degli step precedenti partono con una scelta
+// già salvata («rifiutato», solo se manca), così il banner non copre clic e screenshot. Lo step 7 lo prova davvero.
+const SCELTA_SALVATA = () => {
+  try {
+    if (!localStorage.getItem('bd-consenso')) localStorage.setItem('bd-consenso', JSON.stringify({ stato: 'rifiutato', data: Date.now() }))
+  } catch {
+    // senza localStorage il banner resta: le prove lo vedrebbero
+  }
+}
+// Header e barra mobile nascosti negli screenshot con il CSSOM (el.style, ammesso dalla CSP): l'opzione «style» di
+// Playwright inietta uno <style> senza hash che la Content-Security-Policy dell'anteprima blocca (step 7).
+async function senzaFissi(pagina, scatta) {
+  const imposta = (nascondi) =>
+    pagina.evaluate((n) => {
+      for (const el of document.querySelectorAll('.bd-header, .bd-barra-mobile')) {
+        if (n) el.style.setProperty('visibility', 'hidden', 'important')
+        else el.style.removeProperty('visibility')
+      }
+    }, nascondi)
+  await imposta(true)
+  try {
+    return await scatta()
+  } finally {
+    await imposta(false)
+  }
+}
+
+async function paginaSenzaBanner(opzioni) {
+  const contesto = await browser.newContext(opzioni)
+  await contesto.addInitScript(SCELTA_SALVATA)
+  const pagina = await contesto.newPage()
+  pagina.once('close', () => void contesto.close())
+  return pagina
+}
+
+const risultati = []
+const esito = (ok, nome, nota) => {
+  risultati.push({ ok, nome, nota })
+  console.log(`${ok ? 'OK' : 'KO'}  ${nome} — ${nota}`)
+}
+
+for (const vista of VISTE) {
+  for (const angolo of ANGOLI) {
+    const pagina = await paginaSenzaBanner({ viewport: { width: vista.width, height: vista.height } })
+    const errori = []
+    pagina.on('console', (m) => {
+      if (m.type() === 'error') errori.push(m.text())
+    })
+    pagina.on('pageerror', (e) => errori.push(e.message))
+    // CLS del caricamento (§9 ≤ 0,05): somma dei layout-shift senza input recente, dall'inizio della pagina
+    await pagina.addInitScript(() => {
+      window.__bdCls = 0
+      try {
+        new PerformanceObserver((lista) => {
+          for (const voce of lista.getEntries()) if (!voce.hadRecentInput) window.__bdCls += voce.value
+        }).observe({ type: 'layout-shift', buffered: true })
+      } catch {
+        window.__bdCls = -1
+      }
+    })
+    await pagina.goto(`${BASE}/?a=${angolo}`, { waitUntil: 'networkidle' })
+    // Da 1024 px il titolo si rivela per righe (bd-rivela): si aspetta la fine prima della foto del primo schermo
+    await pagina.waitForFunction(() => !document.documentElement.classList.contains('bd-rivela'), null, { timeout: 4000 }).catch(() => {})
+    await pagina.waitForTimeout(1000)
+    // Primo schermo com'è all'apertura, prima di scorrere
+    await pagina.screenshot({ path: join(USCITA, `${angolo}-${vista.width}.png`) })
+
+    const stato = await pagina.evaluate(() => {
+      const visibile = (el) => !!el && getComputedStyle(el).display !== 'none'
+      const varianti = [...document.querySelectorAll('h1 .bd-v')].filter(visibile).map((el) => el.className)
+      const titolo = document.querySelector('h1')
+      const cta = document.querySelector('#inizio .bd-cta--primaria')
+      // Contrasto WCAG tra testo e fondo della CTA primaria dell'hero
+      const rgb = (c) => {
+        let m = c.match(/^rgba?\(([^)]+)\)/)
+        if (m) return m[1].split(/[\s,/]+/).slice(0, 3).map(Number)
+        m = c.match(/^color\(srgb ([^)]+)\)/)
+        return m ? m[1].split(/[\s/]+/).slice(0, 3).map((v) => Number(v) * 255) : null
+      }
+      const luce = (c) => {
+        const v = rgb(c)
+        if (!v) return null
+        const [r, g, b] = v.map((x) => x / 255).map((x) => (x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4))
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b
+      }
+      const stileCta = cta ? getComputedStyle(cta) : null
+      const l1 = stileCta ? luce(stileCta.color) : null
+      const l2 = stileCta ? luce(stileCta.backgroundColor) : null
+      return {
+        cls: Math.round((window.__bdCls ?? -1) * 1000) / 1000,
+        contrastoCta: l1 !== null && l2 !== null ? Math.round(((Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05)) * 10) / 10 : null,
+        larghezza: document.documentElement.scrollWidth,
+        varianti,
+        h1: document.querySelectorAll('h1').length,
+        titoloFine: titolo ? Math.round(titolo.getBoundingClientRect().bottom) : null,
+        titoloOpacita: titolo ? Number(getComputedStyle(titolo).opacity) : 0,
+        ctaFine: cta ? Math.round(cta.getBoundingClientRect().bottom) : null,
+      }
+    })
+
+    const etichetta = `${angolo} ${vista.width}px`
+    esito(errori.length === 0, `console ${etichetta}`, errori.length ? errori.join(' | ') : 'nessun errore')
+    esito(
+      stato.varianti.length === 1 && stato.varianti[0].includes(`bd-v-${angolo}`),
+      `variante ${etichetta}`,
+      `visibile: ${stato.varianti.join(', ') || 'nessuna'}`,
+    )
+    if (vista.width === 390) {
+      esito(stato.larghezza <= 390, `scroll orizzontale ${etichetta}`, `larghezza documento ${stato.larghezza} px`)
+    }
+    esito(stato.cls >= 0 && stato.cls <= 0.05, `CLS al caricamento ${etichetta}`, `${stato.cls} (massimo 0,05)`)
+    esito(stato.contrastoCta !== null && stato.contrastoCta >= 4.5, `contrasto della CTA primaria ${etichetta}`, `${stato.contrastoCta}:1 (minimo 4,5:1)`)
+    // §6.2: in un solo schermo chi sei, per chi, cosa fare — titolo e CTA primaria visibili senza scorrere
+    esito(
+      stato.ctaFine !== null && stato.ctaFine <= vista.height && stato.titoloOpacita === 1,
+      `primo schermo ${etichetta}`,
+      `titolo fino a ${stato.titoloFine} px (opacità ${stato.titoloOpacita}), CTA primaria fino a ${stato.ctaFine} px su ${vista.height}`,
+    )
+
+    // Step 2 e 4: nell'header il logo impilato alto 44 px fino a 1023 px, l'orizzontale alto 34 px da 1024 px;
+    // con STILE «Misto» negativo sopra l'hero (header scuro), positivo dopo (header chiaro).
+    const leggiHeader = () =>
+      pagina.evaluate(() => {
+        const header = document.querySelector('.bd-header')
+        const loghi = [...header.querySelectorAll('.bd-logo--header')]
+        const visibile = loghi.find((l) => Number(getComputedStyle(l).opacity) > 0.5) ?? loghi[0]
+        const img = visibile?.querySelector('img')
+        const footer = document.querySelector('img.bd-logo--footer')
+        return {
+          tema: header.dataset.bdTema ?? 'unico',
+          file: img ? img.currentSrc.split('/').pop() : '?',
+          altezza: img ? Math.round(img.getBoundingClientRect().height) : 0,
+          caricato: !!img && img.complete && img.naturalWidth > 0,
+          altezzaFooter: footer ? Math.round(footer.getBoundingClientRect().height) : 0,
+        }
+      })
+    const logoAtteso = (tema) =>
+      new RegExp(`^bd-logo-${vista.width >= 1024 ? 'orizzontale-' : ''}${tema === 'scuro' ? 'negativo-' : ''}[A-Za-z0-9_-]{8}\\.svg$`)
+    const altezzaLogo = vista.width >= 1024 ? 34 : 44
+
+    if (angolo === 'famiglia') {
+      const logo = await leggiHeader()
+      const ok = logo.caricato && logoAtteso(logo.tema).test(logo.file) && logo.altezza === altezzaLogo && logo.altezzaFooter === 48
+      esito(
+        ok && logo.tema !== 'chiaro',
+        `logo nell'header e nel footer ${vista.width}px`,
+        `header ${logo.tema}: ${logo.file} alto ${logo.altezza} px${logo.caricato ? '' : ' (non caricato)'}, footer ${logo.altezzaFooter} px`,
+      )
+
+      // Step 4: giro della pagina. Parete esplosa all'apertura e ricomposta scorrendo; header chiaro dopo l'hero;
+      // su mobile la barra compare dopo l'hero e sparisce sul modulo.
+      const leggiStato = () =>
+        pagina.evaluate(() => {
+          const svg = document.querySelector('#inizio [data-bd-parete] svg')
+          const barra = document.querySelector('.bd-barra-mobile')
+          const esplodi = parseFloat(svg ? getComputedStyle(svg).getPropertyValue('--bd-esplodi') : '')
+          const stileBarra = barra ? getComputedStyle(barra) : null
+          return {
+            esplodi: Number.isNaN(esplodi) ? 1 : Math.round(esplodi * 100) / 100,
+            barra: !!stileBarra && stileBarra.display !== 'none' && stileBarra.visibility === 'visible',
+          }
+        })
+      const scorriA = async (calcola, ms) => {
+        await pagina.evaluate(calcola)
+        await pagina.waitForTimeout(ms)
+      }
+      const mobile = vista.width < 768
+
+      const apertura = await leggiStato()
+
+      // §5: --bd-dettaglio (rovere sul chiaro, lime sullo scuro) mai come colore di un testo visibile
+      const testiDettaglio = await pagina.evaluate(() => {
+        const esa = (h) => {
+          const m = h.trim().match(/^#([0-9a-f]{6})$/i)
+          return m ? [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16)).join(', ') : null
+        }
+        const trovati = []
+        const giro = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
+        for (let nodo = giro.nextNode(); nodo; nodo = giro.nextNode()) {
+          const el = nodo.parentElement
+          if (!el || !nodo.textContent.trim() || el.closest('svg, script, style, noscript')) continue
+          if (!el.getClientRects().length) continue
+          const stile = getComputedStyle(el)
+          if (stile.visibility !== 'visible') continue
+          const dettaglio = esa(stile.getPropertyValue('--bd-dettaglio'))
+          if (dettaglio && stile.color === `rgb(${dettaglio})`) trovati.push(`${el.tagName.toLowerCase()}.${el.className}: «${nodo.textContent.trim().slice(0, 30)}»`)
+        }
+        return trovati
+      })
+      esito(
+        testiDettaglio.length === 0,
+        `colore dei dettagli mai sui testi ${vista.width}px`,
+        testiDettaglio.length ? testiDettaglio.slice(0, 4).join(' · ') : 'nessun testo visibile in --bd-dettaglio',
+      )
+      await scorriA(() => {
+        const parete = document.querySelector('#inizio [data-bd-parete]')
+        const r = parete.getBoundingClientRect()
+        window.scrollTo(0, Math.max(320, window.scrollY + r.top + r.height / 2 - window.innerHeight * 0.25))
+      }, 1300)
+      const ricomposta = await leggiStato()
+      await pagina.screenshot({ path: join(USCITA, `parete-composta-${vista.width}.png`) })
+      esito(
+        apertura.esplodi >= 0.95 && ricomposta.esplodi <= 0.05,
+        `parete che si ricompone scorrendo ${vista.width}px`,
+        `--bd-esplodi ${apertura.esplodi} all'apertura, ${ricomposta.esplodi} con il disegno al 25% dello schermo`,
+      )
+
+      // Il prompt dello step 4 chiede la barra visibile dopo 900 px di scorrimento a 390 × 844
+      await scorriA(() => window.scrollTo(0, 900), 600)
+      const a900 = await leggiStato()
+
+      await scorriA(() => {
+        const header = document.querySelector('.bd-header')
+        window.scrollTo(0, window.scrollY + document.getElementById('per-chi').getBoundingClientRect().top - header.offsetHeight)
+      }, 600)
+      const dopoHero = { ...(await leggiStato()), ...(await leggiHeader()) }
+      await pagina.screenshot({ path: join(USCITA, `dopo-hero-${vista.width}.png`) })
+      esito(
+        dopoHero.tema === 'chiaro' && logoAtteso('chiaro').test(dopoHero.file) && dopoHero.altezza === altezzaLogo,
+        `header chiaro dopo l'hero ${vista.width}px`,
+        `header ${dopoHero.tema}, logo ${dopoHero.file} alto ${dopoHero.altezza} px`,
+      )
+
+      await scorriA(() => {
+        window.scrollTo(0, window.scrollY + document.getElementById('preventivo').getBoundingClientRect().top - 120)
+      }, 600)
+      const sulModulo = await leggiStato()
+      esito(
+        mobile
+          ? !apertura.barra && a900.barra && dopoHero.barra && !sulModulo.barra
+          : !apertura.barra && !a900.barra && !dopoHero.barra && !sulModulo.barra,
+        `barra mobile ${vista.width}px`,
+        `all'apertura ${apertura.barra ? 'visibile' : 'nascosta'}, a 900 px ${a900.barra ? 'visibile' : 'nascosta'}, su «Per chi è» ${dopoHero.barra ? 'visibile' : 'nascosta'}, sul modulo ${sulModulo.barra ? 'visibile' : 'nascosta'}${mobile ? '' : ' (da 768 px non c\'è)'}`,
+      )
+      await scorriA(() => window.scrollTo(0, 0), 900)
+
+      // Salti istantanei (scroll programmato, ancore): l'header cambia tema anche senza passare per le posizioni intermedie
+      await scorriA(() => window.scrollTo(0, document.documentElement.scrollHeight), 500)
+      const inFondo = await leggiHeader()
+      await scorriA(() => window.scrollTo(0, 0), 500)
+      const inCima = await leggiHeader()
+      const conAncora = await paginaSenzaBanner({ viewport: { width: vista.width, height: vista.height } })
+      await conAncora.goto(`${BASE}/?a=famiglia#preventivo`, { waitUntil: 'networkidle' })
+      await conAncora.waitForTimeout(500)
+      const temaAncora = await conAncora.evaluate(() => document.querySelector('.bd-header').dataset.bdTema)
+      await conAncora.close()
+      esito(
+        inFondo.tema === 'chiaro' && inCima.tema === 'scuro' && temaAncora === 'chiaro',
+        `header con i salti di scroll ${vista.width}px`,
+        `salto in fondo: ${inFondo.tema}; salto in cima: ${inCima.tema}; pagina aperta su #preventivo: ${temaAncora}`,
+      )
+    }
+
+    // §5: una sola CTA primaria per schermata, al caricamento e scorrendo tutta la pagina.
+    const affollate = await pagina.evaluate(async () => {
+      const visibiliNelloSchermo = () =>
+        [...document.querySelectorAll('.bd-cta--primaria')].filter((el) => {
+          if (el.closest('[hidden]')) return false
+          const stile = getComputedStyle(el)
+          if (stile.display === 'none' || stile.visibility === 'hidden' || Number(stile.opacity) === 0) return false
+          const r = el.getBoundingClientRect()
+          return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < window.innerHeight
+        }).length
+      const problemi = []
+      const altezza = document.documentElement.scrollHeight
+      for (let y = 0; y < altezza; y += Math.round(window.innerHeight * 0.75)) {
+        window.scrollTo(0, y)
+        await new Promise((r) => setTimeout(r, 120))
+        const n = visibiliNelloSchermo()
+        if (n > 1) problemi.push(`${n} a ${Math.round(window.scrollY)} px`)
+      }
+      window.scrollTo(0, 0)
+      await new Promise((r) => setTimeout(r, 120))
+      return problemi
+    })
+    esito(affollate.length === 0, `una CTA primaria per schermata ${etichetta}`, affollate.length ? affollate.join(', ') : 'mai più di una')
+
+    // §2: le due illustrazioni AI, sfumate, con il ritaglio giusto per la larghezza e la dicitura visibile
+    if (angolo === 'famiglia') {
+      const illustrazioni = []
+      for (const id of ['villa-dal-disegno', 'villa-tramonto']) {
+        await pagina.evaluate((id) => {
+          const figura = document.querySelector(`.bd-illustrazione--${id}`)
+          const r = figura.getBoundingClientRect()
+          window.scrollTo(0, window.scrollY + r.top + r.height / 2 - window.innerHeight / 2)
+        }, id)
+        await pagina.waitForTimeout(900)
+        await pagina.screenshot({ path: join(USCITA, `illustrazione-${id}-${vista.width}.png`) })
+        illustrazioni.push(
+          await pagina.evaluate((id) => {
+            const figura = document.querySelector(`.bd-illustrazione--${id}`)
+            const img = figura.querySelector('img')
+            const nota = figura.querySelector('figcaption')
+            const stileNota = nota ? getComputedStyle(nota) : null
+            return {
+              id,
+              file: img.currentSrc.split('/').pop(),
+              caricata: img.complete && img.naturalWidth > 0,
+              alt: img.alt,
+              nota: nota?.textContent.trim() ?? '',
+              notaVisibile: !!stileNota && nota.getClientRects().length > 0 && stileNota.visibility === 'visible' && Number(stileNota.opacity) > 0,
+            }
+          }, id),
+        )
+      }
+      const ritagli = vista.width < 768 ? ['villa-dal-disegno-672', 'villa-tramonto-640'] : ['villa-dal-disegno-1200', 'villa-tramonto-1052']
+      const ok = illustrazioni.every(
+        (x, i) => x.caricata && x.file.startsWith(`bd-${ritagli[i]}-`) && x.file.endsWith('.avif') && x.alt.startsWith('Illustrazione') && x.nota === 'Illustrazione' && x.notaVisibile,
+      )
+      esito(
+        ok,
+        `illustrazioni sfumate ${vista.width}px`,
+        illustrazioni.map((x) => `${x.id}: ${x.file}${x.caricata ? '' : ' (non caricata)'}, «${x.nota}» ${x.notaVisibile ? 'visibile' : 'nascosta'}`).join(' · '),
+      )
+      // Il percorso del cantiere in «Come funziona»: su mobile una striscia che si scorre di lato senza allargare la pagina,
+      // da 1024 px cinque colonne sulla stessa riga; il riquadro 3 è quello con i casseri isolanti
+      await pagina.evaluate(() => {
+        const r = document.querySelector('.bd-percorso').getBoundingClientRect()
+        window.scrollTo(0, window.scrollY + r.top - 90)
+      })
+      await pagina.waitForTimeout(900)
+      await pagina.screenshot({ path: join(USCITA, `percorso-${vista.width}.png`) })
+      await pagina.evaluate(async () => {
+        const striscia = document.querySelector('.bd-percorso__scorri')
+        striscia.scrollTo({ left: striscia.scrollWidth })
+        await new Promise((r) => setTimeout(r, 700))
+        striscia.scrollTo({ left: 0 })
+      })
+      await pagina.waitForTimeout(500)
+      const percorso = await pagina.evaluate(() => {
+        const striscia = document.querySelector('.bd-percorso__scorri')
+        const fasi = [...document.querySelectorAll('.bd-percorso__fase')]
+        const immagini = [...document.querySelectorAll('.bd-percorso img')]
+        const nota = document.querySelector('.bd-percorso__nota')
+        return {
+          fasi: fasi.length,
+          righe: new Set(fasi.map((f) => Math.round(f.getBoundingClientRect().top))).size,
+          scorre: striscia.scrollWidth > striscia.clientWidth + 1,
+          caricate: immagini.filter((i) => i.complete && i.naturalWidth > 0).length,
+          terza: immagini[2]?.currentSrc.split('/').pop() ?? '',
+          nota: nota?.textContent.trim() ?? '',
+          larghezzaPagina: document.documentElement.scrollWidth,
+        }
+      })
+      const okPercorso =
+        percorso.fasi === 5 &&
+        percorso.caricate === 5 &&
+        percorso.terza.startsWith('bd-percorso-3-casseri-') &&
+        percorso.nota.startsWith('Illustrazioni') &&
+        percorso.larghezzaPagina <= vista.width &&
+        (vista.width < 1024 ? percorso.scorre : !percorso.scorre && percorso.righe === 1)
+      esito(
+        okPercorso,
+        `percorso del cantiere ${vista.width}px`,
+        `${percorso.fasi} riquadri, ${percorso.caricate} caricati, il terzo è ${percorso.terza}; ${vista.width < 1024 ? (percorso.scorre ? 'striscia che scorre di lato' : 'striscia ferma') : `${percorso.righe} riga`}; pagina larga ${percorso.larghezzaPagina} px; «${percorso.nota.slice(0, 40)}…»`,
+      )
+
+      await pagina.evaluate(() => window.scrollTo(0, 0))
+      await pagina.waitForTimeout(600)
+    }
+
+    // Pagina intera per ogni angolo (step 8), dopo lo scorrimento: gli ingressi sono già entrati
+    await pagina.screenshot({ path: join(USCITA, `pagina-intera-${angolo}-${vista.width}.png`), fullPage: true })
+    await pagina.close()
+  }
+}
+
+// Step 5: «Com'è fatta la casa» con lo strato 2 aperto, a 390 e 1440 px. Il disegno si porta col centro al 28% dello schermo:
+// lì preparaPareti l'ha già ricomposto (la ricomposizione finisce quando il centro arriva al 30%). Header e barra nascosti nella foto.
+// A 390 px anche la leggibilità delle tre sezioni nuove: tratti del disegno ≥ 1 px, testi ≥ 14 px, nessuno scroll orizzontale.
+for (const vista of VISTE) {
+  const pagina = await paginaSenzaBanner({ viewport: { width: vista.width, height: vista.height } })
+  const errori = []
+  pagina.on('pageerror', (e) => errori.push(e.message))
+  pagina.on('console', (m) => {
+    if (m.type() === 'error') errori.push(m.text())
+  })
+  await pagina.goto(`${BASE}/`, { waitUntil: 'networkidle' })
+  await pagina.waitForTimeout(600)
+  await pagina.locator('#sistema-strato-2').scrollIntoViewIfNeeded()
+  await pagina.waitForTimeout(500)
+  await pagina.locator('#sistema-strato-2').click()
+  await pagina.evaluate(() => {
+    const tela = document.querySelector('#sistema .bd-sistema__tela')
+    const r = tela.getBoundingClientRect()
+    window.scrollTo(0, window.scrollY + r.top + r.height / 2 - window.innerHeight * 0.28)
+  })
+  await pagina.waitForTimeout(1600)
+  const stato = await pagina.evaluate(() => {
+    const pulsanti = [...document.querySelectorAll('#sistema .bd-strati__pulsante')]
+    const riquadri = pulsanti.map((b) => document.getElementById(b.getAttribute('aria-controls')))
+    const tela = document.querySelector('#sistema .bd-sistema__tela')
+    const svg = tela.querySelector('svg')
+    return {
+      espansi: pulsanti.map((b) => b.getAttribute('aria-expanded')).join(','),
+      visibili: riquadri.map((r) => (r && r.getClientRects().length > 0 ? 'sì' : 'no')).join(','),
+      attivo: tela.dataset.stratoAttivo ?? '',
+      esplodi: Number(getComputedStyle(svg).getPropertyValue('--bd-esplodi') || 0),
+      bordo: getComputedStyle(svg.querySelector('.bd-strato-2 [class$="-l"]')).stroke,
+      dettaglio: getComputedStyle(document.querySelector('#sistema')).getPropertyValue('--bd-dettaglio').trim(),
+    }
+  })
+  await senzaFissi(pagina, () => pagina.screenshot({ path: join(USCITA, `sistema-strato-2-${vista.width}.png`) }))
+  esito(
+    stato.espansi === 'false,true,false,false' && stato.visibili === 'no,sì,no,no' && stato.attivo === '2' && stato.esplodi === 0 && errori.length === 0,
+    `«Com'è fatta la casa» con lo strato 2 aperto ${vista.width}px`,
+    `aria-expanded ${stato.espansi}; riquadri visibili ${stato.visibili}; strato attivo nel disegno ${stato.attivo || 'nessuno'} (bordo ${stato.bordo}); parete ${stato.esplodi === 0 ? 'ricomposta' : `staccata a ${stato.esplodi}`}${errori.length ? `; errori: ${errori.join(' | ')}` : ''}`,
+  )
+
+  // Tocco sullo strato 4 nel disegno: apre lo stesso riquadro del pulsante 4 (scorciatoia per il dito)
+  await pagina.evaluate(() => {
+    const strato = document.querySelector('#sistema .bd-strato-4 rect')
+    strato.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+  })
+  await pagina.waitForTimeout(300)
+  const dopoTocco = await pagina.evaluate(() => [...document.querySelectorAll('#sistema .bd-strati__pulsante')].map((b) => b.getAttribute('aria-expanded')).join(','))
+  esito(dopoTocco === 'false,false,false,true', `tocco sullo strato nel disegno ${vista.width}px`, `dopo il tocco sullo strato 4: aria-expanded ${dopoTocco}`)
+
+  if (vista.width === 390) {
+    const leggibile = await pagina.evaluate(() => {
+      const svg = document.querySelector('#sistema svg')
+      const [, , larghezzaVista] = svg.getAttribute('viewBox').split(/\s+/).map(Number)
+      const scala = svg.getBoundingClientRect().width / larghezzaVista
+      // Tratti: ogni elemento con stroke, compresi i retini dentro i <pattern> (unità del disegno × scala)
+      const tratti = [...svg.querySelectorAll('path, rect, circle, line, polyline, polygon')]
+        .map((el) => ({ el, stile: getComputedStyle(el) }))
+        .filter(({ stile }) => stile.stroke !== 'none' && parseFloat(stile.strokeWidth) > 0)
+        .map(({ el, stile }) => ({ classe: el.getAttribute('class') ?? el.tagName, px: parseFloat(stile.strokeWidth) * scala }))
+      const piuSottile = tratti.reduce((min, t) => (t.px < min.px ? t : min), { classe: '', px: Infinity })
+      // Testi delle tre sezioni nuove: dimensione minima
+      const testi = []
+      for (const id of ['come-funziona', 'ruolo', 'sistema']) {
+        const sezione = document.getElementById(id)
+        const giro = document.createTreeWalker(sezione, NodeFilter.SHOW_TEXT)
+        while (giro.nextNode()) {
+          const nodo = giro.currentNode
+          if (!nodo.textContent.trim() || !nodo.parentElement || nodo.parentElement.closest('svg')) continue
+          if (nodo.parentElement.getClientRects().length === 0) continue
+          testi.push({ id, testo: nodo.textContent.trim().slice(0, 30), px: parseFloat(getComputedStyle(nodo.parentElement).fontSize) })
+        }
+      }
+      const piuPiccolo = testi.reduce((min, t) => (t.px < min.px ? t : min), { px: Infinity, testo: '' })
+      const larghe = ['come-funziona', 'ruolo', 'sistema'].filter((id) => {
+        const el = document.getElementById(id)
+        return el.scrollWidth > el.clientWidth + 1 || el.getBoundingClientRect().right > window.innerWidth + 0.5
+      })
+      return { scala, piuSottile, piuPiccolo, larghe, documento: document.documentElement.scrollWidth }
+    })
+    esito(
+      leggibile.piuSottile.px >= 1 - 1e-6,
+      'disegno di «Com\'è fatta la casa» leggibile a 390px: tratti ≥ 1 px',
+      `scala ${leggibile.scala.toFixed(2)}; tratto più sottile ${leggibile.piuSottile.px.toFixed(2)} px (${leggibile.piuSottile.classe})`,
+    )
+    esito(
+      leggibile.piuPiccolo.px >= 14,
+      'testi delle sezioni nuove a 390px: almeno 14 px',
+      `testo più piccolo ${leggibile.piuPiccolo.px} px («${leggibile.piuPiccolo.testo}»)`,
+    )
+    esito(
+      leggibile.larghe.length === 0 && leggibile.documento <= 390,
+      'nessuno scroll orizzontale nelle sezioni nuove a 390px',
+      leggibile.larghe.length ? `troppo larghe: ${leggibile.larghe.join(', ')}` : `come-funziona, ruolo e sistema entro lo schermo; documento ${leggibile.documento} px`,
+    )
+  }
+  await pagina.close()
+}
+
+// Step 6: ritmo verticale, quote in fila, FAQ con una domanda aperta e «Chiusura», a 390 e 1440 px.
+for (const vista of VISTE) {
+  const pagina = await paginaSenzaBanner({ viewport: { width: vista.width, height: vista.height } })
+  const errori = []
+  pagina.on('pageerror', (e) => errori.push(e.message))
+  pagina.on('console', (m) => {
+    if (m.type() === 'error') errori.push(m.text())
+  })
+  await pagina.goto(`${BASE}/`, { waitUntil: 'networkidle' })
+  await pagina.waitForTimeout(600)
+
+  // Ritmo verticale (§5): ogni sezione dopo l'hero ha 96 px sopra e sotto su mobile e 160 px su desktop. Unica eccezione,
+  // dichiarata nel CSS: il modulo, che segue l'illustrazione «villa al tramonto» e ha meno spazio sopra.
+  // Tra due sezioni una BdQuota con il numero della sezione che segue, in fila (01, 02, …).
+  const ritmo = await pagina.evaluate((atteso) => {
+    const sezioni = [...document.querySelectorAll('main > section')].filter((s) => s.id !== 'inizio')
+    const fuori = []
+    for (const s of sezioni) {
+      const stile = getComputedStyle(s)
+      const sopra = parseFloat(stile.paddingTop)
+      const sotto = parseFloat(stile.paddingBottom)
+      const dopoIllustrazione = s.previousElementSibling?.matches('.bd-illustrazione') ?? false
+      if (sotto !== atteso || (!dopoIllustrazione && sopra !== atteso)) fuori.push(`#${s.id} ${sopra}/${sotto}`)
+    }
+    const numeri = [...document.querySelectorAll('main .bd-quota__numero')].map((n) => n.textContent.trim())
+    const inFila = numeri.every((n, i) => n === String(i + 1).padStart(2, '0'))
+    // Ogni quota sta subito prima di una sezione
+    const quotePrimaDi = [...document.querySelectorAll('main .bd-quota')].map((q) => q.closest('.bd-wrap')?.nextElementSibling?.id ?? '?')
+    return { sezioni: sezioni.map((s) => s.id), fuori, numeri, inFila, quotePrimaDi }
+  }, vista.width < 1024 ? 96 : 160)
+  esito(
+    ritmo.fuori.length === 0 && ritmo.inFila && ritmo.quotePrimaDi.every((id) => id !== '?'),
+    `ritmo verticale e quote numerate ${vista.width}px`,
+    `${ritmo.sezioni.length} sezioni con ${vista.width < 1024 ? 96 : 160} px sopra e sotto${ritmo.fuori.length ? `; fuori misura: ${ritmo.fuori.join(', ')}` : ''}; quote ${ritmo.numeri.join(' ')} prima di ${ritmo.quotePrimaDi.join(', ')}`,
+  )
+
+  // FAQ: all'inizio tutte chiuse; un clic ne apre una, il clic su un'altra chiude la prima; da tastiera Invio e Spazio
+  await pagina.locator('#faq').scrollIntoViewIfNeeded()
+  await pagina.waitForTimeout(900)
+  const statoFaq = () =>
+    pagina.evaluate(() =>
+      [...document.querySelectorAll('#faq .bd-faq__domanda')].map((b) => {
+        const regione = document.getElementById(b.getAttribute('aria-controls') ?? '')
+        return {
+          tag: b.tagName,
+          espansa: b.getAttribute('aria-expanded'),
+          visibile: Boolean(regione && regione.getClientRects().length > 0),
+          regione: regione?.getAttribute('role') === 'region' && regione.getAttribute('aria-labelledby') === b.id,
+          altezza: b.getBoundingClientRect().height,
+        }
+      }),
+    )
+  const aperte = (stato) => stato.flatMap((v, i) => (v.espansa === 'true' ? [i + 1] : [])).join(',') || 'nessuna'
+  const coerenti = (stato) => stato.every((v) => (v.espansa === 'true') === v.visibile)
+  const iniziale = await statoFaq()
+  const domande = pagina.locator('#faq .bd-faq__domanda')
+  await domande.nth(0).click()
+  await pagina.waitForTimeout(250)
+  const dopoPrima = await statoFaq()
+  await domande.nth(4).click()
+  await pagina.waitForTimeout(250)
+  const dopoQuinta = await statoFaq()
+  await domande.nth(2).focus()
+  await pagina.keyboard.press('Enter')
+  await pagina.waitForTimeout(250)
+  const dopoInvio = await statoFaq()
+  await pagina.keyboard.press('Space')
+  await pagina.waitForTimeout(250)
+  const dopoSpazio = await statoFaq()
+  const tutteBottoni = iniziale.length > 0 && iniziale.every((v) => v.tag === 'BUTTON' && v.regione && v.altezza >= 44)
+  const passi = [aperte(iniziale), aperte(dopoPrima), aperte(dopoQuinta), aperte(dopoInvio), aperte(dopoSpazio)]
+  const tuttiCoerenti = [iniziale, dopoPrima, dopoQuinta, dopoInvio, dopoSpazio].every(coerenti)
+  esito(
+    tutteBottoni && tuttiCoerenti && passi.join(' → ') === 'nessuna → 1 → 5 → 3 → nessuna' && errori.length === 0,
+    `FAQ, una domanda aperta per volta ${vista.width}px`,
+    `${iniziale.length} domande (button con aria-expanded e aria-controls verso role="region", alte ${Math.min(...iniziale.map((v) => Math.round(v.altezza)))} px o più); clic 1, clic 5, Invio sulla 3, Spazio: ${passi.join(' → ')}${tuttiCoerenti ? '' : '; aria-expanded e riquadri visibili non coincidono'}${errori.length ? `; errori: ${errori.join(' | ')}` : ''}`,
+  )
+  // Screenshot con la domanda 5 aperta, la risposta più lunga («Quanto costa il servizio…»)
+  await domande.nth(4).click()
+  await pagina.waitForTimeout(400)
+  await senzaFissi(pagina, () => pagina.locator('#faq').screenshot({ path: join(USCITA, `faq-aperta-${vista.width}.png`) }))
+
+  // «Chiusura»: si arriva in fondo come una persona, a colpi di rotella, e la parete piccola dev'essere ricomposta
+  for (let i = 0; i < 40; i++) {
+    await pagina.mouse.wheel(0, 800)
+    await pagina.waitForTimeout(40)
+  }
+  await pagina.waitForTimeout(1800)
+  const chiusura = await pagina.evaluate(() => {
+    const sezione = document.getElementById('chiusura')
+    const svg = sezione.querySelector('[data-bd-parete] svg')
+    const primaria = sezione.querySelector('.bd-cta:not(.bd-cta--secondaria)')
+    const secondarie = [...sezione.querySelectorAll('.bd-chiusura__pulsanti a')]
+    const misura = (el) => {
+      const r = el.getBoundingClientRect()
+      return { h: Math.round(r.height), w: Math.round(r.width), testo: parseFloat(getComputedStyle(el).fontSize) }
+    }
+    return {
+      inFondo: Math.abs(window.scrollY - (document.documentElement.scrollHeight - window.innerHeight)) < 2,
+      esplodi: Number(getComputedStyle(svg).getPropertyValue('--bd-esplodi') || 0),
+      scura: Boolean(sezione.closest('.bd-tema-scuro')),
+      dettaglio: getComputedStyle(sezione).getPropertyValue('--bd-dettaglio').trim().toLowerCase(),
+      primaria: primaria ? { ...misura(primaria), href: primaria.getAttribute('href') } : null,
+      secondarie: secondarie.map((a) => ({ ...misura(a), href: a.getAttribute('href'), target: a.getAttribute('target'), rel: a.getAttribute('rel') })),
+    }
+  })
+  const secondarieOk =
+    chiusura.primaria !== null &&
+    chiusura.secondarie.length >= 1 &&
+    chiusura.secondarie.every((a) => a.h >= 44 && a.w >= 44 && a.h < chiusura.primaria.h && a.testo <= chiusura.primaria.testo) &&
+    chiusura.secondarie.some((a) => a.href?.startsWith('tel:+39')) &&
+    chiusura.secondarie.filter((a) => a.href?.startsWith('https://wa.me/')).every((a) => a.target === '_blank' && (a.rel ?? '').includes('noopener'))
+  esito(
+    chiusura.inFondo && chiusura.esplodi === 0 && !chiusura.scura && chiusura.dettaglio === '#a87b4f' && secondarieOk,
+    `«Chiusura» in fondo alla pagina ${vista.width}px`,
+    `parete ${chiusura.esplodi === 0 ? 'ricomposta' : `staccata a ${chiusura.esplodi}`} in chiaro (dettagli ${chiusura.dettaglio}); CTA primaria ${chiusura.primaria?.h} px verso ${chiusura.primaria?.href}; secondarie ${chiusura.secondarie.map((a) => `${a.href} ${a.w}×${a.h} px`).join(', ')}`,
+  )
+  await senzaFissi(pagina, () => pagina.locator('#chiusura').screenshot({ path: join(USCITA, `chiusura-${vista.width}.png`) }))
+
+  // Aree di tocco (§9): ogni link e ogni pulsante di «Chiusura» e del footer almeno 44 × 44 px e su una riga sola
+  const tocchi = await pagina.evaluate(() =>
+    [...document.querySelectorAll('#chiusura a, #chiusura button, footer a, footer button')].map((el) => {
+      const r = el.getBoundingClientRect()
+      const copia = el.cloneNode(true)
+      copia.querySelectorAll('.bd-sr-only').forEach((s) => s.remove())
+      return { testo: copia.textContent.replace(/\s+/g, ' ').trim(), w: r.width, h: r.height, righe: el.getClientRects().length }
+    }),
+  )
+  const fuoriMisura = tocchi.filter((x) => x.w + 0.01 < 44 || x.h + 0.01 < 44 || x.righe !== 1)
+  esito(
+    tocchi.length > 0 && fuoriMisura.length === 0,
+    `aree di tocco di «Chiusura» e del footer ${vista.width}px`,
+    fuoriMisura.length
+      ? `sotto i 44 × 44 px o su più righe: ${fuoriMisura.map((x) => `«${x.testo}» ${Math.round(x.w)} × ${Math.round(x.h)} px su ${x.righe} righe`).join(', ')}`
+      : `${tocchi.length} tra link e pulsanti, tutti su una riga; altezza minima ${Math.round(Math.min(...tocchi.map((x) => x.h)))} px, larghezza minima ${Math.round(Math.min(...tocchi.map((x) => x.w)))} px («${tocchi.reduce((m, x) => (x.w < m.w ? x : m)).testo}»)`,
+  )
+  await senzaFissi(pagina, () => pagina.locator('footer').screenshot({ path: join(USCITA, `footer-${vista.width}.png`) }))
+  await pagina.close()
+}
+
+// Senza JavaScript (§3.8): header chiaro con il logo positivo, parete composta con le quote, titolo visibile, barra nascosta.
+{
+  const contesto = await browser.newContext({ viewport: { width: 390, height: 844 }, javaScriptEnabled: false })
+  const pagina = await contesto.newPage()
+  await pagina.goto(`${BASE}/`, { waitUntil: 'networkidle' })
+  const stato = await pagina.evaluate(() => {
+    const header = document.querySelector('.bd-header')
+    const positivo = header.querySelector('.bd-logo--positivo')
+    const svg = document.querySelector('#inizio [data-bd-parete] svg')
+    const strati = [...svg.querySelectorAll('.bd-strato')].map((s) => getComputedStyle(s).transform)
+    return {
+      js: document.documentElement.classList.contains('bd-js'),
+      fondoHeader: getComputedStyle(header).backgroundColor,
+      logoPositivo: positivo ? Number(getComputedStyle(positivo).opacity) : 0,
+      composta: strati.length === 4 && strati.every((t) => t === 'none' || t === 'matrix(1, 0, 0, 1, 0, 0)'),
+      quote: Number(getComputedStyle(svg.querySelector('[class*="-quote"]')).opacity),
+      titolo: Number(getComputedStyle(document.querySelector('h1')).opacity),
+      barra: getComputedStyle(document.querySelector('.bd-barra-mobile')).visibility,
+    }
+  })
+  await pagina.locator('#inizio .bd-hero__visuale').screenshot({ path: join(USCITA, 'senza-js-parete-390.png') })
+  await pagina.screenshot({ path: join(USCITA, 'senza-js-390.png') })
+  // FAQ senza JavaScript: <details> e <summary>, si aprono col clic del browser e le risposte sono già nella pagina
+  const faqPrima = await pagina.evaluate(() => [...document.querySelectorAll('#faq details')].map((d) => d.open))
+  await pagina.locator('#faq summary').nth(1).click()
+  // La risposta entra con una dissolvenza di 200 ms e la freccia ruota: si scatta dopo
+  await pagina.waitForTimeout(400)
+  const faqDopo = await pagina.evaluate(() => {
+    const voci = [...document.querySelectorAll('#faq details')]
+    return {
+      aperte: voci.flatMap((d, i) => (d.open ? [i + 1] : [])),
+      risposta: voci[1]?.querySelector('.bd-faq__risposta')?.getClientRects().length > 0,
+      testi: voci.filter((d) => (d.querySelector('.bd-faq__risposta')?.textContent ?? '').trim().length > 20).length,
+    }
+  })
+  await pagina.locator('#faq').screenshot({ path: join(USCITA, 'senza-js-faq-390.png') })
+  esito(
+    faqPrima.length > 0 && faqPrima.every((o) => !o) && faqDopo.aperte.join(',') === '2' && faqDopo.risposta && faqDopo.testi === faqPrima.length,
+    'FAQ senza JavaScript 390px',
+    `${faqPrima.length} <details> chiusi, tutte le ${faqDopo.testi} risposte nella pagina; clic sulla domanda 2: aperta ${faqDopo.aperte.join(',') || 'nessuna'}, risposta ${faqDopo.risposta ? 'visibile' : 'nascosta'}`,
+  )
+  const ok = !stato.js && stato.fondoHeader === 'rgb(237, 236, 232)' && stato.logoPositivo === 1 && stato.composta && stato.quote === 1 && stato.titolo === 1 && stato.barra === 'hidden'
+  esito(
+    ok,
+    'senza JavaScript 390px',
+    `header ${stato.fondoHeader} con logo positivo ${stato.logoPositivo === 1 ? 'visibile' : 'nascosto'}, parete ${stato.composta ? 'composta' : 'staccata'} con quote a ${stato.quote}, titolo ${stato.titolo}, barra ${stato.barra}`,
+  )
+  await contesto.close()
+}
+
+// Riduzione del movimento: niente Lenis, parete già composta con le quote, titolo subito visibile, nessun errore.
+for (const vista of VISTE) {
+  const contesto = await browser.newContext({ viewport: { width: vista.width, height: vista.height }, reducedMotion: 'reduce' })
+  await contesto.addInitScript(SCELTA_SALVATA)
+  const pagina = await contesto.newPage()
+  const errori = []
+  pagina.on('pageerror', (e) => errori.push(e.message))
+  await pagina.goto(`${BASE}/`, { waitUntil: 'networkidle' })
+  await pagina.waitForTimeout(300)
+  const stato = await pagina.evaluate(() => {
+    const svg = document.querySelector('#inizio [data-bd-parete] svg')
+    const strati = [...(svg?.querySelectorAll('.bd-strato') ?? [])].map((s) => getComputedStyle(s).transform)
+    // Il gruppo delle quote ha le classi «<prefisso>-quote <prefisso>-luce»
+    const quote = svg?.querySelector('[class*="-quote"]')
+    return {
+      lenis: document.documentElement.classList.contains('lenis'),
+      rivela: document.documentElement.classList.contains('bd-rivela'),
+      titolo: Number(getComputedStyle(document.querySelector('h1')).opacity),
+      composta: strati.length === 4 && strati.every((t) => t === 'none'),
+      quote: quote ? Number(getComputedStyle(quote).opacity) : 0,
+    }
+  })
+  // Step 5: «Com'è fatta la casa» già composta, catena dei passaggi già disegnata, riquadri che si aprono senza animazione
+  await pagina.locator('#sistema-strato-3').scrollIntoViewIfNeeded()
+  await pagina.locator('#sistema-strato-3').click()
+  await pagina.waitForTimeout(100)
+  const passo5 = await pagina.evaluate(() => {
+    const strati = [...document.querySelectorAll('#sistema [data-bd-parete] .bd-strato')].map((s) => getComputedStyle(s).transform)
+    const elenco = document.querySelector('#come-funziona .bd-passaggi')
+    const riquadro = document.getElementById('sistema-strato-3-testo')
+    return {
+      sistemaComposta: strati.length === 4 && strati.every((t) => t === 'none'),
+      traccia: elenco ? getComputedStyle(elenco).getPropertyValue('--bd-traccia').trim() : '',
+      linea: elenco ? getComputedStyle(elenco, '::before').transform : '',
+      animazione: riquadro ? getComputedStyle(riquadro).animationName : '',
+      aperto: riquadro ? riquadro.getClientRects().length > 0 : false,
+    }
+  })
+  esito(
+    passo5.sistemaComposta && passo5.traccia === '1' && (passo5.linea === 'none' || passo5.linea === 'matrix(1, 0, 0, 1, 0, 0)') && passo5.animazione === 'none' && passo5.aperto,
+    `riduzione del movimento, sezioni dello step 5 ${vista.width}px`,
+    `parete di #sistema ${passo5.sistemaComposta ? 'già composta' : 'staccata'}; catena dei passaggi --bd-traccia ${passo5.traccia} (${passo5.linea}); riquadro aperto ${passo5.aperto ? 'sì' : 'no'} con animazione «${passo5.animazione}»`,
+  )
+  await pagina.evaluate(() => window.scrollTo(0, 0))
+  await pagina.waitForTimeout(100)
+  await pagina.screenshot({ path: join(USCITA, `movimento-ridotto-${vista.width}.png`) })
+  const ok = !stato.lenis && !stato.rivela && stato.titolo === 1 && stato.composta && stato.quote === 1 && errori.length === 0
+  esito(
+    ok,
+    `riduzione del movimento ${vista.width}px`,
+    `${stato.lenis ? 'Lenis attivo' : 'niente Lenis'}, titolo opacità ${stato.titolo}, parete ${stato.composta ? 'già composta' : 'esplosa'}, quote opacità ${stato.quote}${errori.length ? `, errori: ${errori.join(' | ')}` : ''}`,
+  )
+  await contesto.close()
+}
+
+// ---------- Step 7: banner dei cookie, Pixel solo con il consenso, Contact, revoca, CSP, LCP ----------
+// Meta non si raggiunge mai: route() intercetta connect.facebook.net e www.facebook.com. Lo script del Pixel diventa
+// un fbq finto che registra le chiamate in window.__fbqChiamate. Il «META_PIXEL di prova» entra riscrivendo, solo qui,
+// il bundle servito (META_PIXEL:null → un ID finto): nel codice del sito non c'è nessun aggancio per i test.
+const PIXEL_PROVA = '000000000000007'
+const FBEVENTS_FINTO = `(function () {
+  window.__fbqChiamate = window.__fbqChiamate || [];
+  var f = window.fbq; if (!f) return;
+  var coda = f.queue || [];
+  f.callMethod = function () { window.__fbqChiamate.push(Array.prototype.slice.call(arguments)); };
+  for (var i = 0; i < coda.length; i++) f.callMethod.apply(f, coda[i]);
+  f.queue = [];
+})();`
+const SCRIPT_PIXEL = 'https://connect.facebook.net/en_US/fbevents.js'
+const LINK_CONTATTO = 'a[href^="tel:"], a[href^="https://wa.me/"]'
+
+async function contestoStep7({ width, height }, { ridotto = false, pixel = false, consenso = null } = {}) {
+  const contesto = await browser.newContext({ viewport: { width, height }, reducedMotion: ridotto ? 'reduce' : 'no-preference' })
+  await contesto.addInitScript((scelta) => {
+    window.__violazioni = []
+    document.addEventListener('securitypolicyviolation', (e) => {
+      window.__violazioni.push(`${e.violatedDirective} ${e.blockedURI || 'inline'} ${(e.sourceFile || '').split('/').pop()}:${e.lineNumber}`)
+    })
+    window.__lcp = []
+    try {
+      new PerformanceObserver((lista) => window.__lcp.push(...lista.getEntries())).observe({ type: 'largest-contentful-paint', buffered: true })
+    } catch {
+      // senza LCP la prova lo segnala
+    }
+    try {
+      if (scelta && !localStorage.getItem('bd-consenso')) localStorage.setItem('bd-consenso', JSON.stringify({ stato: scelta, data: Date.now() }))
+    } catch {
+      // niente
+    }
+  }, consenso)
+  const richieste = []
+  contesto.on('request', (r) => richieste.push(r.url()))
+  await contesto.route(/^https:\/\/(?:connect\.facebook\.net|www\.facebook\.com)\//, (route) =>
+    route.request().url() === SCRIPT_PIXEL
+      ? route.fulfill({ status: 200, contentType: 'text/javascript; charset=utf-8', body: FBEVENTS_FINTO })
+      : route.fulfill({ status: 204, body: '' }),
+  )
+  if (pixel) {
+    await contesto.route(/\/assets\/index-[\w-]+\.js$/, async (route) => {
+      const risposta = await route.fetch()
+      const corpo = await risposta.text()
+      if (!corpo.includes('META_PIXEL:null')) return route.abort()
+      return route.fulfill({ response: risposta, body: corpo.replace('META_PIXEL:null', `META_PIXEL:${JSON.stringify(PIXEL_PROVA)}`) })
+    })
+  }
+  const pagina = await contesto.newPage()
+  const errori = []
+  pagina.on('pageerror', (e) => errori.push(e.message))
+  pagina.on('console', (m) => {
+    if (m.type() === 'error' && !/status of 404/.test(m.text())) errori.push(m.text())
+  })
+  return { contesto, pagina, richieste, errori }
+}
+const esterne = (richieste) => richieste.filter((u) => !u.startsWith(BASE) && !u.startsWith('data:') && !u.startsWith('blob:'))
+const violazioniDi = (pagina) => pagina.evaluate(() => window.__violazioni ?? [])
+async function scorriTutta(pagina) {
+  for (let i = 0; i < 30; i++) {
+    await pagina.mouse.wheel(0, 700)
+    await pagina.waitForTimeout(40)
+  }
+  await pagina.waitForTimeout(600)
+  await pagina.evaluate(() => window.scrollTo(0, 0))
+  await pagina.waitForTimeout(400)
+}
+const alCentro = (localizzatore) => localizzatore.evaluate((el) => el.scrollIntoView({ block: 'center' }))
+
+// 1. Senza consenso nessuna richiesta esterna, nemmeno con un Pixel configurato; il Pixel parte solo dopo «Accetta».
+//    Zero violazioni della CSP prima e dopo «Accetta», con il movimento e con la riduzione del movimento.
+for (const ridotto of [false, true]) {
+  for (const vista of VISTE) {
+    const etichetta = `${vista.width}px ${ridotto ? 'movimento ridotto' : 'con movimento'}`
+    const { contesto, pagina, richieste, errori } = await contestoStep7(vista, { ridotto, pixel: true })
+    await pagina.goto(`${BASE}/`, { waitUntil: 'networkidle' })
+    await pagina.waitForTimeout(500)
+    await scorriTutta(pagina)
+    const primaEsterne = esterne(richieste)
+    const violazioniPrima = await violazioniDi(pagina)
+    const bannerVisibile = await pagina.locator('.bd-banner').isVisible()
+    const attesaPixel = pagina.waitForRequest(SCRIPT_PIXEL, { timeout: 5000 }).catch(() => null)
+    await pagina.locator('.bd-banner').getByRole('button', { name: 'Accetta', exact: true }).click()
+    const richiestaPixel = await attesaPixel
+    await pagina.waitForTimeout(500)
+    await scorriTutta(pagina)
+    const chiamate = await pagina.evaluate(() => window.__fbqChiamate ?? [])
+    const violazioniDopo = await violazioniDi(pagina)
+    const init = chiamate.some((c) => c[0] === 'init' && c[1] === PIXEL_PROVA)
+    const pageView = chiamate.some((c) => c[0] === 'track' && c[1] === 'PageView')
+    // Configurazione automatica spenta prima di init: niente clic sui pulsanti né metadati della pagina verso Meta
+    const posAutoConfig = chiamate.findIndex((c) => c[0] === 'set' && c[1] === 'autoConfig' && c[2] === false && c[3] === PIXEL_PROVA)
+    const posInit = chiamate.findIndex((c) => c[0] === 'init' && c[1] === PIXEL_PROVA)
+    const autoConfigPrima = posAutoConfig !== -1 && posAutoConfig < posInit
+    esito(
+      bannerVisibile && primaEsterne.length === 0 && richiestaPixel !== null && init && pageView && autoConfigPrima,
+      `Pixel solo dopo «Accetta» ${etichetta}`,
+      `prima: ${richieste.length} richieste, esterne ${primaEsterne.length ? primaEsterne.join(', ') : 'nessuna'}; dopo «Accetta»: ${richiestaPixel ? 'fbevents.js richiesto' : 'fbevents.js MAI richiesto'}, autoConfig false ${autoConfigPrima ? 'prima di init' : 'MANCANTE o dopo init'}, init ${init ? 'sì' : 'no'}, PageView ${pageView ? 'sì' : 'no'}`,
+    )
+    esito(
+      violazioniPrima.length === 0 && violazioniDopo.length === 0 && errori.length === 0,
+      `CSP senza violazioni prima e dopo «Accetta» ${etichetta}`,
+      violazioniPrima.length || violazioniDopo.length || errori.length
+        ? `prima ${violazioniPrima.join(' | ') || '0'}; dopo ${violazioniDopo.join(' | ') || '0'}${errori.length ? `; errori: ${errori.join(' | ')}` : ''}`
+        : '0 eventi securitypolicyviolation, console pulita',
+    )
+    await contesto.close()
+  }
+}
+
+// 2. Con il consenso: un clic su ognuno dei quattro link tel: e wa.me registra un «Contact» senza parametri,
+//    senza aprire il link. 3. Revoca da «Gestisci cookie»: _fbp e _fbc cancellati, nessun nuovo evento.
+for (const vista of VISTE) {
+  const { contesto, pagina, errori } = await contestoStep7(vista, { pixel: true, consenso: 'accettato' })
+  await pagina.goto(`${BASE}/`, { waitUntil: 'networkidle' })
+  await pagina.waitForTimeout(600)
+  // Un ascoltatore in cattura annulla l'apertura del link; quello delegato del sito sente lo stesso il clic
+  await pagina.evaluate((selettore) => {
+    window.addEventListener('click', (e) => {
+      if (e.target instanceof Element && e.target.closest(selettore)) e.preventDefault()
+    }, true)
+  }, LINK_CONTATTO)
+  const link = pagina.locator(LINK_CONTATTO)
+  const quanti = await link.count()
+  for (let i = 0; i < quanti; i++) {
+    await alCentro(link.nth(i))
+    await pagina.waitForTimeout(250)
+    await link.nth(i).click()
+    await pagina.waitForTimeout(100)
+  }
+  const chiamate = await pagina.evaluate(() => window.__fbqChiamate ?? [])
+  const contatti = chiamate.filter((c) => c[0] === 'track' && c[1] === 'Contact')
+  const senzaDati = contatti.every((c) => JSON.stringify(c.slice(2)) === '[{},{}]')
+  esito(
+    quanti === 4 && contatti.length === 4 && senzaDati && contesto.pages().length === 1 && pagina.url().startsWith(BASE) && errori.length === 0,
+    `«Contact» sui quattro link di contatto ${vista.width}px`,
+    `${quanti} link, ${contatti.length} eventi Contact ${senzaDati ? 'senza parametri' : 'CON parametri'}; nessun link aperto (${contesto.pages().length} scheda)${errori.length ? `; errori: ${errori.join(' | ')}` : ''}`,
+  )
+
+  await pagina.evaluate(() => {
+    document.cookie = '_fbp=fb.1.1700000000000.123; Path=/'
+    document.cookie = '_fbc=fb.1.1700000000000.prova; Path=/'
+  })
+  const gestisci = pagina.getByRole('button', { name: 'Gestisci cookie' })
+  await alCentro(gestisci)
+  await pagina.waitForTimeout(250)
+  await gestisci.click()
+  await pagina.waitForTimeout(300)
+  const riaperto = await pagina.evaluate(() => ({
+    focus: Boolean(document.activeElement?.closest('.bd-banner')),
+    stato: document.querySelector('.bd-banner__stato')?.textContent?.trim() ?? '',
+  }))
+  await pagina.locator('.bd-banner').getByRole('button', { name: 'Rifiuta', exact: true }).click()
+  await pagina.waitForTimeout(200)
+  const focusDopoRifiuta = await pagina.evaluate(() => document.activeElement?.textContent?.trim() ?? '')
+  const primaDelClic = await pagina.evaluate(() => window.__fbqChiamate.length)
+  await alCentro(link.first())
+  await pagina.waitForTimeout(250)
+  await link.first().click()
+  await pagina.waitForTimeout(150)
+  const dopo = await pagina.evaluate((da) => ({
+    cookie: document.cookie,
+    consenso: JSON.parse(localStorage.getItem('bd-consenso') || '{}').stato,
+    revoca: window.__fbqChiamate.some((c) => c[0] === 'consent' && c[1] === 'revoke'),
+    nuovi: window.__fbqChiamate.slice(da).filter((c) => c[0] === 'track').length,
+  }), primaDelClic)
+  esito(
+    riaperto.focus && /accettati/.test(riaperto.stato) && dopo.consenso === 'rifiutato' && !/_fbp|_fbc/.test(dopo.cookie) && dopo.revoca && dopo.nuovi === 0 && focusDopoRifiuta === 'Gestisci cookie',
+    `revoca da «Gestisci cookie» ${vista.width}px`,
+    `banner riaperto con il focus ${riaperto.focus ? 'dentro' : 'FUORI'} («${riaperto.stato}»); dopo «Rifiuta»: consenso ${dopo.consenso}, cookie _fbp/_fbc ${/_fbp|_fbc/.test(dopo.cookie) ? 'ANCORA presenti' : 'cancellati'}, fbq consent revoke ${dopo.revoca ? 'sì' : 'no'}, ${dopo.nuovi} eventi nuovi dopo un clic su «Chiama»; focus tornato su «${focusDopoRifiuta}»`,
+  )
+  await contesto.close()
+}
+
+// 4. Il banner con i dati veri (META_PIXEL vuoto): misure, LCP nell'hero, barra mobile sopra, tastiera, Esc, X, «Gestisci cookie».
+for (const vista of VISTE) {
+  const { contesto, pagina, richieste, errori } = await contestoStep7(vista)
+  await pagina.goto(`${BASE}/`, { waitUntil: 'networkidle' })
+  await pagina.waitForTimeout(1500)
+  const misure = await pagina.evaluate(() => {
+    const b = document.querySelector('.bd-banner')
+    if (!b) return null
+    const [rifiuta, accetta] = [...b.querySelectorAll('.bd-banner__scelta')]
+    const aspetto = (el) => {
+      const s = getComputedStyle(el)
+      return [s.backgroundColor, s.borderTopWidth, s.borderTopColor, s.color, s.fontSize, s.fontWeight, s.borderTopLeftRadius].join('|')
+    }
+    const r = (el) => el.getBoundingClientRect()
+    const x = b.querySelector('.bd-banner__chiudi')
+    const link = b.querySelector('.bd-banner__link')
+    const ultimo = window.__lcp.at(-1)
+    return {
+      ruolo: b.getAttribute('role'),
+      etichetta: b.getAttribute('aria-label'),
+      scelte: [rifiuta?.textContent, accetta?.textContent].join(' / '),
+      stessaMisura: Math.abs(r(rifiuta).width - r(accetta).width) < 0.5 && Math.abs(r(rifiuta).height - r(accetta).height) < 0.5,
+      stessoAspetto: aspetto(rifiuta) === aspetto(accetta),
+      scelta: `${Math.round(r(rifiuta).width)}×${Math.round(r(rifiuta).height)}`,
+      x: `${Math.round(r(x).width)}×${Math.round(r(x).height)}`,
+      xEtichetta: x.getAttribute('aria-label'),
+      link: link.getAttribute('href'),
+      linkAlto: r(link).height,
+      testo: parseFloat(getComputedStyle(b.querySelector('.bd-banner__testo')).fontSize),
+      altezza: Math.round(r(b).height),
+      lcp: ultimo ? { nellHero: Boolean(ultimo.element?.closest('#inizio')), elemento: `${ultimo.element?.tagName ?? '?'}.${String(ultimo.element?.className ?? '').split(' ')[0]}` } : null,
+      ctaHero: Math.round(document.querySelector('#inizio .bd-cta--primaria').getBoundingClientRect().bottom),
+      bannerCima: Math.round(r(b).top),
+    }
+  })
+  await pagina.screenshot({ path: join(USCITA, `banner-${vista.width}.png`) })
+  esito(
+    misure !== null &&
+      misure.ruolo === 'dialog' &&
+      misure.stessaMisura &&
+      misure.stessoAspetto &&
+      misure.x === '44×44' &&
+      misure.xEtichetta === 'Chiudi e rifiuta' &&
+      misure.link === '/cookie.html' &&
+      misure.linkAlto >= 44 &&
+      misure.testo === 14 &&
+      misure.ctaHero <= misure.bannerCima,
+    `banner dei cookie ${vista.width}px`,
+    misure
+      ? `«${misure.etichetta}», ${misure.scelte} ${misure.stessaMisura && misure.stessoAspetto ? 'uguali' : 'DIVERSI'} (${misure.scelta} px), X ${misure.x} «${misure.xEtichetta}», link ${misure.link}, testo ${misure.testo} px, alto ${misure.altezza} px; CTA dell'hero finisce a ${misure.ctaHero} px, banner da ${misure.bannerCima} px`
+      : 'banner assente al primo accesso',
+  )
+  esito(
+    misure?.lcp?.nellHero === true,
+    `LCP nell'hero con il banner aperto ${vista.width}px`,
+    misure?.lcp ? `ultimo elemento LCP: ${misure.lcp.elemento}${misure.lcp.nellHero ? ' (in #inizio)' : ' (FUORI dall\'hero)'}` : 'nessuna voce LCP',
+  )
+
+  if (vista.width < 768) {
+    // Con il banner aperto la barra mobile sale sopra di lui: la CTA della barra resta scoperta
+    await pagina.evaluate(() => document.getElementById('ruolo').scrollIntoView({ block: 'start' }))
+    await pagina.waitForTimeout(800)
+    const posizioni = await pagina.evaluate(() => {
+      const barra = document.querySelector('.bd-barra-mobile')
+      const banner = document.querySelector('.bd-banner')
+      return {
+        vista: barra.classList.contains('bd-barra-mobile--vista'),
+        barraFondo: Math.round(barra.getBoundingClientRect().bottom),
+        bannerCima: Math.round(banner.getBoundingClientRect().top),
+      }
+    })
+    await pagina.screenshot({ path: join(USCITA, `banner-barra-${vista.width}.png`) })
+    esito(
+      posizioni.vista && posizioni.barraFondo <= posizioni.bannerCima + 1,
+      `barra mobile sopra il banner ${vista.width}px`,
+      `barra ${posizioni.vista ? 'visibile' : 'nascosta'}, finisce a ${posizioni.barraFondo} px; il banner comincia a ${posizioni.bannerCima} px`,
+    )
+    await pagina.evaluate(() => window.scrollTo(0, 0))
+    await pagina.waitForTimeout(400)
+  }
+
+  // Tastiera: subito dopo «Vai al contenuto» c'è il banner; Esc chiude e vale come rifiuto
+  await pagina.locator('.bd-salta').focus()
+  await pagina.keyboard.press('Tab')
+  const primoNelBanner = await pagina.evaluate(() => (document.activeElement?.closest('.bd-banner') ? document.activeElement.textContent.trim() : document.activeElement?.tagName ?? ''))
+  await pagina.keyboard.press('Escape')
+  await pagina.waitForTimeout(200)
+  const dopoEsc = await pagina.evaluate(() => ({ aperto: Boolean(document.querySelector('.bd-banner')), stato: JSON.parse(localStorage.getItem('bd-consenso') || '{}').stato }))
+  esito(
+    primoNelBanner === 'Cookie policy' && !dopoEsc.aperto && dopoEsc.stato === 'rifiutato',
+    `banner da tastiera ${vista.width}px`,
+    `dopo «Vai al contenuto» il Tab va su «${primoNelBanner}»; Esc: banner ${dopoEsc.aperto ? 'ancora aperto' : 'chiuso'}, scelta «${dopoEsc.stato}»`,
+  )
+
+  // «Gestisci cookie» lo riapre con il focus dentro; la X vale come rifiuto e il focus torna sul pulsante
+  const gestisci = pagina.getByRole('button', { name: 'Gestisci cookie' })
+  await alCentro(gestisci)
+  await pagina.waitForTimeout(250)
+  await gestisci.click()
+  await pagina.waitForTimeout(300)
+  const focusDentro = await pagina.evaluate(() => Boolean(document.activeElement?.closest('.bd-banner')))
+  await pagina.locator('.bd-banner__chiudi').click()
+  await pagina.waitForTimeout(200)
+  const dopoX = await pagina.evaluate(() => ({
+    aperto: Boolean(document.querySelector('.bd-banner')),
+    stato: JSON.parse(localStorage.getItem('bd-consenso') || '{}').stato,
+    focus: document.activeElement?.textContent?.trim() ?? '',
+  }))
+  // «Accetta» con META_PIXEL vuoto: scelta salvata, nessuna richiesta a Meta (codice pronto ma inattivo)
+  await gestisci.click()
+  await pagina.waitForTimeout(300)
+  await pagina.locator('.bd-banner').getByRole('button', { name: 'Accetta', exact: true }).click()
+  await pagina.waitForTimeout(800)
+  const dopoAccetta = await pagina.evaluate(() => JSON.parse(localStorage.getItem('bd-consenso') || '{}').stato)
+  // Dalla cookie policy, «cambia la tua scelta» (/#gestisci-cookie) lo riapre anche con una scelta salvata; l'ancora sparisce
+  await pagina.goto(`${BASE}/cookie.html`, { waitUntil: 'networkidle' })
+  await pagina.getByRole('link', { name: 'cambia la tua scelta' }).click()
+  await pagina.waitForLoadState('networkidle')
+  await pagina.waitForTimeout(800)
+  const daAncora = await pagina.evaluate(() => ({ aperto: Boolean(document.querySelector('.bd-banner')), indirizzo: location.hash, focus: Boolean(document.activeElement?.closest('.bd-banner')) }))
+  const violazioni = await violazioniDi(pagina)
+  esito(
+    focusDentro && !dopoX.aperto && dopoX.stato === 'rifiutato' && dopoX.focus === 'Gestisci cookie' && dopoAccetta === 'accettato' && esterne(richieste).length === 0 && daAncora.aperto && daAncora.indirizzo === '' && daAncora.focus && violazioni.length === 0 && errori.length === 0,
+    `banner da «Gestisci cookie» e dalla cookie policy ${vista.width}px`,
+    `riaperto con il focus ${focusDentro ? 'dentro' : 'FUORI'}; X: «${dopoX.stato}», focus su «${dopoX.focus}»; «Accetta» con META_PIXEL vuoto: «${dopoAccetta}», richieste esterne ${esterne(richieste).length}; da «cambia la tua scelta» della cookie policy: banner ${daAncora.aperto ? 'aperto' : 'chiuso'} con il focus ${daAncora.focus ? 'dentro' : 'fuori'}, ancora ${daAncora.indirizzo || 'tolta'}${violazioni.length ? `; violazioni CSP: ${violazioni.join(' | ')}` : ''}${errori.length ? `; errori: ${errori.join(' | ')}` : ''}`,
+  )
+  await contesto.close()
+}
+
+// 5. Pagine statiche: zero violazioni della CSP e nessuna richiesta esterna; foto di privacy, cookie, grazie e 404
+for (const vista of VISTE) {
+  const righe = []
+  let ok = true
+  for (const [nome, percorso, atteso] of [
+    ['privacy', '/privacy.html', 200],
+    ['cookie', '/cookie.html', 200],
+    ['grazie', '/grazie.html', 200],
+    ['404', '/non-esiste/pagina', 404],
+  ]) {
+    const { contesto, pagina, richieste, errori } = await contestoStep7(vista)
+    const risposta = await pagina.goto(`${BASE}${percorso}`, { waitUntil: 'networkidle' })
+    const violazioni = await violazioniDi(pagina)
+    const larga = await pagina.evaluate(() => document.documentElement.scrollWidth)
+    await pagina.screenshot({ path: join(USCITA, `pagina-${nome}-${vista.width}.png`) })
+    const bene = risposta?.status() === atteso && violazioni.length === 0 && esterne(richieste).length === 0 && errori.length === 0 && larga <= vista.width
+    ok &&= bene
+    righe.push(`${nome} ${risposta?.status()}${violazioni.length ? ` violazioni: ${violazioni.join(' | ')}` : ''}${esterne(richieste).length ? ` esterne: ${esterne(richieste).join(', ')}` : ''}${larga > vista.width ? ` larga ${larga} px` : ''}${errori.length ? ` errori: ${errori.join(' | ')}` : ''}`)
+    await contesto.close()
+  }
+  esito(ok, `CSP senza violazioni su privacy, cookie, grazie e 404 ${vista.width}px`, `${righe.join(' · ')}; nessuna richiesta esterna`)
+}
+
+await browser.close()
+server?.kill()
+
+const ko = risultati.filter((r) => !r.ok).length
+writeFileSync(join(USCITA, 'riepilogo.json'), JSON.stringify({ browser: origine, data: new Date().toISOString(), risultati }, null, 2))
+console.log(`\nBrowser: ${origine}. ${risultati.length - ko} OK, ${ko} KO. Screenshot in studio/report/screenshot/`)
+process.exit(ko ? 1 : 0)

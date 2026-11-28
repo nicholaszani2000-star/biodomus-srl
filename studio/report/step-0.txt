@@ -1,0 +1,45 @@
+# npm run check · step 0 · 2026-11-15 12:42 UTC
+# node v22.23.4 · npm 10.9.9
+
+
+> biodomus-landing@0.0.0 check
+> npm run typecheck && npm run lint && npm run build && npm run controlli
+
+
+> biodomus-landing@0.0.0 typecheck
+> tsc -b
+
+
+> biodomus-landing@0.0.0 lint
+> eslint .
+
+
+> biodomus-landing@0.0.0 build
+> vite build
+
+vite v8.3.8 building client environment for production...
+transforming...
+✓ 20 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.45 kB │ gzip:  0.29 kB
+dist/assets/react-CHdo91hT.svg    4.12 kB │ gzip:  2.06 kB
+dist/assets/vite-BF8QNONU.svg     8.70 kB │ gzip:  1.60 kB
+dist/assets/hero-CLDdwZDr.png    13.05 kB
+dist/assets/index-D64VDMd1.css    4.10 kB │ gzip:  1.47 kB
+dist/assets/index-GpEN3EET.js   222.44 kB │ gzip: 69.28 kB
+
+✓ built in 146ms
+
+> biodomus-landing@0.0.0 controlli
+> node studio/controlli.mjs
+
+OK  CLAUDE.md presente e completo — il brief arriva fino al §13
+OK  netlify.toml pubblica dist — publish = "dist"
+OK  .env.example con tutte le variabili — 9 variabili, tutte senza valore
+OK  nessun segreto nel repository — 28 file di testo controllati, nessun segreto
+OK  build presente — dist/index.html esiste
+
+5 OK, 0 KO
+
+# exit code: 0
